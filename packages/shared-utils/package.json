@@ -1,0 +1,17 @@
+﻿{
+  "name": "@caisseflow/shared-utils",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "node -e \"console.log('No tests yet')\"",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,0 +1,11 @@
+﻿{
+  "name": "@caisseflow/api-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node -e \"console.log('Kong gateway config ready')\"",
+    "build": "node -e \"console.log('No build step for kong config')\"",
+    "test": "node -e \"console.log('No tests yet for kong config')\"",
+    "lint": "node -e \"console.log('No lint step for kong config')\""
+  }
+}

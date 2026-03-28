@@ -1,0 +1,11 @@
+﻿{
+  "name": "@caisseflow/docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node -e \"console.log('Docs app placeholder')\"",
+    "build": "node -e \"console.log('Docs build placeholder')\"",
+    "test": "node -e \"console.log('Docs tests placeholder')\"",
+    "lint": "node -e \"console.log('Docs lint placeholder')\""
+  }
+}

@@ -1,0 +1,24 @@
+﻿_format_version: "3.0"
+_transform: true
+
+services:
+  - name: auth-service
+    url: http://auth-service:3000
+    routes:
+      - name: auth-route
+        paths:
+          - /auth
+
+  - name: sales-service
+    url: http://sales-service:3000
+    routes:
+      - name: sales-route
+        paths:
+          - /sales
+
+  - name: expense-service
+    url: http://expense-service:3000
+    routes:
+      - name: expense-route
+        paths:
+          - /expenses

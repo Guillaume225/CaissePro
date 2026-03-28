@@ -1,0 +1,14 @@
+﻿{
+  "name": "@caisseflow/database",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node -e \"console.log('Use prisma studio or migration commands')\"",
+    "build": "node -e \"console.log('No build step for schema package')\"",
+    "test": "node -e \"console.log('No tests yet for schema package')\"",
+    "lint": "node -e \"console.log('No lint step for schema package')\""
+  },
+  "devDependencies": {
+    "prisma": "^6.4.1"
+  }
+}
