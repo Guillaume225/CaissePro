@@ -1,6 +1,11 @@
-﻿export function toCurrency(value: number, currency = "EUR"): string {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-  }).format(value);
-}
+﻿/* ═══════════════════════════════════════════
+ *  @caisseflow/shared-utils — Barrel export
+ * ═══════════════════════════════════════════ */
+
+export * from './constants.js';
+export * from './error-codes.js';
+export * from './reference-generator.js';
+export * from './currency.js';
+export * from './date-utils.js';
+export * from './validation.js';
+export * from './pagination.js';
