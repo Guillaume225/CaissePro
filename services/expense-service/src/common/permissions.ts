@@ -1,0 +1,31 @@
+export const PERMISSIONS = {
+  EXPENSE_CREATE: 'expense.create',
+  EXPENSE_READ: 'expense.read',
+  EXPENSE_UPDATE: 'expense.update',
+  EXPENSE_DELETE: 'expense.delete',
+  EXPENSE_APPROVE_L1: 'expense.approve_l1',
+  EXPENSE_APPROVE_L2: 'expense.approve_l2',
+  EXPENSE_EXPORT: 'expense.export',
+  BUDGET_CREATE: 'budget.create',
+  BUDGET_READ: 'budget.read',
+  BUDGET_UPDATE: 'budget.update',
+} as const;
+
+export const EXPENSE_PERMISSIONS = {
+  CREATE: PERMISSIONS.EXPENSE_CREATE,
+  READ: PERMISSIONS.EXPENSE_READ,
+  UPDATE: PERMISSIONS.EXPENSE_UPDATE,
+  DELETE: PERMISSIONS.EXPENSE_DELETE,
+  APPROVE_L1: PERMISSIONS.EXPENSE_APPROVE_L1,
+  APPROVE_L2: PERMISSIONS.EXPENSE_APPROVE_L2,
+  EXPORT: PERMISSIONS.EXPENSE_EXPORT,
+} as const;
+
+export const BUDGET_PERMISSIONS = {
+  CREATE: PERMISSIONS.BUDGET_CREATE,
+  READ: PERMISSIONS.BUDGET_READ,
+  UPDATE: PERMISSIONS.BUDGET_UPDATE,
+} as const;
+
+export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+export const ALL_PERMISSIONS = Object.values(PERMISSIONS);
