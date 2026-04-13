@@ -4,6 +4,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
+import { Company } from '../entities/company.entity';
 import { AuthService } from '../auth/auth.service';
 import { AuditService } from '../audit/audit.service';
 
@@ -71,6 +72,10 @@ describe('UsersService', () => {
         UsersService,
         { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: getRepositoryToken(Role), useValue: roleRepo },
+        {
+          provide: getRepositoryToken(Company),
+          useValue: { findOne: jest.fn(), findOneBy: jest.fn() },
+        },
         { provide: AuthService, useValue: authService },
         { provide: AuditService, useValue: auditService },
       ],
@@ -118,7 +123,9 @@ describe('UsersService', () => {
 
   describe('create', () => {
     it('should create a user with hashed password', async () => {
-      userRepo.findOne.mockResolvedValue(null);
+      userRepo.findOne
+        .mockResolvedValueOnce(null) // no existing email
+        .mockResolvedValueOnce({ ...mockUser, id: 'admin-uuid', tenantId: 'tenant-1' }); // actor
       roleRepo.findOne.mockResolvedValue(mockRole);
 
       const dto = {

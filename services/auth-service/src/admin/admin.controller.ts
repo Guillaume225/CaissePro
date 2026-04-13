@@ -29,7 +29,9 @@ export class SettingsController {
   }
 
   @Put()
-  async updateSettings(@Body() dto: Record<string, unknown>) {
+  async updateSettings(
+    @Body() dto: Record<string, unknown> & { validation?: { maxDisbursementAmount?: number } },
+  ) {
     const [company] = await this.dataSource.query('SELECT TOP 1 id FROM companies');
     if (company) {
       const sets: string[] = [];
