@@ -15,7 +15,9 @@ describe('EmailService', () => {
   let nodemailer: { createTransport: jest.Mock };
 
   beforeEach(async () => {
-    nodemailer = await import('nodemailer');
+    nodemailer = (await import('nodemailer')) as unknown as {
+      createTransport: jest.Mock;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
