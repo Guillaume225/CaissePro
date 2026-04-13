@@ -6,6 +6,7 @@ import { AddCashDayTables1712000000000 } from './migrations/1712000000000-AddCas
 import { AddDisbursementAndValidation1712100000000 } from './migrations/1712100000000-AddDisbursementAndValidation';
 import { AddReportConfigs1712200000000 } from './migrations/1712200000000-AddReportConfigs';
 import { AddEmployees1712300000000 } from './migrations/1712300000000-AddEmployees';
+import { AddFneInvoiceTables1712400000000 } from './migrations/1712400000000-AddFneInvoiceTables';
 
 export const AppDataSource = new DataSource({
   type: 'mssql',
@@ -17,6 +18,6 @@ export const AppDataSource = new DataSource({
   synchronize: false,
   logging: process.env.NODE_ENV !== 'production',
   entities: [__dirname + '/entities/**/*.{ts,js}'],
-  migrations: [InitialMigration1711600000000, AddMultiTenancy1711700000000, AddCashDayTables1712000000000, AddDisbursementAndValidation1712100000000, AddReportConfigs1712200000000, AddEmployees1712300000000],
+  migrations: [InitialMigration1711600000000, AddMultiTenancy1711700000000, AddCashDayTables1712000000000, AddDisbursementAndValidation1712100000000, AddReportConfigs1712200000000, AddEmployees1712300000000, AddFneInvoiceTables1712400000000],
   options: { encrypt: false, trustServerCertificate: true },
 });

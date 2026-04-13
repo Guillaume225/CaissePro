@@ -363,24 +363,51 @@ export class InitialMigration1711600000000 implements MigrationInterface {
       AS
       BEGIN
         SET NOCOUNT ON;
-        INSERT INTO [expenses] (
-          [id],[reference],[date],[amount],[description],[beneficiary],
-          [payment_method],[status],[observations],[category_id],[created_by],
-          [cost_center_id],[project_id],[created_at],[updated_at],[deleted_at]
-        )
-        SELECT
-          ISNULL(i.[id], NEWID()),
-          CASE WHEN i.[reference] IS NULL OR i.[reference] = ''
-            THEN 'DEP-' + CAST(YEAR(ISNULL(i.[date], GETDATE())) AS NVARCHAR) + '-' + RIGHT('00000' + CAST(NEXT VALUE FOR expense_ref_seq AS NVARCHAR), 5)
-            ELSE i.[reference]
-          END,
-          i.[date],i.[amount],i.[description],i.[beneficiary],
-          i.[payment_method],ISNULL(i.[status],'DRAFT'),i.[observations],i.[category_id],i.[created_by],
-          i.[cost_center_id],i.[project_id],
-          ISNULL(i.[created_at], SYSDATETIMEOFFSET()),
-          ISNULL(i.[updated_at], SYSDATETIMEOFFSET()),
-          i.[deleted_at]
-        FROM inserted i;
+
+        -- Cursor-based approach to handle NEXT VALUE FOR per row
+        DECLARE @id UNIQUEIDENTIFIER, @reference NVARCHAR(255), @date DATE,
+                @amount DECIMAL(15,2), @description NVARCHAR(MAX), @beneficiary NVARCHAR(255),
+                @payment_method NVARCHAR(50), @status NVARCHAR(50), @observations NVARCHAR(MAX),
+                @category_id UNIQUEIDENTIFIER, @created_by UNIQUEIDENTIFIER,
+                @cost_center_id NVARCHAR(255), @project_id NVARCHAR(255),
+                @created_at DATETIMEOFFSET, @updated_at DATETIMEOFFSET, @deleted_at DATETIMEOFFSET;
+
+        DECLARE ins_cursor CURSOR LOCAL FAST_FORWARD FOR
+          SELECT [id],[reference],[date],[amount],[description],[beneficiary],
+                 [payment_method],[status],[observations],[category_id],[created_by],
+                 [cost_center_id],[project_id],[created_at],[updated_at],[deleted_at]
+          FROM inserted;
+
+        OPEN ins_cursor;
+        FETCH NEXT FROM ins_cursor INTO @id, @reference, @date, @amount, @description, @beneficiary,
+              @payment_method, @status, @observations, @category_id, @created_by,
+              @cost_center_id, @project_id, @created_at, @updated_at, @deleted_at;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+          IF @reference IS NULL OR @reference = ''
+            SET @reference = 'DEP-' + CAST(YEAR(ISNULL(@date, GETDATE())) AS NVARCHAR) + '-' + RIGHT('00000' + CAST(NEXT VALUE FOR expense_ref_seq AS NVARCHAR), 5);
+
+          INSERT INTO [expenses] (
+            [id],[reference],[date],[amount],[description],[beneficiary],
+            [payment_method],[status],[observations],[category_id],[created_by],
+            [cost_center_id],[project_id],[created_at],[updated_at],[deleted_at]
+          ) VALUES (
+            ISNULL(@id, NEWID()), @reference, @date, @amount, @description, @beneficiary,
+            @payment_method, ISNULL(@status,'DRAFT'), @observations, @category_id, @created_by,
+            @cost_center_id, @project_id,
+            ISNULL(@created_at, SYSDATETIMEOFFSET()),
+            ISNULL(@updated_at, SYSDATETIMEOFFSET()),
+            @deleted_at
+          );
+
+          FETCH NEXT FROM ins_cursor INTO @id, @reference, @date, @amount, @description, @beneficiary,
+                @payment_method, @status, @observations, @category_id, @created_by,
+                @cost_center_id, @project_id, @created_at, @updated_at, @deleted_at;
+        END
+
+        CLOSE ins_cursor;
+        DEALLOCATE ins_cursor;
       END;
     `);
 
@@ -392,22 +419,43 @@ export class InitialMigration1711600000000 implements MigrationInterface {
       AS
       BEGIN
         SET NOCOUNT ON;
-        INSERT INTO [sales] (
-          [id],[reference],[date],[client_id],[subtotal],[tax_amount],
-          [discount_amount],[total],[status],[seller_id],[created_at],[updated_at]
-        )
-        SELECT
-          ISNULL(i.[id], NEWID()),
-          CASE WHEN i.[reference] IS NULL OR i.[reference] = ''
-            THEN 'VTE-' + CAST(YEAR(ISNULL(i.[date], GETDATE())) AS NVARCHAR) + '-' + RIGHT('00000' + CAST(NEXT VALUE FOR sale_ref_seq AS NVARCHAR), 5)
-            ELSE i.[reference]
-          END,
-          i.[date],i.[client_id],ISNULL(i.[subtotal],0),ISNULL(i.[tax_amount],0),
-          ISNULL(i.[discount_amount],0),ISNULL(i.[total],0),ISNULL(i.[status],'DRAFT'),
-          i.[seller_id],
-          ISNULL(i.[created_at], SYSDATETIMEOFFSET()),
-          ISNULL(i.[updated_at], SYSDATETIMEOFFSET())
-        FROM inserted i;
+
+        DECLARE @id UNIQUEIDENTIFIER, @reference NVARCHAR(255), @date DATE,
+                @client_id UNIQUEIDENTIFIER, @subtotal DECIMAL(15,2), @tax_amount DECIMAL(15,2),
+                @discount_amount DECIMAL(15,2), @total DECIMAL(15,2), @status NVARCHAR(50),
+                @seller_id UNIQUEIDENTIFIER, @created_at DATETIMEOFFSET, @updated_at DATETIMEOFFSET;
+
+        DECLARE ins_cursor CURSOR LOCAL FAST_FORWARD FOR
+          SELECT [id],[reference],[date],[client_id],[subtotal],[tax_amount],
+                 [discount_amount],[total],[status],[seller_id],[created_at],[updated_at]
+          FROM inserted;
+
+        OPEN ins_cursor;
+        FETCH NEXT FROM ins_cursor INTO @id, @reference, @date, @client_id, @subtotal, @tax_amount,
+              @discount_amount, @total, @status, @seller_id, @created_at, @updated_at;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+          IF @reference IS NULL OR @reference = ''
+            SET @reference = 'VTE-' + CAST(YEAR(ISNULL(@date, GETDATE())) AS NVARCHAR) + '-' + RIGHT('00000' + CAST(NEXT VALUE FOR sale_ref_seq AS NVARCHAR), 5);
+
+          INSERT INTO [sales] (
+            [id],[reference],[date],[client_id],[subtotal],[tax_amount],
+            [discount_amount],[total],[status],[seller_id],[created_at],[updated_at]
+          ) VALUES (
+            ISNULL(@id, NEWID()), @reference, @date, @client_id, ISNULL(@subtotal,0), ISNULL(@tax_amount,0),
+            ISNULL(@discount_amount,0), ISNULL(@total,0), ISNULL(@status,'DRAFT'),
+            @seller_id,
+            ISNULL(@created_at, SYSDATETIMEOFFSET()),
+            ISNULL(@updated_at, SYSDATETIMEOFFSET())
+          );
+
+          FETCH NEXT FROM ins_cursor INTO @id, @reference, @date, @client_id, @subtotal, @tax_amount,
+                @discount_amount, @total, @status, @seller_id, @created_at, @updated_at;
+        END
+
+        CLOSE ins_cursor;
+        DEALLOCATE ins_cursor;
       END;
     `);
   }
