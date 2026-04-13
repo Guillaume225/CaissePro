@@ -26,7 +26,7 @@ import {
   useCancelAccounting,
 } from '@/hooks/useClosing';
 import type { AccountingEntry } from '@/types/admin';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 type AnyRow = Record<string, unknown>;
 
@@ -75,7 +75,7 @@ export default function AccountingEntriesPage() {
   const processAccounting = useProcessAccounting();
   const cancelAccounting = useCancelAccounting();
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!accountingSummary) return;
 
     const rows = accountingSummary.entries.map((e) => ({
@@ -100,20 +100,30 @@ export default function AccountingEntriesPage() {
       Libellé: accountingSummary.isBalanced ? 'Équilibré' : 'Non équilibré',
     });
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [
-      { wch: 12 },
-      { wch: 8 },
-      { wch: 12 },
-      { wch: 28 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 14 },
-      { wch: 30 },
-    ];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Écritures Comptables');
-    XLSX.writeFile(wb, `ecritures-caisse-${accountingSummary.date}.xlsx`);
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Écritures Comptables');
+
+    const headers = Object.keys(rows[0]);
+    ws.addRow(headers);
+    for (const row of rows) {
+      ws.addRow(Object.values(row));
+    }
+
+    const colWidths = [12, 8, 12, 28, 15, 15, 14, 30];
+    ws.columns.forEach((col, i) => {
+      col.width = colWidths[i] || 15;
+    });
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ecritures-caisse-${accountingSummary.date}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleProcess = () => {
