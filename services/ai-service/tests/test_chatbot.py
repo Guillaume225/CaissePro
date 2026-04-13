@@ -19,7 +19,7 @@ from app.schemas.chatbot import (
 @pytest.fixture
 def engine() -> ChatbotEngine:
     """Chatbot engine in offline mode (no API key)."""
-    return ChatbotEngine(anthropic_api_key=None)
+    return ChatbotEngine(openai_api_key=None)
 
 
 @pytest.fixture

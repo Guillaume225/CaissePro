@@ -44,8 +44,9 @@ def extract_dates(text: str) -> list[date]:
 def extract_invoice_number(text: str) -> str | None:
     """Extract invoice/receipt number."""
     patterns = [
-        r"(?:Facture|Invoice|Fact|Reçu|Receipt)[:\s#]*([A-Z0-9\-/]+)",
-        r"N°?\s*:?\s*([A-Z]{0,3}\d{4,}[A-Z0-9\-/]*)",
+        r"(?:Facture|Invoice|Fact|Reçu|Receipt)\s*N[°o]?\s*:?\s*([A-Z0-9\-/]+)",
+        r"(?:Facture|Invoice|Fact|Reçu|Receipt)[:\s#]+([A-Z0-9\-/]+)",
+        r"N[°o]?\s*:?\s*([A-Z]{0,3}\d{4,}[A-Z0-9\-/]*)",
         r"(?:Réf|Ref)[.:\s]*([A-Z0-9\-/]+)",
     ]
     for pattern in patterns:

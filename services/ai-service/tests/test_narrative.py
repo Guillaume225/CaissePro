@@ -19,7 +19,7 @@ from app.schemas.narrative import (
 @pytest.fixture
 def generator() -> NarrativeGenerator:
     """Narrative generator in offline mode (no API key)."""
-    return NarrativeGenerator(anthropic_api_key=None)
+    return NarrativeGenerator(openai_api_key=None)
 
 
 @pytest.fixture
