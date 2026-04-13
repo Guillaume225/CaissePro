@@ -463,7 +463,7 @@ class ChatbotEngine:
             }
             name = module_names.get(m, m)
             return (
-                f"Bonjour ! Je suis l'assistant IA du module **{name}**.\n\n"
+                f"Bonjour ! Je suis l'assistant IA CaisseFlow du module **{name}**.\n\n"
                 "Je peux vous aider à :\n"
                 "• Naviguer vers les pages du module\n"
                 "• Répondre à vos questions sur les fonctionnalités\n"
@@ -531,6 +531,34 @@ class ChatbotEngine:
                 ),
             }
             return _features.get(m, _features["expense"])
+
+        # ── Cross-module topic detection ─────────────────
+        if any(w in msg_lower for w in ["stock", "inventaire", "inventory", "niveau"]):
+            return (
+                "Pour la gestion de stock et inventaire :\n\n"
+                "• Consultez le module **Stock** pour suivre les niveaux de stock\n"
+                "• Les mouvements d'inventaire sont enregistrés en temps réel\n"
+                "• Les alertes de stock bas sont disponibles sur le dashboard\n\n"
+                "Basculez vers le module Stock pour plus de détails."
+            )
+
+        if any(w in msg_lower for w in ["client", "customer", "fidél", "meilleur"]):
+            return (
+                "Pour la gestion des clients :\n\n"
+                "• Consultez le module **Clients** pour voir la liste client\n"
+                "• Les scores de fidélité et l'historique d'achats y sont disponibles\n"
+                "• Identifiez vos meilleurs clients grâce au scoring IA\n\n"
+                "Basculez vers le module Clients pour plus de détails."
+            )
+
+        if any(w in msg_lower for w in ["anomalie", "anomaly", "détection", "suspect", "fraude"]):
+            return (
+                "Pour la détection d'anomalies :\n\n"
+                "• Le module **Anomalies** analyse automatiquement les transactions suspectes\n"
+                "• Les alertes de détection sont visibles sur le dashboard\n"
+                "• Consultez l'historique des anomalies détectées par l'IA\n\n"
+                "Basculez vers le module Anomalies pour plus de détails."
+            )
 
         # ── Ultimate generic fallback ────────────────────
         module_names = {
