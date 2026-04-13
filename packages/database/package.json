@@ -1,0 +1,27 @@
+{
+  "name": "@caisseflow/database",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node -r tsconfig-paths/register src/data-source.ts",
+    "build": "tsc",
+    "test": "echo \"No tests yet\"",
+    "lint": "eslint src --ext .ts",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source.ts",
+    "seed": "ts-node -r tsconfig-paths/register src/seeds/run-seed.ts"
+  },
+  "dependencies": {
+    "typeorm": "^0.3.20",
+    "mssql": "^11.0.1",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.8.2"
+  }
+}

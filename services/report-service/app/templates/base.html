@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page {
+    size: A4;
+    margin: 15mm 15mm 20mm 15mm;
+    @bottom-center {
+      content: "Page " counter(page) " / " counter(pages);
+      font-size: 9px;
+      color: #888;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid #062A5A;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+  }
+  .company-info { flex: 1; }
+  .company-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #062A5A;
+    margin-bottom: 2px;
+  }
+  .company-details { font-size: 9px; color: #666; }
+  .report-meta { text-align: right; }
+  .report-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #062A5A;
+    margin-bottom: 4px;
+  }
+  .report-subtitle { font-size: 10px; color: #64748b; }
+  .report-date { font-size: 9px; color: #94a3b8; margin-top: 4px; }
+
+  /* ── Summary boxes ── */
+  .summary-grid {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .summary-box {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+  .summary-box.primary { border-left: 4px solid #4884BD; }
+  .summary-box.success { border-left: 4px solid #16a34a; }
+  .summary-box.warning { border-left: 4px solid #EA761D; }
+  .summary-box.danger { border-left: 4px solid #E87017; }
+  .summary-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-value { font-size: 16px; font-weight: 700; color: #062A5A; margin-top: 2px; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 10px;
+  }
+  th {
+    background: #062A5A;
+    color: white;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  tr:nth-child(even) { background: #f8fafc; }
+  tr:hover { background: #EDF3F9; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .font-bold { font-weight: 700; }
+  .total-row { background: #062A5A !important; color: white; font-weight: 700; }
+  .subtotal-row { background: #e2e8f0 !important; font-weight: 600; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 20px; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #062A5A;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-success { background: #dcfce7; color: #16a34a; }
+  .badge-warning { background: #FEF0E0; color: #EA761D; }
+  .badge-danger { background: #FDE8D8; color: #E87017; }
+  .badge-info { background: #DDEAF5; color: #4884BD; }
+
+  /* ── Progress bar ── */
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  .progress-ok { background: #16a34a; }
+  .progress-warn { background: #EA761D; }
+  .progress-danger { background: #E87017; }
+
+  /* ── Footer ── */
+  .report-footer {
+    margin-top: 30px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8px;
+    color: #94a3b8;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+{% block content %}{% endblock %}
+
+<div class="report-footer">
+  Document généré automatiquement par {{ company_name }} — {{ generated_at }} — Confidentiel
+</div>
+</body>
+</html>

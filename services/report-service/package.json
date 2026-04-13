@@ -1,0 +1,12 @@
+{
+  "name": "@caisseflow/report-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "python -m uvicorn app.main:app --reload --port 8001",
+    "dev:worker": "python -m celery -A app.celery_app worker --loglevel=info --concurrency=2 -Q reports",
+    "build": "python -m compileall app",
+    "test": "python -m pytest -v",
+    "lint": "python -m ruff check app"
+  }
+}

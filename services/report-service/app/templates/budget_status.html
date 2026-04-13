@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="report-header">
+  <div class="company-info">
+    <div class="company-name">{{ company_name }}</div>
+    <div class="company-details">
+      {% if company_address %}{{ company_address }}<br>{% endif %}
+      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
+      {% if company_email %} — {{ company_email }}{% endif %}
+    </div>
+  </div>
+  <div class="report-meta">
+    <div class="report-title">État Budgétaire</div>
+    <div class="report-subtitle">{{ period_start }} — {{ period_end }}</div>
+    <div class="report-date">Généré le {{ generated_at }}</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-grid">
+  <div class="summary-box primary">
+    <div class="summary-label">Budget Total</div>
+    <div class="summary-value">{{ total_budget }}</div>
+  </div>
+  <div class="summary-box warning">
+    <div class="summary-label">Total Consommé</div>
+    <div class="summary-value">{{ total_consumed }}</div>
+  </div>
+  <div class="summary-box success">
+    <div class="summary-label">Reste Disponible</div>
+    <div class="summary-value">{{ total_remaining }}</div>
+  </div>
+  <div class="summary-box {% if global_percentage > 90 %}danger{% elif global_percentage > 75 %}warning{% else %}primary{% endif %}">
+    <div class="summary-label">Taux Consommation</div>
+    <div class="summary-value">{{ global_percentage }}%</div>
+  </div>
+</div>
+
+<!-- Par Catégorie -->
+<div class="section">
+  <div class="section-title">Détail par Catégorie</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Catégorie</th>
+        <th>Département</th>
+        <th class="text-right">Budget Alloué</th>
+        <th class="text-right">Consommé</th>
+        <th class="text-right">Reste</th>
+        <th class="text-center" style="width:120px">Taux</th>
+        <th class="text-center">Alerte</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in budgets %}
+      <tr>
+        <td class="font-bold">{{ item.category }}</td>
+        <td>{{ item.department }}</td>
+        <td class="text-right">{{ item.allocated }}</td>
+        <td class="text-right">{{ item.consumed }}</td>
+        <td class="text-right">{{ item.remaining }}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="progress-bar">
+              <div class="progress-fill {% if item.percentage > 90 %}progress-danger{% elif item.percentage > 75 %}progress-warn{% else %}progress-ok{% endif %}"
+                   style="width:{{ item.percentage }}%"></div>
+            </div>
+            <span style="font-size:9px;font-weight:600">{{ item.percentage }}%</span>
+          </div>
+        </td>
+        <td class="text-center">
+          {% if item.percentage > 90 %}
+            <span class="badge badge-danger">CRITIQUE</span>
+          {% elif item.percentage > 75 %}
+            <span class="badge badge-warning">ATTENTION</span>
+          {% else %}
+            <span class="badge badge-success">OK</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td colspan="2">TOTAL GÉNÉRAL</td>
+        <td class="text-right">{{ total_budget }}</td>
+        <td class="text-right">{{ total_consumed }}</td>
+        <td class="text-right">{{ total_remaining }}</td>
+        <td class="text-center">{{ global_percentage }}%</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

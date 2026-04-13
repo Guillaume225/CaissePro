@@ -1,0 +1,115 @@
+# ═══════════════════════════════════════════════════════════
+# PersistentVolumeClaims
+# ═══════════════════════════════════════════════════════════
+
+# ── MSSQL data ───────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-data-pvc
+  labels:
+    app: mssql
+    app.kubernetes.io/part-of: caisseflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-premium
+  resources:
+    requests:
+      storage: 50Gi
+---
+# ── MinIO object storage ─────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  labels:
+    app: minio
+    app.kubernetes.io/part-of: caisseflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-premium
+  resources:
+    requests:
+      storage: 20Gi
+---
+# ── Redis persistence ────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  labels:
+    app: redis
+    app.kubernetes.io/part-of: caisseflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-standard
+  resources:
+    requests:
+      storage: 5Gi
+---
+# ── RabbitMQ data ────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+  labels:
+    app: rabbitmq
+    app.kubernetes.io/part-of: caisseflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-standard
+  resources:
+    requests:
+      storage: 5Gi
+---
+# ── ML models storage ────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-models-pvc
+  labels:
+    app: ai-service
+    app.kubernetes.io/part-of: caisseflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-standard
+  resources:
+    requests:
+      storage: 10Gi
+---
+# ── Prometheus data ──────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-pvc
+  labels:
+    app: prometheus
+    app.kubernetes.io/part-of: caisseflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-standard
+  resources:
+    requests:
+      storage: 20Gi
+---
+# ── Grafana data ─────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  labels:
+    app: grafana
+    app.kubernetes.io/part-of: caisseflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-standard
+  resources:
+    requests:
+      storage: 5Gi

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="report-header">
+  <div class="company-info">
+    <div class="company-name">{{ company_name }}</div>
+    <div class="company-details">
+      {% if company_address %}{{ company_address }}<br>{% endif %}
+      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
+      {% if company_email %} — {{ company_email }}{% endif %}
+    </div>
+  </div>
+  <div class="report-meta">
+    <div class="report-title">Bilan de Clôture de Caisse</div>
+    <div class="report-subtitle">{{ register_name }} — {{ date }}</div>
+    <div class="report-date">Généré le {{ generated_at }}</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-grid">
+  <div class="summary-box primary">
+    <div class="summary-label">Solde d'Ouverture</div>
+    <div class="summary-value">{{ opening_balance }}</div>
+  </div>
+  <div class="summary-box success">
+    <div class="summary-label">Encaissements</div>
+    <div class="summary-value">{{ total_income }}</div>
+  </div>
+  <div class="summary-box warning">
+    <div class="summary-label">Décaissements</div>
+    <div class="summary-value">{{ total_outflow }}</div>
+  </div>
+  <div class="summary-box {% if variance_abs > 0 %}danger{% else %}success{% endif %}">
+    <div class="summary-label">Écart</div>
+    <div class="summary-value">{{ variance }}</div>
+  </div>
+</div>
+
+<!-- Récapitulatif par mode de paiement -->
+<div class="section">
+  <div class="section-title">Encaissements par Mode de Paiement</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Mode de Paiement</th>
+        <th class="text-right">Nombre Transactions</th>
+        <th class="text-right">Montant</th>
+        <th class="text-center">% du Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pm in payment_methods %}
+      <tr>
+        <td class="font-bold">{{ pm.method }}</td>
+        <td class="text-right">{{ pm.count }}</td>
+        <td class="text-right">{{ pm.amount }}</td>
+        <td class="text-center">{{ pm.percentage }}%</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td>TOTAL</td>
+        <td class="text-right">{{ total_transactions }}</td>
+        <td class="text-right">{{ total_income }}</td>
+        <td class="text-center">100%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Bilan -->
+<div class="section">
+  <div class="section-title">Bilan de Caisse</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Libellé</th>
+        <th class="text-right">Montant</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Solde d'ouverture</td><td class="text-right">{{ opening_balance }}</td></tr>
+      <tr><td>(+) Total encaissements</td><td class="text-right">{{ total_income }}</td></tr>
+      <tr><td>(−) Total décaissements (dépenses)</td><td class="text-right">{{ total_outflow }}</td></tr>
+      <tr class="subtotal-row"><td class="font-bold">Solde théorique</td><td class="text-right font-bold">{{ theoretical_balance }}</td></tr>
+      <tr><td>Solde réel compté</td><td class="text-right">{{ actual_balance }}</td></tr>
+      <tr class="total-row">
+        <td>ÉCART (Réel − Théorique)</td>
+        <td class="text-right">{{ variance }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+{% if variance_abs > 0 %}
+<div style="background:#FDE8D8;border:1px solid #E87017;border-radius:6px;padding:10px 14px;margin-top:10px">
+  <strong style="color:#E87017">⚠ Écart détecté :</strong>
+  <span>Un écart de {{ variance }} a été constaté entre le solde théorique et le solde réel. Veuillez vérifier les opérations de la journée.</span>
+</div>
+{% endif %}
+{% endblock %}

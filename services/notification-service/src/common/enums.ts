@@ -1,0 +1,23 @@
+/**
+ * Notification types — maps to business events.
+ */
+export enum NotificationType {
+  EXPENSE_TO_VALIDATE = 'EXPENSE_TO_VALIDATE',
+  EXPENSE_APPROVED = 'EXPENSE_APPROVED',
+  EXPENSE_REJECTED = 'EXPENSE_REJECTED',
+  BUDGET_ALERT = 'BUDGET_ALERT',
+  ADVANCE_UNJUSTIFIED = 'ADVANCE_UNJUSTIFIED',
+  RECEIVABLE_OVERDUE = 'RECEIVABLE_OVERDUE',
+  CASH_REGISTER_CLOSE_REQUIRED = 'CASH_REGISTER_CLOSE_REQUIRED',
+  AI_ANOMALY_DETECTED = 'AI_ANOMALY_DETECTED',
+  TREASURY_FORECAST_ALERT = 'TREASURY_FORECAST_ALERT',
+}
+
+/**
+ * Channels through which a notification can be delivered.
+ */
+export enum NotificationChannel {
+  IN_APP = 'IN_APP',
+  EMAIL = 'EMAIL',
+  SMS = 'SMS',
+}

@@ -1,0 +1,30 @@
+﻿# dependencies
+node_modules/
+.pnpm-store/
+
+# logs
+*.log
+
+# env
+.env
+.env.*
+!.env.example
+
+# build outputs
+dist/
+build/
+coverage/
+.turbo/
+
+# python
+__pycache__/
+.pytest_cache/
+.venv/
+
+# editors
+.vscode/
+.idea/
+
+# os
+.DS_Store
+Thumbs.db

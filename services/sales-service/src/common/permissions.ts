@@ -1,0 +1,72 @@
+export const PERMISSIONS = {
+  CLIENT_CREATE: 'client.create',
+  CLIENT_READ: 'client.read',
+  CLIENT_UPDATE: 'client.update',
+  CLIENT_DELETE: 'client.delete',
+  PRODUCT_CREATE: 'product.create',
+  PRODUCT_READ: 'product.read',
+  PRODUCT_UPDATE: 'product.update',
+  PRODUCT_DELETE: 'product.delete',
+  SALE_CREATE: 'sale.create',
+  SALE_READ: 'sale.read',
+  SALE_UPDATE: 'sale.update',
+  SALE_CONFIRM: 'sale.confirm',
+  SALE_DELETE: 'sale.delete',
+  PAYMENT_CREATE: 'payment.create',
+  PAYMENT_READ: 'payment.read',
+  RECEIVABLE_READ: 'receivable.read',
+  DISCOUNT_APPROVE: 'discount.approve',
+  CASH_CLOSING_OPEN: 'cash_closing.open',
+  CASH_CLOSING_READ: 'cash_closing.read',
+  CASH_CLOSING_CLOSE: 'cash_closing.close',
+  FNE_CREATE: 'fne.create',
+  FNE_READ: 'fne.read',
+  FNE_UPDATE: 'fne.update',
+  FNE_CREDIT_NOTE: 'fne.credit_note',
+} as const;
+
+export const CLIENT_PERMISSIONS = {
+  CREATE: PERMISSIONS.CLIENT_CREATE,
+  READ: PERMISSIONS.CLIENT_READ,
+  UPDATE: PERMISSIONS.CLIENT_UPDATE,
+  DELETE: PERMISSIONS.CLIENT_DELETE,
+} as const;
+
+export const PRODUCT_PERMISSIONS = {
+  CREATE: PERMISSIONS.PRODUCT_CREATE,
+  READ: PERMISSIONS.PRODUCT_READ,
+  UPDATE: PERMISSIONS.PRODUCT_UPDATE,
+  DELETE: PERMISSIONS.PRODUCT_DELETE,
+} as const;
+
+export const SALE_PERMISSIONS = {
+  CREATE: PERMISSIONS.SALE_CREATE,
+  READ: PERMISSIONS.SALE_READ,
+  UPDATE: PERMISSIONS.SALE_UPDATE,
+  CONFIRM: PERMISSIONS.SALE_CONFIRM,
+  DELETE: PERMISSIONS.SALE_DELETE,
+} as const;
+
+export const PAYMENT_PERMISSIONS = {
+  CREATE: PERMISSIONS.PAYMENT_CREATE,
+  READ: PERMISSIONS.PAYMENT_READ,
+} as const;
+
+export const RECEIVABLE_PERMISSIONS = {
+  READ: PERMISSIONS.RECEIVABLE_READ,
+} as const;
+
+export const CASH_CLOSING_PERMISSIONS = {
+  OPEN: PERMISSIONS.CASH_CLOSING_OPEN,
+  READ: PERMISSIONS.CASH_CLOSING_READ,
+  CLOSE: PERMISSIONS.CASH_CLOSING_CLOSE,
+} as const;
+
+export const FNE_PERMISSIONS = {
+  CREATE: PERMISSIONS.FNE_CREATE,
+  READ: PERMISSIONS.FNE_READ,
+  UPDATE: PERMISSIONS.FNE_UPDATE,
+  CREDIT_NOTE: PERMISSIONS.FNE_CREDIT_NOTE,
+} as const;
+
+export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
