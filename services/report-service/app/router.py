@@ -6,18 +6,17 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.enums import JobStatus, ReportType, REPORT_TEMPLATES
+from app.enums import JobStatus, REPORT_TEMPLATES
 from app.models import ReportJob, ScheduledReport
 from app.schemas import (
     GenerateReportRequest,
     GenerateReportResponse,
     JobStatusResponse,
-    ReportJobResponse,
     ReportTemplateResponse,
     ScheduleReportRequest,
     ScheduledReportResponse,

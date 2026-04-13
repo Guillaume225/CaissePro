@@ -4,7 +4,7 @@ Each builder returns (context, table_headers, table_rows, summary) for multi-for
 """
 
 from typing import Any
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 import asyncio
 
 from app.enums import ReportType
@@ -605,7 +605,6 @@ async def build_client_statement(params: dict, token: str | None = None) -> dict
     for s in sorted(sales_raw, key=lambda x: x.get("createdAt", x.get("date", ""))):
         ttc = _safe_float(s.get("amountTTC", s.get("amount", 0)))
         paid = _safe_float(s.get("paidAmount", 0))
-        status = s.get("status", "")
 
         # Debit = sale amount, Credit = payment received
         running += ttc
@@ -625,7 +624,7 @@ async def build_client_statement(params: dict, token: str | None = None) -> dict
             transactions.append({
                 "date": s.get("paymentDate", s.get("date", "—"))[:10],
                 "reference": s.get("reference", "—"),
-                "description": f"Paiement reçu",
+                "description": "Paiement reçu",
                 "debit": "—",
                 "credit": format_xof(paid),
                 "running_balance": format_xof(running),

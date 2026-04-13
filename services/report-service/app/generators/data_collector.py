@@ -1,7 +1,7 @@
 """Base report data collector — fetches data from other services."""
 
 from typing import Any
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 import httpx
 
