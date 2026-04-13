@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import * as amqp from 'amqp-connection-manager';
 import { ChannelWrapper } from 'amqp-connection-manager';
+import type { Channel } from 'amqplib';
 
 export const EXPENSE_EXCHANGE = 'expense.events';
 
@@ -36,7 +37,7 @@ export class EventsService implements OnModuleInit, OnModuleDestroy {
     try {
       this.connection = amqp.connect([url]);
       this.channel = this.connection.createChannel({
-        setup: async (ch: any) => {
+        setup: async (ch: Channel) => {
           await ch.assertExchange(EXPENSE_EXCHANGE, 'topic', { durable: true });
         },
       });

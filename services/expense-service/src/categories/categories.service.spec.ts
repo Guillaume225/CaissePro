@@ -81,7 +81,7 @@ describe('CategoriesService', () => {
       repo.save.mockResolvedValue(savedCat);
       repo.find.mockResolvedValue([savedCat]); // for toTree in findById
 
-      const result = await service.create(
+      await service.create(
         { name: 'New', code: 'NEW' },
         'user-1',
       );

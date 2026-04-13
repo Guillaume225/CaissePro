@@ -47,7 +47,7 @@ async def detect_anomaly(
         return result
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    except Exception as exc:
+    except Exception:
         logger.exception("Anomaly detection failed for expense %s", request.expense_id)
         raise HTTPException(status_code=500, detail="Erreur interne lors de la détection d'anomalies.")
 
@@ -76,6 +76,6 @@ async def detect_anomalies_batch(
         return result
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    except Exception as exc:
+    except Exception:
         logger.exception("Batch anomaly detection failed")
         raise HTTPException(status_code=500, detail="Erreur interne lors de la détection d'anomalies en lot.")

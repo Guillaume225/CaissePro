@@ -152,7 +152,7 @@ describe('ConsumerService', () => {
   describe('handleMessage', () => {
     it('should process a known routing key', async () => {
       const ack = jest.fn();
-      (service as any).channel = { ack, nack: jest.fn() };
+      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = { ack, nack: jest.fn() };
 
       const msg = {
         fields: { routingKey: 'expense.submitted', exchange: 'expense.events' },
@@ -161,7 +161,7 @@ describe('ConsumerService', () => {
           reference: 'DEP-001',
           approverIds: ['user-1'],
         })),
-      } as any;
+      } as unknown as import('amqplib').ConsumeMessage;
 
       await service.handleMessage(msg);
 
@@ -171,12 +171,12 @@ describe('ConsumerService', () => {
 
     it('should ack unknown routing keys without creating notifications', async () => {
       const ack = jest.fn();
-      (service as any).channel = { ack, nack: jest.fn() };
+      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = { ack, nack: jest.fn() };
 
       const msg = {
         fields: { routingKey: 'unknown.event', exchange: 'expense.events' },
         content: Buffer.from(JSON.stringify({ id: 'x' })),
-      } as any;
+      } as unknown as import('amqplib').ConsumeMessage;
 
       await service.handleMessage(msg);
 
@@ -186,12 +186,12 @@ describe('ConsumerService', () => {
 
     it('should nack on malformed JSON', async () => {
       const nack = jest.fn();
-      (service as any).channel = { ack: jest.fn(), nack };
+      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = { ack: jest.fn(), nack };
 
       const msg = {
         fields: { routingKey: 'expense.submitted', exchange: 'expense.events' },
         content: Buffer.from('not-json'),
-      } as any;
+      } as unknown as import('amqplib').ConsumeMessage;
 
       await service.handleMessage(msg);
 

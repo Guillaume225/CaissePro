@@ -14,7 +14,7 @@ export class ApprovalCircuitsController {
 
   @Post()
   @Permissions('expense.approve_l1')
-  create(@Body() dto: { name: string; minAmount?: number; maxAmount?: number; steps?: any[] }) {
+  create(@Body() dto: { name: string; minAmount?: number; maxAmount?: number; steps?: { level?: number; role: string; approverId?: string }[] }) {
     return this.service.create(dto);
   }
 
@@ -22,7 +22,7 @@ export class ApprovalCircuitsController {
   @Permissions('expense.approve_l1')
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: { name?: string; minAmount?: number; maxAmount?: number; isActive?: boolean; steps?: any[] },
+    @Body() dto: { name?: string; minAmount?: number; maxAmount?: number; isActive?: boolean; steps?: { level?: number; role: string; approverId?: string }[] },
   ) {
     return this.service.update(id, dto);
   }

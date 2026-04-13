@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   FileText, Eye, EyeOff, GripVertical, RotateCcw, ChevronDown, ChevronRight,
   ArrowUp, ArrowDown, Check, AlertTriangle, LayoutTemplate, X, MousePointerClick,
-  Bold, Italic, AlignLeft, AlignCenter, AlignRight, Type, Columns, Settings2,
+  Bold, Italic, AlignLeft, AlignCenter, AlignRight, Type,
   Palette, Table2, Ruler, Maximize2, Minimize2, PanelTopClose, PanelBottomClose,
   BarChart3, Layers, Move, Save, CloudUpload, Loader2, CheckCircle2, CloudOff,
   Plus, Trash2, Database, Search, Hash, Calendar, DollarSign, ToggleLeft, ListFilter,
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import {
   useReportConfigStore, DEFAULT_REPORTS, DATA_SOURCE_FIELDS, DATA_SOURCE_LABELS,
   type ReportConfig, type ElementStyle, type SectionType,
-  type TextAlign, type FontWeight, type FontStyle,
+  type TextAlign,
   type DataSourceGroup, type DataSourceField, type ReportFieldConfig, type ReportKpiConfig,
 } from '@/stores/report-config-store';
 

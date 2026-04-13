@@ -53,7 +53,7 @@ export function taxAmount(ht: number, taxRate = TVA_RATE_CI): number {
 export function parseCurrencyString(value: string): number | null {
   // Supprime le symbole devise, espaces, puis convertit virgule → point.
   const cleaned = value
-    .replace(/[^\d,.\-]/g, '')
+    .replace(/[^\d,.-]/g, '')
     .replace(/\s/g, '')
     .replace(/\.(?=\d{3})/g, '') // retire les points de milliers
     .replace(',', '.');

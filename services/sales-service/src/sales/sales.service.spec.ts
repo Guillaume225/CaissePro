@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
-  NotFoundException,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
@@ -12,7 +11,7 @@ import { SaleItem } from '../entities/sale-item.entity';
 import { Product } from '../entities/product.entity';
 import { Client } from '../entities/client.entity';
 import { Receivable } from '../entities/receivable.entity';
-import { SaleStatus, AgingBucket } from '../entities/enums';
+import { SaleStatus } from '../entities/enums';
 import { AuditService } from '../audit/audit.service';
 import { EventsService } from '../events/events.service';
 
@@ -30,15 +29,15 @@ describe('SalesService', () => {
   const mockSale: Partial<Sale> = {
     id: 's1',
     reference: 'VTE-2025-00001',
-    date: '2025-01-15' as any,
+    date: '2025-01-15',
     clientId: 'c1',
     status: SaleStatus.DRAFT,
-    subtotalHt: 10000 as any,
-    discountAmount: 0 as any,
-    totalVat: 1800 as any,
-    totalTtc: 11800 as any,
-    amountPaid: 0 as any,
-    globalDiscountPct: 0 as any,
+    subtotalHt: 10000,
+    discountAmount: 0,
+    totalVat: 1800,
+    totalTtc: 11800,
+    amountPaid: 0,
+    globalDiscountPct: 0,
     notes: null,
     createdById: 'u1',
     dueDate: '2025-02-15',
@@ -56,8 +55,8 @@ describe('SalesService', () => {
     id: 'prod1',
     code: 'P001',
     name: 'Article',
-    unitPrice: 10000 as any,
-    vatRate: 18 as any,
+    unitPrice: 10000,
+    vatRate: 18,
     isActive: true,
   };
 
@@ -144,7 +143,7 @@ describe('SalesService', () => {
         receivable: null,
       });
 
-      const result = await service.create(
+      await service.create(
         {
           date: '2025-01-15',
           clientId: 'c1',

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, Check, X, Pencil, ChevronRight, ChevronDown, AlertTriangle } from 'lucide-react';
-import { Button, Input, Badge } from '@/components/ui';
+import { Input, Badge } from '@/components/ui';
 import { useCategories, useUpdateCategoryAccounting } from '@/hooks/useAdmin';
 import type { ExpenseCategory } from '@/types/admin';
 
@@ -22,7 +22,7 @@ export default function AccountingConfigPage() {
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   };

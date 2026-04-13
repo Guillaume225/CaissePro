@@ -9,7 +9,7 @@ const fmt = (n: number) =>
 
 export default function CashDayRequiredPage() {
   const { t } = useTranslation();
-  const { data: state } = useCashState();
+  useCashState();
   const openCash = useOpenCash();
 
   const [showOpenModal, setShowOpenModal] = useState(false);

@@ -474,7 +474,7 @@ export default function ExpenseListPage() {
             {payMutation.isError && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-3">
                 <p className="text-sm font-medium text-red-800">
-                  {(payMutation.error as any)?.response?.data?.message || t('expenses.payError')}
+                  {(payMutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message || t('expenses.payError')}
                 </p>
               </div>
             )}
@@ -568,7 +568,6 @@ function ApprovalInfo({ expense }: { expense: Expense }) {
   }
 
   const sorted = [...expense.approvals].sort((a, b) => a.level - b.level);
-  const lastAction = sorted.filter((a) => a.status !== 'PENDING').sort((a, b) => b.level - a.level)[0];
   const pending = sorted.find((a) => a.status === 'PENDING');
 
   return (

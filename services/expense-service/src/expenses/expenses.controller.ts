@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname } from 'path';
 import { v4 as uuid } from 'uuid';
 import { ConfigService } from '@nestjs/config';
 import { ExpensesService } from './expenses.service';

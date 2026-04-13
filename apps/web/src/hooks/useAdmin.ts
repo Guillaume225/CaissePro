@@ -32,12 +32,7 @@ const ROLE_NAME_TO_FRONTEND: Record<string, string> = {
   ACCOUNTANT: 'viewer',
 };
 
-const FRONTEND_TO_ROLE_NAME: Record<string, string> = {
-  admin: 'ADMIN',
-  manager: 'MANAGER',
-  cashier: 'CASHIER',
-  viewer: 'ACCOUNTANT',
-};
+
 
 function mapBackendUser(u: Record<string, unknown>): AdminUser {
   const roleName = u.roleName as string;
@@ -504,7 +499,7 @@ export function useEmployees() {
     queryKey: ADMIN_KEYS.employees,
     queryFn: async (): Promise<EmployeeAccount[]> => {
       const { data } = await api.get('/employees/all');
-      const list = (data as any)?.data ?? data;
+      const list = (data as Record<string, unknown>)?.data ?? data;
       return Array.isArray(list) ? (list as EmployeeAccount[]) : [];
     },
   });

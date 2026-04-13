@@ -1,6 +1,5 @@
 import {
   IsString,
-  IsOptional,
   MaxLength,
   IsArray,
   ValidateNested,

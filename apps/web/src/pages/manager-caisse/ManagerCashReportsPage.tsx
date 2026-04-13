@@ -304,7 +304,7 @@ function JournalComptable({ accountingData, periodLabel, companyName, companyAdd
   periodLabel: string;
   companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
 }) {
-  const { isFieldVisible, getFieldLabel, header, footer } = useReportDesign('journal-comptable');
+  const { header, footer } = useReportDesign('journal-comptable');
   const allEntries = useMemo(() => {
     const entries: (AccountingEntry & { dayRef: string })[] = [];
     accountingData.forEach((s) => {
@@ -669,7 +669,7 @@ function EcartsCumules({ days, periodLabel, companyName, companyAddress, company
   periodLabel: string;
   companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
 }) {
-  const { isFieldVisible, getFieldLabel, isKpiVisible, getKpiLabel, header, footer } = useReportDesign('ecarts-cumules');
+  const { header, footer } = useReportDesign('ecarts-cumules');
   const daysWithVariance = days.filter((d) => d.actualBalance != null);
   const totalVariance = daysWithVariance.reduce((s, d) => s + d.variance, 0);
   const daysWithEcart = daysWithVariance.filter((d) => Math.abs(d.variance) > 0.5);

@@ -34,7 +34,7 @@ export function isNonNegativeAmount(amount: number): boolean {
 
 /** Nettoyage d'un numéro de téléphone : supprime espaces / tirets / points. */
 export function sanitizePhone(phone: string): string {
-  return phone.replace(/[\s\-\.\(\)]/g, '');
+  return phone.replace(/[\s\-.()]/g, '');
 }
 
 /** Vérifie qu'une string n'est pas vide / uniquement espaces. */

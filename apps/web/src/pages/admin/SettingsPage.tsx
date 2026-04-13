@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings2, Save, Building2, Mail, Brain, BadgeDollarSign, ShieldAlert } from 'lucide-react';
+import { Save, Building2, Mail, Brain, BadgeDollarSign, ShieldAlert } from 'lucide-react';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { useSettings, useUpdateSettings } from '@/hooks/useAdmin';
 import type { AppSettings } from '@/types/admin';

@@ -39,7 +39,7 @@ async def score_client(
             result.credit_recommendation, elapsed,
         )
         return result
-    except Exception as exc:
+    except Exception:
         logger.exception("Scoring failed for client %s", request.client_id)
         raise HTTPException(status_code=500, detail="Erreur interne lors du scoring client.")
 
@@ -62,6 +62,6 @@ async def score_client_with_features(
             features.client_id, result.score, result.risk_class.value, elapsed,
         )
         return result
-    except Exception as exc:
+    except Exception:
         logger.exception("Scoring with features failed for %s", features.client_id)
         raise HTTPException(status_code=500, detail="Erreur interne lors du scoring client.")

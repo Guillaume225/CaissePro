@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageService } from './storage.service';
 
 // Mock the AWS SDK
@@ -114,7 +115,6 @@ describe('StorageService', () => {
 
   describe('getPresignedDownloadUrl', () => {
     it('should return presigned URL', async () => {
-      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
       const url = await service.getPresignedDownloadUrl('test-key', 'doc.pdf');
 
       expect(getSignedUrl).toHaveBeenCalled();

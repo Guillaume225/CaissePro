@@ -6,10 +6,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
-  Clock,
   Lock,
   TrendingUp,
-  TrendingDown,
   Eye,
   History,
   Landmark,
@@ -17,14 +15,12 @@ import {
   BarChart3,
   CheckCircle2,
 } from 'lucide-react';
-import { Badge, Card, CardHeader, CardTitle, CardContent, Stat, Button } from '@/components/ui';
-import { useOpenCashDays, useClosingHistory, useCashState, useAccountingEntries, type CashDayRow } from '@/hooks/useClosing';
+import { Badge, Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
+import { useOpenCashDays, useClosingHistory, useCashState, useAccountingEntries } from '@/hooks/useClosing';
 import { useUsers } from '@/hooks/useAdmin';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
-
-const pct = (n: number) => `${Math.round(n)}%`;
 
 function timeSince(dateStr: string): string {
   const now = new Date();
@@ -44,7 +40,7 @@ export default function ManagerDashboardPage() {
 
   const { data: openDays = [], isLoading: openLoading } = useOpenCashDays();
   const { data: history = [], isLoading: historyLoading } = useClosingHistory();
-  const { data: state } = useCashState();
+  useCashState();
   const { data: accounting } = useAccountingEntries(true);
   const { data: users = [] } = useUsers();
 
@@ -57,7 +53,6 @@ export default function ManagerDashboardPage() {
   // ── Computed stats ─────────────────────────────────────
   const openCount = openDays.length;
   const pendingCloseCount = openDays.filter((d) => d.status === 'PENDING_CLOSE').length;
-  const stillOpenCount = openDays.filter((d) => d.status === 'OPEN').length;
 
   const totalTheoreticalBalance = openDays.reduce((s, d) => s + (d.theoreticalBalance || 0), 0);
   const totalOpenEntries = openDays.reduce((s, d) => s + (d.totalEntries || 0), 0);

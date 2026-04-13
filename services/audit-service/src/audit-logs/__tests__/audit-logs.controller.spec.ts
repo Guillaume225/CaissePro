@@ -54,7 +54,7 @@ describe('AuditLogsController', () => {
       const res = {
         setHeader: jest.fn(),
         send: jest.fn(),
-      } as any;
+      } as unknown as import('express').Response;
 
       await controller.exportLogs({ format: ExportFormat.CSV }, res);
 

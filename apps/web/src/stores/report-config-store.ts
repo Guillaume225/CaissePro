@@ -928,8 +928,8 @@ export const useReportConfigStore = create<ReportConfigState>()(
           } else {
             set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
           }
-        } catch (e: any) {
-          set({ isSyncing: false, syncError: e?.message ?? 'Erreur de synchronisation' });
+        } catch (e: unknown) {
+          set({ isSyncing: false, syncError: e instanceof Error ? e.message : 'Erreur de synchronisation' });
         }
       },
 
@@ -944,8 +944,8 @@ export const useReportConfigStore = create<ReportConfigState>()(
             configJson: JSON.stringify(cfg),
           });
           set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
-        } catch (e: any) {
-          set({ isSyncing: false, syncError: e?.message ?? 'Erreur de sauvegarde' });
+        } catch (e: unknown) {
+          set({ isSyncing: false, syncError: e instanceof Error ? e.message : 'Erreur de sauvegarde' });
         }
       },
 
@@ -961,8 +961,8 @@ export const useReportConfigStore = create<ReportConfigState>()(
             })),
           });
           set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
-        } catch (e: any) {
-          set({ isSyncing: false, syncError: e?.message ?? 'Erreur de sauvegarde' });
+        } catch (e: unknown) {
+          set({ isSyncing: false, syncError: e instanceof Error ? e.message : 'Erreur de sauvegarde' });
         }
       },
     }),

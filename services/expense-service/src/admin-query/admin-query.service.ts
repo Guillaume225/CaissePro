@@ -6,6 +6,7 @@ import { CashDay } from '../entities/cash-day.entity';
 import { Advance } from '../entities/advance.entity';
 import { DisbursementRequest } from '../entities/disbursement-request.entity';
 import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../audit/audit-log.entity';
 import {
   ExpenseStatus,
   CashDayStatus,
@@ -36,7 +37,7 @@ export class AdminQueryService {
     private readonly auditService: AuditService,
   ) {}
 
-  private getRepo(entity: EntityType): Repository<any> {
+  private getRepo(entity: EntityType): Repository<unknown> {
     switch (entity) {
       case 'expense': return this.expenseRepo;
       case 'cashDay': return this.cashDayRepo;
@@ -54,7 +55,7 @@ export class AdminQueryService {
     perPage = 50,
   ) {
     const repo = this.getRepo(entity);
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (status) {
       where.status = status;
@@ -117,7 +118,7 @@ export class AdminQueryService {
 
       await this.auditService.log({
         userId,
-        action: 'UPDATE' as any,
+        action: AuditAction.UPDATE,
         entityType: entity,
         entityId: record.id,
         oldValue: { status: oldStatus },

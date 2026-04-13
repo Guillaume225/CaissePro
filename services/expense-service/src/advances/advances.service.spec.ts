@@ -6,7 +6,7 @@ import { Advance } from '../entities/advance.entity';
 import { AdvanceStatus } from '../entities/enums';
 import { AuditService } from '../audit/audit.service';
 
-const createMockQb = (countResult?: [any[], number]) => ({
+const createMockQb = (countResult?: [unknown[], number]) => ({
   where: jest.fn().mockReturnThis(),
   andWhere: jest.fn().mockReturnThis(),
   orderBy: jest.fn().mockReturnThis(),
@@ -18,7 +18,7 @@ const createMockQb = (countResult?: [any[], number]) => ({
   execute: jest.fn().mockResolvedValue({ affected: 0 }),
 });
 
-const mockRepo = (qb?: any) => ({
+const mockRepo = (qb?: unknown) => ({
   findOne: jest.fn(),
   create: jest.fn((a) => a),
   save: jest.fn((a) => Promise.resolve({ id: 'adv-1', ...a })),
@@ -100,7 +100,7 @@ describe('AdvancesService', () => {
         updatedAt: new Date(),
       });
 
-      const result = await service.create(
+      await service.create(
         { employeeId: 'emp-1', amount: 5000, reason: 'Mission' },
         'user-1',
       );
@@ -130,7 +130,7 @@ describe('AdvancesService', () => {
           employeeId: 'emp-1',
         });
 
-      const result = await service.justify('adv-1', { justifiedAmount: 2000 }, 'user-1');
+      await service.justify('adv-1', { justifiedAmount: 2000 }, 'user-1');
       expect(repo.save).toHaveBeenCalled();
     });
 
@@ -186,7 +186,7 @@ describe('AdvancesService', () => {
   describe('checkOverdue', () => {
     it('should mark overdue advances', async () => {
       const qb = createMockQb();
-      (qb as any).execute = jest.fn().mockResolvedValue({ affected: 3 });
+      qb.execute = jest.fn().mockResolvedValue({ affected: 3 });
       repo.createQueryBuilder.mockReturnValue(qb);
 
       const count = await service.checkOverdue();

@@ -12,7 +12,7 @@ import {
   CreditCard,
   Search,
 } from 'lucide-react';
-import { Button, Badge, Card, CardHeader, CardTitle, CardContent, Modal, DataTable } from '@/components/ui';
+import { Button, Badge, Card, CardContent, Modal, DataTable } from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
 import { useExpenses, useApproveExpense, useRejectExpense } from '@/hooks/useExpenses';
 import { useAuthStore } from '@/stores/auth-store';

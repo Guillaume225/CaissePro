@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 export class NotificationsService {
   constructor(private readonly ds: DataSource) {}
 
-  private wrap(data: any) {
+  private wrap(data: unknown) {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -13,7 +13,7 @@ export class NotificationsService {
     let sql = `SELECT id, type, title, body AS message, entity_type AS entityType,
                entity_id AS entityId, is_read AS isRead, created_at AS createdAt
                FROM notifications WHERE user_id = @0`;
-    const params: any[] = [userId];
+    const params: unknown[] = [userId];
     let idx = 1;
 
     if (query?.type) {
@@ -30,7 +30,7 @@ export class NotificationsService {
     sql += ' ORDER BY created_at DESC';
 
     const rows = await this.ds.query(sql, params);
-    return this.wrap(rows.map((r: any) => ({ ...r, isRead: !!r.isRead })));
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({ ...r, isRead: !!r.isRead })));
   }
 
   async unreadCount(userId: string) {

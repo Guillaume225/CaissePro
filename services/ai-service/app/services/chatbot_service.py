@@ -7,7 +7,6 @@ from app.schemas.chatbot import (
     ChatIntent,
     ChatRequest,
     ChatResponse,
-    ChartData,
     SuggestedAction,
 )
 

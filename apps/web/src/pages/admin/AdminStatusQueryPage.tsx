@@ -6,7 +6,6 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertTriangle,
-  ChevronDown,
   ArrowRight,
 } from 'lucide-react';
 import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
@@ -15,7 +14,6 @@ import {
   useAdminUpdateStatus,
   type AdminEntityType,
 } from '@/hooks/useAdmin';
-import type { ClosingStatus } from '@/types/admin';
 
 /* ─── Entity config ─── */
 interface EntityConfig {
@@ -120,7 +118,7 @@ export default function AdminStatusQueryPage() {
   const [newStatus, setNewStatus] = useState('');
   const [reason, setReason] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [result, setResult] = useState<{ updated: number; results: any[] } | null>(null);
+  const [result, setResult] = useState<{ updated: number; results: { id: string; reference: string; oldStatus: string; newStatus: string }[] } | null>(null);
 
   const config = ENTITIES[entity];
   const { data, isLoading, refetch } = useAdminQuery(entity, searchTerm, filterStatus, page);
@@ -140,7 +138,7 @@ export default function AdminStatusQueryPage() {
     if (selectedIds.length === records.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(records.map((r: any) => r.id));
+      setSelectedIds(records.map((r: Record<string, unknown>) => r.id as string));
     }
   };
 
@@ -168,9 +166,10 @@ export default function AdminStatusQueryPage() {
       setSelectedIds([]);
       setNewStatus('');
       setReason('');
-    } catch (err: any) {
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
       setResult(null);
-      alert(err?.response?.data?.message || err.message || 'Erreur');
+      alert(e?.response?.data?.message || e?.message || 'Erreur');
       setShowConfirm(false);
     }
   }, [entity, selectedIds, newStatus, reason, updateMutation]);
@@ -291,7 +290,7 @@ export default function AdminStatusQueryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {records.map((row: any) => (
+                    {records.map((row: Record<string, unknown>) => (
                       <tr
                         key={row.id}
                         className={`border-b border-gray-100 transition-colors hover:bg-gray-50 ${
@@ -455,7 +454,7 @@ export default function AdminStatusQueryPage() {
             </div>
             {result.results?.length > 0 && (
               <ul className="mt-2 space-y-1 text-sm text-gray-600">
-                {result.results.map((r: any) => (
+                {result.results.map((r) => (
                   <li key={r.id}>
                     <span className="font-medium">{r.reference}</span>:{' '}
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(r.oldStatus)}`}>

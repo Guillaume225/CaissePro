@@ -49,6 +49,6 @@ async def forecast_sales(
         return result
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
-    except Exception as exc:
+    except Exception:
         logger.exception("Forecast failed")
         raise HTTPException(status_code=500, detail="Erreur interne lors de la prévision.")

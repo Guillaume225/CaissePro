@@ -591,7 +591,7 @@ function DisbursementRequestModal({
   onClose: () => void;
   requestId: string;
 }) {
-  const { t } = useTranslation();
+  useTranslation();
   const { data: dr, isLoading } = useDisbursementRequest(open ? requestId : null);
 
   const statusCfg = dr ? DR_STATUS_CONFIG[dr.status] ?? DR_STATUS_CONFIG.PENDING : DR_STATUS_CONFIG.PENDING;

@@ -10,7 +10,7 @@ import { ExportFormat } from '@/audit-logs/dto';
 describe('AuditLogsService', () => {
   let service: AuditLogsService;
   let qb: jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>;
-  let repo: any;
+  let repo: Record<string, jest.Mock>;
 
   const HMAC_SECRET = 'test-hmac-secret';
 
@@ -44,12 +44,12 @@ describe('AuditLogsService', () => {
 
   beforeEach(async () => {
     qb = {
-      andWhere: jest.fn().mockReturnThis() as any,
-      orderBy: jest.fn().mockReturnThis() as any,
-      skip: jest.fn().mockReturnThis() as any,
-      take: jest.fn().mockReturnThis() as any,
-      getManyAndCount: jest.fn().mockResolvedValue([[], 0]) as any,
-      getMany: jest.fn().mockResolvedValue([]) as any,
+      andWhere: jest.fn().mockReturnThis() as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['andWhere'],
+      orderBy: jest.fn().mockReturnThis() as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['orderBy'],
+      skip: jest.fn().mockReturnThis() as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['skip'],
+      take: jest.fn().mockReturnThis() as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['take'],
+      getManyAndCount: jest.fn().mockResolvedValue([[], 0]) as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['getManyAndCount'],
+      getMany: jest.fn().mockResolvedValue([]) as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['getMany'],
     };
 
     repo = {

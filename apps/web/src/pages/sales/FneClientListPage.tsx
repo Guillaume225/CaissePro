@@ -12,7 +12,7 @@ import {
   Check,
   Users,
 } from 'lucide-react';
-import { Button, Card, Badge } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import {
   useFneClients,
   useCreateFneClient,

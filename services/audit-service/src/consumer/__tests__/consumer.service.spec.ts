@@ -41,7 +41,7 @@ describe('ConsumerService', () => {
 
     service = module.get(ConsumerService);
     // Manually set hmacSecret since onModuleInit would try to connect
-    (service as any).hmacSecret = HMAC_SECRET;
+    (service as unknown as { hmacSecret: string }).hmacSecret = HMAC_SECRET;
   });
 
   describe('buildAuditEntry', () => {
@@ -214,12 +214,12 @@ describe('ConsumerService', () => {
   describe('handleMessage', () => {
     it('should process a valid message and ack', async () => {
       const ack = jest.fn();
-      (service as any).channel = { ack, nack: jest.fn() };
+      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = { ack, nack: jest.fn() };
 
       const msg = {
         fields: { routingKey: 'expense.created', exchange: 'expense.events' },
         content: Buffer.from(JSON.stringify({ id: 'exp-100', userId: 'user-1' })),
-      } as any;
+      } as unknown as import('amqplib').ConsumeMessage;
 
       await service.handleMessage(msg);
 
@@ -234,12 +234,12 @@ describe('ConsumerService', () => {
 
     it('should nack on malformed JSON', async () => {
       const nack = jest.fn();
-      (service as any).channel = { ack: jest.fn(), nack };
+      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = { ack: jest.fn(), nack };
 
       const msg = {
         fields: { routingKey: 'expense.created', exchange: 'expense.events' },
         content: Buffer.from('not-valid-json'),
-      } as any;
+      } as unknown as import('amqplib').ConsumeMessage;
 
       await service.handleMessage(msg);
 

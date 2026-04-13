@@ -11,7 +11,7 @@ describe('RolesGuard', () => {
     guard = new RolesGuard(reflector);
   });
 
-  function createMockContext(user?: any, roles?: string[]): ExecutionContext {
+  function createMockContext(user?: Record<string, unknown>, roles?: string[]): ExecutionContext {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(roles || undefined);
 
     return {
@@ -20,7 +20,7 @@ describe('RolesGuard', () => {
       }),
       getHandler: () => jest.fn(),
       getClass: () => jest.fn(),
-    } as any;
+    } as unknown as ExecutionContext;
   }
 
   it('should allow access when no roles are required', () => {

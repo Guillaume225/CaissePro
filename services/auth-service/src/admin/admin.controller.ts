@@ -2,7 +2,7 @@ import { Controller, Get, Put, Body, Query } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PERMISSIONS, ALL_PERMISSIONS, getPermissionsMeta } from '../common/permissions';
+import { getPermissionsMeta } from '../common/permissions';
 import { AuditLog } from '../audit/audit-log.entity';
 
 @Controller('settings')
@@ -29,11 +29,11 @@ export class SettingsController {
   }
 
   @Put()
-  async updateSettings(@Body() dto: Record<string, any>) {
+  async updateSettings(@Body() dto: Record<string, unknown>) {
     const [company] = await this.dataSource.query('SELECT TOP 1 id FROM companies');
     if (company) {
       const sets: string[] = [];
-      const params: any[] = [company.id];
+      const params: unknown[] = [company.id];
       let idx = 1;
       const map: Record<string, string> = {
         name: 'name', address: 'address', phone: 'phone',

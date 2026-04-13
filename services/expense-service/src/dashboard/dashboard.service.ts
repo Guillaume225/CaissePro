@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 export class DashboardService {
   constructor(private readonly dataSource: DataSource) {}
 
-  private wrap(data: any) {
+  private wrap(data: unknown) {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -55,7 +55,7 @@ export class DashboardService {
       GROUP BY FORMAT(created_at, 'yyyy-MM')
       ORDER BY month
     `);
-    return this.wrap(rows.map((r: any) => ({ month: r.month, amount: Number(r.amount) })));
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })));
   }
 
   /* ── Monthly comparison (/dashboard/monthly-comparison) */
@@ -80,7 +80,7 @@ export class DashboardService {
       ) s ON s.month = m.month
       ORDER BY m.month
     `);
-    return this.wrap(rows.map((r: any) => ({
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({
       month: r.month,
       expenses: Number(r.expenses),
       revenue: Number(r.revenue),
@@ -99,7 +99,7 @@ export class DashboardService {
       GROUP BY c.name
       ORDER BY value DESC
     `);
-    return this.wrap(rows.map((r: any) => ({ name: r.name, value: Number(r.value) })));
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({ name: r.name, value: Number(r.value) })));
   }
 
   /* ── Top clients (/dashboard/top-clients) ──────────── */
@@ -112,7 +112,7 @@ export class DashboardService {
       GROUP BY c.id, c.name
       ORDER BY revenue DESC
     `);
-    return this.wrap(rows.map((r: any) => ({
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({
       clientId: r.clientId,
       clientName: r.clientName,
       revenue: Number(r.revenue),
@@ -158,7 +158,7 @@ export class DashboardService {
       GROUP BY FORMAT([date], 'yyyy-MM')
       ORDER BY month
     `);
-    return this.wrap(rows.map((r: any) => ({ month: r.month, amount: Number(r.amount) })));
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })));
   }
 
   /* ── Recent expenses (/dashboard/expense/recent) ───── */
@@ -169,7 +169,7 @@ export class DashboardService {
       LEFT JOIN expense_categories c ON c.id = e.category_id
       ORDER BY e.created_at DESC
     `);
-    return this.wrap(rows.map((r: any) => ({
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({
       id: r.id,
       reference: r.reference,
       date: r.date,

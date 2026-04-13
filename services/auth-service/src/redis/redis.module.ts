@@ -118,7 +118,7 @@ class InMemoryRedis {
           return redis;
         } catch {
           logger.warn(`Cannot connect to Redis at ${host}:${port} – using in-memory fallback`);
-          return new InMemoryRedis() as any;
+          return new InMemoryRedis() as unknown as Redis;
         }
       },
       inject: [ConfigService],

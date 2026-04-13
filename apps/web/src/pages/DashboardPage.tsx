@@ -22,7 +22,7 @@ function DashboardLoader() {
 }
 
 export default function DashboardPage() {
-  const { t } = useTranslation();
+  useTranslation();
   const { activeModule } = useModuleStore();
 
   return (

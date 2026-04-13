@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 export class ApprovalCircuitsService {
   constructor(private readonly dataSource: DataSource) {}
 
-  private wrap(data: any) {
+  private wrap(data: unknown) {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -31,7 +31,7 @@ export class ApprovalCircuitsService {
     return this.wrap(circuits);
   }
 
-  async create(dto: { name: string; minAmount?: number; maxAmount?: number; steps?: any[] }) {
+  async create(dto: { name: string; minAmount?: number; maxAmount?: number; steps?: { level?: number; role: string; approverId?: string }[] }) {
     const [circuit] = await this.dataSource.query(`
       INSERT INTO approval_circuits (id, name, min_amount, max_amount, is_active)
       OUTPUT INSERTED.*
@@ -50,14 +50,14 @@ export class ApprovalCircuitsService {
     return this.wrap(circuit);
   }
 
-  async update(id: string, dto: { name?: string; minAmount?: number; maxAmount?: number; isActive?: boolean; steps?: any[] }) {
+  async update(id: string, dto: { name?: string; minAmount?: number; maxAmount?: number; isActive?: boolean; steps?: { level?: number; role: string; approverId?: string }[] }) {
     const [existing] = await this.dataSource.query(
       'SELECT id FROM approval_circuits WHERE id = @0', [id],
     );
     if (!existing) throw new NotFoundException('Circuit not found');
 
     const sets: string[] = [];
-    const params: any[] = [id];
+    const params: unknown[] = [id];
     let idx = 1;
     if (dto.name !== undefined) { sets.push(`name = @${idx}`); params.push(dto.name); idx++; }
     if (dto.minAmount !== undefined) { sets.push(`min_amount = @${idx}`); params.push(dto.minAmount); idx++; }

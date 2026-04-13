@@ -18,7 +18,6 @@ import {
 import { useCompanies } from '@/hooks/useAdmin';
 import { useFneSetting, useUpsertFneSetting } from '@/hooks/useFneSettings';
 import type { FnePointOfSaleRecord, FneEstablishmentRecord } from '@/types/fne';
-import type { Company } from '@/types/admin';
 
 interface ItemForm {
   name: string;

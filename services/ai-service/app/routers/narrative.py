@@ -34,6 +34,6 @@ async def generate_narrative(
             result.offline_mode, len(result.key_insights), len(result.alerts), elapsed,
         )
         return result
-    except Exception as exc:
+    except Exception:
         logger.exception("Narrative generation failed")
         raise HTTPException(status_code=500, detail="Erreur lors de la génération du rapport.")

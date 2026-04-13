@@ -41,7 +41,7 @@ export class RolesService {
 
     // Validate permissions
     const permissions = dto.permissions || [];
-    const invalid = permissions.filter((p) => !ALL_PERMISSIONS.includes(p as any));
+    const invalid = permissions.filter((p) => !(ALL_PERMISSIONS as readonly string[]).includes(p));
     if (invalid.length > 0) {
       throw new ConflictException(`Invalid permissions: ${invalid.join(', ')}`);
     }
@@ -92,7 +92,7 @@ export class RolesService {
     }
 
     if (dto.permissions !== undefined) {
-      const invalid = dto.permissions.filter((p) => !ALL_PERMISSIONS.includes(p as any));
+      const invalid = dto.permissions.filter((p) => !(ALL_PERMISSIONS as readonly string[]).includes(p));
       if (invalid.length > 0) {
         throw new ConflictException(`Invalid permissions: ${invalid.join(', ')}`);
       }

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { Payment } from '../entities/payment.entity';
 import { Sale } from '../entities/sale.entity';
@@ -16,8 +16,8 @@ describe('PaymentsService', () => {
     id: 's1',
     reference: 'VTE-2025-00001',
     clientId: 'c1',
-    totalTtc: 11800 as any,
-    amountPaid: 0 as any,
+    totalTtc: 11800,
+    amountPaid: 0,
     status: SaleStatus.CONFIRMED,
   };
 
@@ -26,9 +26,9 @@ describe('PaymentsService', () => {
     reference: 'REC-2025-00001',
     saleId: 's1',
     clientId: 'c1',
-    amount: 5000 as any,
+    amount: 5000,
     paymentMethod: PaymentMethod.CASH,
-    paymentDate: '2025-01-20' as any,
+    paymentDate: '2025-01-20',
     createdAt: new Date(),
   };
 
@@ -100,7 +100,7 @@ describe('PaymentsService', () => {
         client: { name: 'Test Client' },
       });
 
-      const result = await service.create(
+      await service.create(
         {
           saleId: 's1',
           amount: 5000,

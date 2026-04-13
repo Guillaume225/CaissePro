@@ -129,7 +129,7 @@ export class PaymentsService {
 
     // Update sale
     const newAmountPaid = Number(sale.amountPaid) + dto.amount;
-    sale.amountPaid = newAmountPaid as any;
+    sale.amountPaid = newAmountPaid;
 
     if (Math.abs(newAmountPaid - Number(sale.totalTtc)) < 0.01) {
       sale.status = SaleStatus.PAID;
@@ -141,11 +141,11 @@ export class PaymentsService {
     // Update receivable if exists
     const receivable = await this.receivableRepo.findOne({ where: { saleId: dto.saleId } });
     if (receivable) {
-      receivable.paidAmount = newAmountPaid as any;
-      receivable.outstandingAmount = (Number(receivable.totalAmount) - newAmountPaid) as any;
+      receivable.paidAmount = newAmountPaid;
+      receivable.outstandingAmount = Number(receivable.totalAmount) - newAmountPaid;
       if (receivable.outstandingAmount <= 0) {
         receivable.isSettled = true;
-        receivable.outstandingAmount = 0 as any;
+        receivable.outstandingAmount = 0;
       }
       await this.receivableRepo.save(receivable);
     }

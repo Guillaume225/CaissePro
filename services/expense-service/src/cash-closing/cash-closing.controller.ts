@@ -41,7 +41,7 @@ export class CashClosingController {
 
   @Post('movements')
   @Permissions(CASH_CLOSING_PERMISSIONS.OPEN)
-  addMovement(@Body() dto: any, @CurrentUser() user: CashClosingUser) {
+  addMovement(@Body() dto: { type: string; category: string; amount: number; reference?: string; description: string }, @CurrentUser() user: CashClosingUser) {
     return this.cashClosingService.addMovement(dto, user);
   }
 
@@ -53,8 +53,8 @@ export class CashClosingController {
 
   @Post('unlock')
   @Permissions(CASH_CLOSING_PERMISSIONS.OPEN)
-  unlock(@CurrentUser() user: CashClosingUser) {
-    return this.cashClosingService.unlock(user);
+  unlock() {
+    return this.cashClosingService.unlock();
   }
 
   @Get('accounting-entries')
@@ -71,8 +71,8 @@ export class CashClosingController {
 
   @Post('accounting-entries/cancel')
   @Permissions(CASH_CLOSING_PERMISSIONS.CLOSE)
-  cancelAccounting(@Body() dto: { cashDayId: string }, @CurrentUser() user: CashClosingUser) {
-    return this.cashClosingService.cancelAccountingProcessing(dto.cashDayId, user);
+  cancelAccounting(@Body() dto: { cashDayId: string }) {
+    return this.cashClosingService.cancelAccountingProcessing(dto.cashDayId);
   }
 
   @Post('close')

@@ -11,7 +11,7 @@ import { NotificationType, NotificationChannel } from '@/common/enums';
 describe('NotificationsService', () => {
   let service: NotificationsService;
   let qb: jest.Mocked<Partial<SelectQueryBuilder<Notification>>>;
-  let repo: any;
+  let repo: Record<string, jest.Mock>;
   let gateway: jest.Mocked<Partial<NotificationsGateway>>;
   let emailService: jest.Mocked<Partial<EmailService>>;
   let smsProvider: { send: jest.Mock };
@@ -37,12 +37,12 @@ describe('NotificationsService', () => {
 
   beforeEach(async () => {
     qb = {
-      where: jest.fn().mockReturnThis() as any,
-      andWhere: jest.fn().mockReturnThis() as any,
-      orderBy: jest.fn().mockReturnThis() as any,
-      skip: jest.fn().mockReturnThis() as any,
-      take: jest.fn().mockReturnThis() as any,
-      getManyAndCount: jest.fn().mockResolvedValue([[], 0]) as any,
+      where: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['where'],
+      andWhere: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['andWhere'],
+      orderBy: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['orderBy'],
+      skip: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['skip'],
+      take: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['take'],
+      getManyAndCount: jest.fn().mockResolvedValue([[], 0]) as jest.Mocked<SelectQueryBuilder<Notification>>['getManyAndCount'],
     };
 
     repo = {

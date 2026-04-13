@@ -33,7 +33,7 @@ export class AdminQueryController {
   @Patch('update-status')
   updateStatus(
     @Body() dto: { entity: EntityType; ids: string[]; newStatus: string; reason?: string },
-    @CurrentUser() user: any,
+    @CurrentUser() user: Record<string, string>,
   ) {
     return this.service.updateStatus(
       dto.entity,

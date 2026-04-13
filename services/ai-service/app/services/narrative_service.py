@@ -9,7 +9,6 @@ from app.schemas.narrative import (
     NarrativeRequest,
     NarrativeResponse,
     ReportModule,
-    ReportType,
 )
 
 logger = logging.getLogger(__name__)

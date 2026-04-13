@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users, Plus, Shield, ShieldCheck, Pencil, Trash2, KeyRound, Wallet, ShoppingCart, Cog, TrendingUp, Building2, Landmark, FileCheck2 } from 'lucide-react';
+import { Plus, Shield, ShieldCheck, Pencil, Trash2, Wallet, ShoppingCart, Cog, TrendingUp, Building2, Landmark, FileCheck2 } from 'lucide-react';
 import { Button, Input, Select, Modal, Badge, DataTable } from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useToggleMfa, useCompanies, useRoles } from '@/hooks/useAdmin';

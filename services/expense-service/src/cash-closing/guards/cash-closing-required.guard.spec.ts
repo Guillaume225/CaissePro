@@ -8,7 +8,7 @@ describe('CashClosingRequiredGuard (expense)', () => {
   let service: { isYesterdayClosed: jest.Mock };
   let reflector: Reflector;
 
-  function mockContext(method: string, isPublic = false, skip = false): ExecutionContext {
+  function mockContext(method: string): ExecutionContext {
     return {
       getHandler: jest.fn(),
       getClass: jest.fn(),

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import {
   ArrowLeft,
   ArrowRight,
@@ -13,7 +13,6 @@ import {
   Save,
   Send,
   FileText,
-  Image as ImageIcon,
 } from 'lucide-react';
 import { Button, Card, Badge, Input } from '@/components/ui';
 import {
@@ -96,8 +95,6 @@ export default function ExpenseCreatePage() {
   // ── Form setup ─────────────────────────────
   const {
     register,
-    control,
-    handleSubmit,
     watch,
     trigger,
     getValues,
@@ -239,7 +236,7 @@ export default function ExpenseCreatePage() {
   );
 
   // ── Submit ─────────────────────────────────
-  const onSubmit = (isDraft: boolean) => {
+  const onSubmit = () => {
     const values = getValues();
     const payload: CreateExpensePayload = {
       date: values.date,
@@ -279,7 +276,6 @@ export default function ExpenseCreatePage() {
       {/* Step indicator */}
       <div className="flex items-center gap-2">
         {STEPS.map((step, i) => {
-          const StepIcon = step.icon;
           const isActive = i === currentStep;
           const isDone = i < currentStep;
           return (

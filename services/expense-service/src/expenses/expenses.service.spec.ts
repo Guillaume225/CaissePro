@@ -15,8 +15,8 @@ import { DataSource } from 'typeorm';
 
 /* ─── Helpers ─── */
 
-const createMockQb = (result?: any, countResult?: [any[], number]) => {
-  const qb: any = {
+const createMockQb = (result?: unknown, countResult?: [unknown[], number]) => {
+  const qb: Record<string, jest.Mock> = {
     leftJoinAndSelect: jest.fn().mockReturnThis(),
     leftJoin: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
@@ -37,7 +37,7 @@ const createMockQb = (result?: any, countResult?: [any[], number]) => {
   return qb;
 };
 
-const mockRepo = (qb?: any) => ({
+const mockRepo = (qb?: unknown) => ({
   find: jest.fn(),
   findOne: jest.fn(),
   create: jest.fn((e) => e),
@@ -54,7 +54,7 @@ const mockDataSource = () => ({
 
 const mockConfig = () => ({
   get: jest.fn((key: string) => {
-    const map: Record<string, any> = {
+    const map: Record<string, unknown> = {
       'workflow.approvalThresholdL2': 500000,
       'workflow.l2Roles': ['DAF', 'ADMIN'],
       'workflow.cashierRole': 'CAISSIER_DEPENSES',
@@ -76,7 +76,7 @@ const makeExpense = (overrides?: Partial<Expense>): Partial<Expense> => ({
   id: 'exp-1',
   reference: 'DEP-2024-00001',
   date: '2024-06-15',
-  amount: 300000 as any,
+  amount: 300000,
   status: ExpenseStatus.DRAFT,
   paymentMethod: PaymentMethod.CASH,
   categoryId: 'cat-1',
@@ -89,7 +89,7 @@ const makeExpense = (overrides?: Partial<Expense>): Partial<Expense> => ({
   projectId: null,
   approvals: [],
   attachments: [],
-  category: { name: 'Fournitures' } as any,
+  category: { name: 'Fournitures' } as unknown as ExpenseCategory,
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
@@ -273,7 +273,7 @@ describe('ExpensesService', () => {
     it('should approve L1 when PENDING + same department', async () => {
       const exp = makeExpense({
         status: ExpenseStatus.PENDING,
-        amount: 600000 as any,
+        amount: 600000,
         departmentId: 'dept-1',
       });
       expenseRepo.findOne
@@ -296,7 +296,7 @@ describe('ExpensesService', () => {
     it('should auto-approve L2 when amount ≤ threshold', async () => {
       const exp = makeExpense({
         status: ExpenseStatus.PENDING,
-        amount: 300000 as any,
+        amount: 300000,
         departmentId: 'dept-1',
       });
       expenseRepo.findOne
@@ -341,7 +341,7 @@ describe('ExpensesService', () => {
     /* ── L2 approval ── */
 
     it('should approve L2 when APPROVED_L1 + DAF role + budget OK', async () => {
-      const exp = makeExpense({ status: ExpenseStatus.APPROVED_L1, amount: 800000 as any });
+      const exp = makeExpense({ status: ExpenseStatus.APPROVED_L1, amount: 800000 });
       expenseRepo.findOne
         .mockResolvedValueOnce(exp)
         .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.APPROVED_L2 });
@@ -532,7 +532,7 @@ describe('ExpensesService', () => {
   describe('full workflow — high-amount path (L1 → L2 → PAID)', () => {
     it('should follow DRAFT → PENDING → APPROVED_L1 → APPROVED_L2 → PAID', async () => {
       // 1. Submit
-      const draft = makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'creator-1', amount: 800000 as any });
+      const draft = makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'creator-1', amount: 800000 });
       expenseRepo.findOne
         .mockResolvedValueOnce(draft)
         .mockResolvedValueOnce({ ...draft, status: ExpenseStatus.PENDING });
@@ -540,7 +540,7 @@ describe('ExpensesService', () => {
       expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: AuditAction.SUBMIT }));
 
       // 2. Approve L1
-      const pending = makeExpense({ status: ExpenseStatus.PENDING, amount: 800000 as any, departmentId: 'dept-1' });
+      const pending = makeExpense({ status: ExpenseStatus.PENDING, amount: 800000, departmentId: 'dept-1' });
       expenseRepo.findOne
         .mockResolvedValueOnce(pending)
         .mockResolvedValueOnce({ ...pending, status: ExpenseStatus.APPROVED_L1 });
@@ -549,7 +549,7 @@ describe('ExpensesService', () => {
       expect(approvalRepo.save).toHaveBeenCalled();
 
       // 3. Approve L2
-      const l1Approved = makeExpense({ status: ExpenseStatus.APPROVED_L1, amount: 800000 as any });
+      const l1Approved = makeExpense({ status: ExpenseStatus.APPROVED_L1, amount: 800000 });
       expenseRepo.findOne
         .mockResolvedValueOnce(l1Approved)
         .mockResolvedValueOnce({ ...l1Approved, status: ExpenseStatus.APPROVED_L2 });
@@ -569,14 +569,14 @@ describe('ExpensesService', () => {
   describe('full workflow — low-amount path (auto-L2)', () => {
     it('should follow DRAFT → PENDING → APPROVED_L2 (auto) → PAID', async () => {
       // 1. Submit
-      const draft = makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'creator-1', amount: 200000 as any });
+      const draft = makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'creator-1', amount: 200000 });
       expenseRepo.findOne
         .mockResolvedValueOnce(draft)
         .mockResolvedValueOnce({ ...draft, status: ExpenseStatus.PENDING });
       await service.submit('exp-1', 'creator-1');
 
       // 2. Approve L1 (auto-skip L2)
-      const pending = makeExpense({ status: ExpenseStatus.PENDING, amount: 200000 as any, departmentId: 'dept-1' });
+      const pending = makeExpense({ status: ExpenseStatus.PENDING, amount: 200000, departmentId: 'dept-1' });
       expenseRepo.findOne
         .mockResolvedValueOnce(pending)
         .mockResolvedValueOnce({ ...pending, status: ExpenseStatus.APPROVED_L2 });

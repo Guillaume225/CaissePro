@@ -6,7 +6,7 @@ import {
   Logger,
   ForbiddenException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -321,7 +321,7 @@ export class AuthService {
         : { algorithm: 'HS256', secret: 'caisseflow-dev-secret-change-me' }),
     };
 
-    const accessToken = this.jwtService.sign(payload, signOptions as any);
+    const accessToken = this.jwtService.sign(payload, signOptions as unknown as JwtSignOptions);
 
     const refreshToken = uuidv4();
     const refreshExpRaw = this.configService.get<string>('jwt.refreshExpiration') || '7d';

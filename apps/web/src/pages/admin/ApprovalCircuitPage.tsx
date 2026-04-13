@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GitBranch, Plus, Pencil, Trash2, Power, PowerOff, UserCheck } from 'lucide-react';
+import { GitBranch, Plus, Pencil, Trash2, Power, PowerOff } from 'lucide-react';
 import { Button, Input, Modal, Badge } from '@/components/ui';
 import {
   useApprovalCircuits,

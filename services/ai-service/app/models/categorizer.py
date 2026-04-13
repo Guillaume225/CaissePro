@@ -7,10 +7,9 @@ import pickle
 from pathlib import Path
 
 import numpy as np
-from scipy.sparse import hstack, issparse
+from scipy.sparse import hstack
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 

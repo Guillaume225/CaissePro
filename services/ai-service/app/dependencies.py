@@ -3,7 +3,19 @@ from pathlib import Path
 from fastapi import Depends
 
 from app.config import Settings, get_settings
+from app.models.anomaly_detector import AnomalyDetector
+from app.models.categorizer import ExpenseCategorizer
+from app.models.chatbot_engine import ChatbotEngine
+from app.models.client_scorer import ClientScorer
+from app.models.narrative_generator import NarrativeGenerator
 from app.models.ocr_engine import OCREngine
+from app.models.sales_forecaster import SalesForecaster
+from app.services.anomaly_service import AnomalyService
+from app.services.categorization_service import CategorizationService
+from app.services.chatbot_service import ChatbotService
+from app.services.forecast_service import ForecastService
+from app.services.narrative_service import NarrativeService
+from app.services.scoring_service import ScoringService
 
 _ocr_engine: OCREngine | None = None
 
@@ -19,9 +31,6 @@ def get_ocr_engine(settings: Settings = Depends(get_settings)) -> OCREngine:
 
 
 # ── Categorizer ──────────────────────────────────────────
-from app.models.categorizer import ExpenseCategorizer
-from app.services.categorization_service import CategorizationService
-
 _categorizer: ExpenseCategorizer | None = None
 _categorization_service: CategorizationService | None = None
 
@@ -48,9 +57,6 @@ def get_categorization_service(
 
 
 # ── Anomaly Detector ─────────────────────────────────────
-from app.models.anomaly_detector import AnomalyDetector
-from app.services.anomaly_service import AnomalyService
-
 _anomaly_detector: AnomalyDetector | None = None
 _anomaly_service: AnomalyService | None = None
 
@@ -78,9 +84,6 @@ def get_anomaly_service(
 
 
 # ── Sales Forecaster ───────────────────────────────────
-from app.models.sales_forecaster import SalesForecaster
-from app.services.forecast_service import ForecastService
-
 _forecaster: SalesForecaster | None = None
 _forecast_service: ForecastService | None = None
 
@@ -105,9 +108,6 @@ def get_forecast_service(
 
 
 # ── Client Scorer ──────────────────────────────────────
-from app.models.client_scorer import ClientScorer
-from app.services.scoring_service import ScoringService
-
 _scorer: ClientScorer | None = None
 _scoring_service: ScoringService | None = None
 
@@ -132,9 +132,6 @@ def get_scoring_service(
 
 
 # ── Chatbot ────────────────────────────────────────────
-from app.models.chatbot_engine import ChatbotEngine
-from app.services.chatbot_service import ChatbotService
-
 _chatbot_engine: ChatbotEngine | None = None
 _chatbot_service: ChatbotService | None = None
 
@@ -160,9 +157,6 @@ def get_chatbot_service(
 
 
 # ── Narrative Generator ────────────────────────────────
-from app.models.narrative_generator import NarrativeGenerator
-from app.services.narrative_service import NarrativeService
-
 _narrative_generator: NarrativeGenerator | None = None
 _narrative_service: NarrativeService | None = None
 

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   FileCheck2,
-  QrCode,
   Undo2,
   AlertCircle,
   Loader2,
@@ -18,14 +17,13 @@ import {
 } from 'lucide-react';
 import { Button, Badge, Card } from '@/components/ui';
 import { useFneInvoice, useCreateCreditNote, useCertifyFneInvoice, useDeleteFneInvoice } from '@/hooks/useFneInvoices';
-import { formatCFA, formatDate, formatDateTime } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { formatCFA, formatDateTime } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCompanies } from '@/hooks/useAdmin';
 import { useFneSetting } from '@/hooks/useFneSettings';
 import { useModuleStore } from '@/stores/module-store';
 import FneInvoicePrintView from '@/components/fne/FneInvoicePrintView';
-import type { FneInvoiceStatus, FneInvoiceItem } from '@/types/fne';
+import type { FneInvoiceStatus } from '@/types/fne';
 
 /* ── Status config ────────────────────────────────────── */
 const STATUS_CONFIG: Record<FneInvoiceStatus, { label: string; variant: 'outline' | 'success' | 'warning' | 'destructive'; color: string }> = {

@@ -4,6 +4,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { Product } from '../entities/product.entity';
 import { AuditService } from '../audit/audit.service';
+import { CreateProductDto } from './dto';
 
 describe('ProductsService', () => {
   let service: ProductsService;
@@ -14,8 +15,8 @@ describe('ProductsService', () => {
     name: 'Test Product',
     description: 'A test product',
     category: 'General',
-    unitPrice: 10000 as any,
-    vatRate: 18 as any,
+    unitPrice: 10000,
+    vatRate: 18,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -83,8 +84,8 @@ describe('ProductsService', () => {
         .mockResolvedValueOnce({ ...mockProduct, id: 'p2' }); // findById
       mockRepo.create.mockReturnValue({ id: 'p2', ...mockProduct });
       mockRepo.save.mockResolvedValue({ id: 'p2', ...mockProduct });
-      const result = await service.create(
-        { code: 'PROD-002', name: 'New', unitPrice: 5000 } as any,
+      await service.create(
+        { code: 'PROD-002', name: 'New', unitPrice: 5000 } as unknown as CreateProductDto,
         'user1',
       );
       expect(mockAudit.log).toHaveBeenCalled();
@@ -93,7 +94,7 @@ describe('ProductsService', () => {
     it('should reject duplicate code', async () => {
       mockRepo.findOne.mockResolvedValue(mockProduct);
       await expect(
-        service.create({ code: 'PROD-001', name: 'Dup', unitPrice: 1000 } as any, 'user1'),
+        service.create({ code: 'PROD-001', name: 'Dup', unitPrice: 1000 } as unknown as CreateProductDto, 'user1'),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -104,7 +105,7 @@ describe('ProductsService', () => {
         .mockResolvedValueOnce({ ...mockProduct, isActive: true })
         .mockResolvedValueOnce({ ...mockProduct, isActive: false });
       mockRepo.save.mockResolvedValue({ ...mockProduct, isActive: false });
-      const result = await service.toggleActive('p1', 'user1');
+      await service.toggleActive('p1', 'user1');
       expect(mockAudit.log).toHaveBeenCalled();
     });
   });

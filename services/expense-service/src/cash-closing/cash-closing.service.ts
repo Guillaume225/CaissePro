@@ -171,7 +171,7 @@ export class CashClosingService {
   }
 
   /* ─── Unlock cash register (cancel lock) ─── */
-  async unlock(user: CashClosingUser) {
+  async unlock() {
     const current = await this.closingRepo.findOne({
       where: { status: CashDayStatus.PENDING_CLOSE, cashType: this.CASH_TYPE },
     });
@@ -440,7 +440,7 @@ export class CashClosingService {
     );
 
     return {
-      data: movements.map((m: any) => ({
+      data: movements.map((m: Record<string, unknown>) => ({
         ...m,
         amount: Number(m.amount),
       })),
@@ -537,7 +537,7 @@ export class CashClosingService {
     const entryDate = (cashDay.closedAt ?? cashDay.openedAt ?? new Date())
       .toISOString()
       .slice(0, 10);
-    const entries: any[] = [];
+    const entries: Record<string, unknown>[] = [];
 
     // ── Expense entries: JOIN with categories to get real accounting accounts ──
     const expenses = await this.dataSource.query(
@@ -696,7 +696,7 @@ export class CashClosingService {
   }
 
   /* ─── Cancel accounting processing ─── */
-  async cancelAccountingProcessing(cashDayId: string, user: CashClosingUser) {
+  async cancelAccountingProcessing(cashDayId: string) {
     const cashDay = await this.closingRepo.findOne({
       where: { id: cashDayId, cashType: this.CASH_TYPE },
     });
@@ -797,8 +797,8 @@ export class CashClosingService {
 
     return {
       data: {
-        movements: movements.map((m: any) => ({ ...m, amount: Number(m.amount) })),
-        expenses: expenses.map((e: any) => ({ ...e, amount: Number(e.amount) })),
+        movements: movements.map((m: Record<string, unknown>) => ({ ...m, amount: Number(m.amount) })),
+        expenses: expenses.map((e: Record<string, unknown>) => ({ ...e, amount: Number(e.amount) })),
       },
     };
   }

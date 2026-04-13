@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FneInvoice } from '../entities/fne-invoice.entity';
 import { FneInvoiceItem } from '../entities/fne-invoice-item.entity';
-import { FneInvoiceStatus, FneTemplate, FnePaymentMethod, FneTaxCode, FneInvoiceType } from '../entities/enums';
+import { FneInvoiceStatus, FneTemplate, FnePaymentMethod, FneInvoiceType } from '../entities/enums';
 import { FneApiService } from './fne-api.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
@@ -476,7 +476,8 @@ export class FneInvoicesService {
     invoiceId: string,
     refundItems: RefundItemDto[],
     userId: string,
-    companyId?: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _companyId?: string,
   ): Promise<FneInvoice> {
     const original = await this.findById(invoiceId);
     if (original.status !== FneInvoiceStatus.CERTIFIED && original.status !== FneInvoiceStatus.CREDIT_NOTE) {
@@ -881,7 +882,7 @@ export class FneInvoicesService {
       order: { createdAt: 'DESC' },
     });
 
-    return { ...inv, creditNotes: creditNotes.length ? creditNotes : undefined } as any;
+    return { ...inv, creditNotes: creditNotes.length ? creditNotes : undefined } as FneInvoice & { creditNotes?: FneInvoice[] };
   }
 
   /* ─── List with filters ─── */

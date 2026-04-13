@@ -21,11 +21,6 @@ const FneProductListPage = lazy(() => import('@/pages/sales/FneProductListPage')
 const FneAccountingPage = lazy(() => import('@/pages/sales/FneAccountingPage'));
 const FneDashboardPage = lazy(() => import('@/pages/sales/FneDashboardPage'));
 
-// ── Reports module ──────────────────────────────
-const ReportsPage = lazy(() => import('@/pages/ReportsPage'));
-const ReportGeneratorPage = lazy(() => import('@/pages/reports/ReportGeneratorPage'));
-const NarrativeReportPage = lazy(() => import('@/pages/reports/NarrativeReportPage'));
-
 // ── Admin module ────────────────────────────────
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
 const UserManagementPage = lazy(() => import('@/pages/admin/UserManagementPage'));
@@ -46,7 +41,6 @@ const CashDayDetailPage = lazy(() => import('@/pages/manager-caisse/CashDayDetai
 const CategoryManagementPage = lazy(() => import('@/pages/admin/CategoryManagementPage'));
 const AccountingConfigPage = lazy(() => import('@/pages/admin/AccountingConfigPage'));
 const CashSettingsPage = lazy(() => import('@/pages/manager-caisse/CashSettingsPage'));
-const ClosingPage = lazy(() => import('@/pages/ClosingPage'));
 const ClosingHistoryPage = lazy(() => import('@/pages/ClosingHistoryPage'));
 const AccountingEntriesPage = lazy(() => import('@/pages/AccountingEntriesPage'));
 const CashReportsPage = lazy(() => import('@/pages/CashReportsPage'));

@@ -4,6 +4,7 @@ import { NotFoundException } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { Client } from '../entities/client.entity';
 import { AuditService } from '../audit/audit.service';
+import { CreateClientDto } from './dto';
 
 describe('ClientsService', () => {
   let service: ClientsService;
@@ -14,7 +15,7 @@ describe('ClientsService', () => {
     email: 'test@example.com',
     phone: '+225 01 02 03',
     address: '123 Rue',
-    creditLimit: 500000 as any,
+    creditLimit: 500000,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -79,7 +80,7 @@ describe('ClientsService', () => {
       const dto = { name: 'New Client' };
       mockRepo.create.mockReturnValue({ id: 'c2', ...dto });
       mockRepo.save.mockResolvedValue({ id: 'c2', ...dto });
-      const result = await service.create(dto as any, 'user1');
+      const result = await service.create(dto as unknown as CreateClientDto, 'user1');
       expect(result.id).toBe('c2');
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'CREATE', entityType: 'client' }),

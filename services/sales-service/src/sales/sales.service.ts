@@ -269,11 +269,11 @@ export class SalesService {
       const resolvedItems = await this.resolveItems(dto.items, user.roleName);
       const saleTotals = this.computeSaleTotals(resolvedItems, globalDiscountPct);
 
-      sale.subtotalHt = saleTotals.subtotalHt as any;
-      sale.discountAmount = saleTotals.discountAmount as any;
-      sale.totalVat = saleTotals.totalVat as any;
-      sale.totalTtc = saleTotals.totalTtc as any;
-      sale.globalDiscountPct = globalDiscountPct as any;
+      sale.subtotalHt = saleTotals.subtotalHt;
+      sale.discountAmount = saleTotals.discountAmount;
+      sale.totalVat = saleTotals.totalVat;
+      sale.totalTtc = saleTotals.totalTtc;
+      sale.globalDiscountPct = globalDiscountPct;
 
       const itemEntities = resolvedItems.map((ri) =>
         this.itemRepo.create({
@@ -299,14 +299,14 @@ export class SalesService {
         })),
         globalDiscountPct,
       );
-      sale.subtotalHt = saleTotals.subtotalHt as any;
-      sale.discountAmount = saleTotals.discountAmount as any;
-      sale.totalVat = saleTotals.totalVat as any;
-      sale.totalTtc = saleTotals.totalTtc as any;
-      sale.globalDiscountPct = globalDiscountPct as any;
+      sale.subtotalHt = saleTotals.subtotalHt;
+      sale.discountAmount = saleTotals.discountAmount;
+      sale.totalVat = saleTotals.totalVat;
+      sale.totalTtc = saleTotals.totalTtc;
+      sale.globalDiscountPct = globalDiscountPct;
     }
 
-    if (dto.date) sale.date = dto.date as any;
+    if (dto.date) sale.date = dto.date;
     if (dto.notes !== undefined) sale.notes = dto.notes || null;
     if (dto.dueDate !== undefined) sale.dueDate = dto.dueDate || null;
 

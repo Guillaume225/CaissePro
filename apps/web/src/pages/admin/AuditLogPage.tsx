@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollText, Filter, X } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { Input, Select, Badge, DataTable, Card, CardContent } from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
 import { useAuditLogs } from '@/hooks/useAdmin';

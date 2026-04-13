@@ -432,7 +432,7 @@ function FicheComptage({ day, counts, otherAmounts, companyName, companyAddress,
   companyTaxId?: string;
   printedBy: string;
 }) {
-  const { isFieldVisible, getFieldLabel, isKpiVisible, getKpiLabel, header, footer } = useReportDesign('comptage');
+  const { header, footer } = useReportDesign('comptage');
   const cashTotal = DENOMINATIONS.reduce((s, d) => s + d.value * (counts[d.value] || 0), 0);
   const grandTotal = cashTotal + otherAmounts.cheques + otherAmounts.mobileMoney;
 
@@ -635,7 +635,7 @@ export default function CashReportsPage() {
 
   // Data
   const { data: history } = useClosingHistory();
-  const { data: cashState } = useCashState();
+  useCashState();
   const { data: settings } = useSettings();
 
   // Cashier: show their own days (including open); Manager/Admin: closed only

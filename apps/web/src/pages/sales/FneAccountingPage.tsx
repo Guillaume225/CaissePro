@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import type { GenerateEntriesResult } from '@/types/fne';
 
 export default function FneAccountingPage() {
-  const { t } = useTranslation();
+  useTranslation();
   const navigate = useNavigate();
 
   /* ── Filters ── */

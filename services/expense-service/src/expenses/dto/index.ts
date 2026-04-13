@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { IsUUID } from '../../is-uuid-loose';
 import { Type, Transform } from 'class-transformer';
-import { PaymentMethod, ExpenseStatus } from '../../entities/enums';
+import { PaymentMethod } from '../../entities/enums';
 
 export class CreateExpenseDto {
   @IsDateString()

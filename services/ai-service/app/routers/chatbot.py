@@ -33,6 +33,6 @@ async def ask_assistant(
             result.intent.value, result.offline_mode, result.sources, elapsed,
         )
         return result
-    except Exception as exc:
+    except Exception:
         logger.exception("Chatbot failed")
         raise HTTPException(status_code=500, detail="Erreur interne de l'assistant IA.")

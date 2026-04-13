@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 export class DashboardService {
   constructor(private readonly dataSource: DataSource) {}
 
-  private wrap(data: any) {
+  private wrap(data: unknown) {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -50,7 +50,7 @@ export class DashboardService {
       GROUP BY r.name
       ORDER BY count DESC
     `);
-    return this.wrap(rows.map((r: any) => ({ name: r.name, count: Number(r.count) })));
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({ name: r.name as string, count: Number(r.count) })));
   }
 
   /* ── Hourly activity (/dashboard/admin/hourly-activity) ─ */
@@ -64,6 +64,6 @@ export class DashboardService {
       GROUP BY DATEPART(HOUR, [timestamp])
       ORDER BY DATEPART(HOUR, [timestamp])
     `);
-    return this.wrap(rows.map((r: any) => ({ hour: r.hour, events: Number(r.events) })));
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({ hour: r.hour as string, events: Number(r.events) })));
   }
 }

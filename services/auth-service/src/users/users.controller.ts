@@ -15,7 +15,7 @@ import {
 import { Request } from 'express';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, ListUsersQueryDto } from './dto';
-import { CurrentUser, Roles, Permissions } from '../common/decorators';
+import { CurrentUser, Permissions } from '../common/decorators';
 import { PERMISSIONS } from '../common/permissions';
 
 @Controller('users')

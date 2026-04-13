@@ -15,14 +15,6 @@ const DEFAULT_VAT_ACCOUNT = '443100';
 const DEFAULT_JOURNAL_SALES = 'VF'; // Ventes Facturées
 const DEFAULT_JOURNAL_CASH = 'CA'; // Caisse
 
-/* ── Tax rates (same as fne-invoices.service) ── */
-const TAX_RATES: Record<string, number> = {
-  TVA: 0.18,
-  TVAB: 0.09,
-  TVAC: 0,
-  TVAD: 0,
-};
-
 export interface ListFneAccountingQuery {
   page?: number;
   perPage?: number;

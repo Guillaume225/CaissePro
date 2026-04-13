@@ -40,8 +40,8 @@ describe('UsersService', () => {
     userRepo = {
       findOne: jest.fn(),
       findOneOrFail: jest.fn().mockResolvedValue(mockUser),
-      create: jest.fn((dto: any) => ({ ...dto, id: 'new-uuid' })),
-      save: jest.fn((entity: any) => Promise.resolve({ ...mockUser, ...entity })),
+      create: jest.fn((dto: Record<string, unknown>) => ({ ...dto, id: 'new-uuid' })),
+      save: jest.fn((entity: Record<string, unknown>) => Promise.resolve({ ...mockUser, ...entity })),
       softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
       createQueryBuilder: jest.fn().mockReturnValue({
         leftJoinAndSelect: jest.fn().mockReturnThis(),

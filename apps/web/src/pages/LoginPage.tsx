@@ -115,9 +115,10 @@ export default function LoginPage() {
       }
 
       await completeLogin(resp.accessToken, resp.refreshToken);
-    } catch (err: any) {
-      const msg = err?.response?.data?.data?.message
-        || err?.response?.data?.message
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string; data?: { message?: string } } }; message?: string };
+      const msg = e?.response?.data?.data?.message
+        || e?.response?.data?.message
         || t('auth.loginError');
       setError(msg);
       useAuthStore.getState().logout();
@@ -138,9 +139,10 @@ export default function LoginPage() {
       });
       const resp = loginRes.data ?? loginRes;
       await completeLogin(resp.accessToken, resp.refreshToken);
-    } catch (err: any) {
-      const msg = err?.response?.data?.data?.message
-        || err?.response?.data?.message
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string; data?: { message?: string } } }; message?: string };
+      const msg = e?.response?.data?.data?.message
+        || e?.response?.data?.message
         || t('auth.mfaInvalidCode');
       setError(msg);
       setMfaCode(['', '', '', '', '', '']);
@@ -200,9 +202,10 @@ export default function LoginPage() {
       });
       const resp = loginRes.data ?? loginRes;
       await completeLogin(resp.accessToken, resp.refreshToken);
-    } catch (err: any) {
-      const msg = err?.response?.data?.data?.message
-        || err?.response?.data?.message
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string; data?: { message?: string } } }; message?: string };
+      const msg = e?.response?.data?.data?.message
+        || e?.response?.data?.message
         || t('auth.mfaInvalidCode');
       setError(msg);
       setSetupCode(['', '', '', '', '', '']);

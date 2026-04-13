@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { NotificationsController } from '@/notifications/notifications.controller';
 import { NotificationsService } from '@/notifications/notifications.service';
-import { NotificationType, NotificationChannel } from '@/common/enums';
+import '@/common/enums';
 
 describe('NotificationsController', () => {
   let controller: NotificationsController;

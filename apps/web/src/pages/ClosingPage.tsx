@@ -25,11 +25,9 @@ import {
   Badge,
   Card,
   CardContent,
-  DataTable,
   Stat,
   Modal,
 } from '@/components/ui';
-import type { Column } from '@/components/ui/DataTable';
 import {
   useCashState,
   useDayOperations,
@@ -40,8 +38,7 @@ import {
 } from '@/hooks/useClosing';
 import { usePendingDisbursementRequests } from '@/hooks/useDisbursementRequests';
 import { useExpenses, useExpenseCategories } from '@/hooks/useExpenses';
-import type { DayOperation, CashMovementType, CashMovementCategory } from '@/types/admin';
-type AnyRow = Record<string, unknown>;
+import type { CashMovementType, CashMovementCategory } from '@/types/admin';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
@@ -51,7 +48,7 @@ export default function ClosingPage() {
   const navigate = useNavigate();
 
   const { data: state, isLoading: stateLoading } = useCashState();
-  const { data: operations = [] } = useDayOperations();
+  useDayOperations();
   const openCash = useOpenCash();
   const addMovement = useAddCashMovement();
   const lockCash = useLockCash();
@@ -169,52 +166,7 @@ export default function ClosingPage() {
     return { draft, pending, approved, paid, rejected, entries, exits, total: entries + exits, totalAmount, paidAmount };
   }, [expenses, categories]);
 
-  const opColumns: Column<Record<string, unknown>>[] = [
-    {
-      key: 'time',
-      header: t('closing.operations.time'),
-      render: (r) => <span className="text-xs text-gray-500">{(r as unknown as DayOperation).time}</span>,
-    },
-    {
-      key: 'type',
-      header: t('closing.operations.type'),
-      render: (r) => {
-        const row = r as unknown as DayOperation;
-        return <Badge variant={row.type === 'ENTRY' ? 'success' : 'destructive'}>{t(`closing.operations.${row.type.toLowerCase()}`)}</Badge>;
-      },
-    },
-    {
-      key: 'category',
-      header: t('closing.operations.category'),
-      render: (r) => {
-        const row = r as unknown as DayOperation;
-        const v: Record<string, 'success' | 'destructive' | 'info' | 'warning' | 'default'> = {
-          SALE: 'success', EXPENSE: 'destructive', PAYMENT: 'info', ADJUSTMENT: 'warning', OTHER: 'default',
-        };
-        return <Badge variant={v[row.category] || 'default'}>{t(`closing.operations.${row.category.toLowerCase()}`)}</Badge>;
-      },
-    },
-    { key: 'reference', header: t('closing.operations.reference') },
-    {
-      key: 'description',
-      header: t('closing.operations.description'),
-      render: (r) => <span className="text-sm text-gray-600">{(r as unknown as DayOperation).description}</span>,
-    },
-    {
-      key: 'amount',
-      header: t('common.amount'),
-      sortable: true,
-      className: 'text-right',
-      render: (r) => {
-        const row = r as unknown as DayOperation;
-        return (
-          <span className={`font-medium ${row.type === 'EXIT' ? 'text-red-600' : 'text-green-600'}`}>
-            {row.type === 'EXIT' ? '−' : '+'}{fmt(Math.abs(row.amount))}
-          </span>
-        );
-      },
-    },
-  ];
+
 
   if (stateLoading) {
     return <p className="text-sm text-gray-500">{t('common.loading')}</p>;

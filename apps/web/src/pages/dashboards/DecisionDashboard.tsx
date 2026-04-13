@@ -73,25 +73,20 @@ function groupByPeriod<T>(items: T[], dateAccessor: (item: T) => string, amountA
     const d = new Date(raw);
     if (isNaN(d.getTime())) continue;
     let key: string;
-    let label: string;
     switch (period) {
       case 'day':
         key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        label = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
         break;
       case 'week': {
         const w = getWeek(d);
         key = `${d.getFullYear()}-W${String(w).padStart(2, '0')}`;
-        label = `S${w} ${d.getFullYear().toString().slice(-2)}`;
         break;
       }
       case 'month':
         key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        label = d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
         break;
       case 'year':
         key = String(d.getFullYear());
-        label = String(d.getFullYear());
         break;
     }
     map.set(key, (map.get(key) ?? 0) + amountAccessor(item));
@@ -148,7 +143,7 @@ export default function DecisionDashboard() {
 
   useSocket();
 
-  const { data: kpis } = useDashboardKpis();
+  useDashboardKpis();
   const { data: alerts = [] } = useAiAlerts();
 
   // Pending expenses

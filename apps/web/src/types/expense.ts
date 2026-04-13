@@ -111,7 +111,7 @@ export interface CreateExpensePayload {
   isDraft?: boolean;
 }
 
-export interface UpdateExpensePayload extends Partial<CreateExpensePayload> {}
+export type UpdateExpensePayload = Partial<CreateExpensePayload>;
 
 // ── API Responses ────────────────────────────────────────
 export interface PaginatedExpenses {

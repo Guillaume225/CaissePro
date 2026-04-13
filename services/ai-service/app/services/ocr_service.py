@@ -1,6 +1,5 @@
 """OCR business logic: orchestrates image preprocessing, OCR, and NLP post-processing."""
 
-import io
 import logging
 import time
 

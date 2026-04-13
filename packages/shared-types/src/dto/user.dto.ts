@@ -4,7 +4,6 @@
 
 import {
   IsEmail,
-  IsEnum,
   IsOptional,
   IsString,
   IsUUID,
@@ -13,7 +12,6 @@ import {
   MaxLength,
   Matches,
 } from 'class-validator';
-import { UserRole } from '../enums/index.js';
 
 /* ─── Auth ─── */
 

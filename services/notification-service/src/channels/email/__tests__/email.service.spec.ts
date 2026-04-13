@@ -12,7 +12,7 @@ jest.mock('nodemailer', () => ({
 
 describe('EmailService', () => {
   let service: EmailService;
-  let nodemailer: any;
+  let nodemailer: { createTransport: jest.Mock };
 
   beforeEach(async () => {
     nodemailer = await import('nodemailer');

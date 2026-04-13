@@ -6,6 +6,7 @@ import { UnauthorizedException, ForbiddenException, BadRequestException } from '
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { User } from '../entities/user.entity';
+import { Role } from '../entities/role.entity';
 import { AuditService } from '../audit/audit.service';
 import { REDIS_CLIENT } from '../redis/redis.module';
 
@@ -30,7 +31,7 @@ describe('AuthService', () => {
     firstName: 'Admin',
     lastName: 'User',
     roleId: 'role-uuid',
-    role: mockRole as any,
+    role: mockRole as unknown as Role,
     departmentId: null,
     isActive: true,
     mfaEnabled: false,

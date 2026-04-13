@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 export class DashboardService {
   constructor(private readonly dataSource: DataSource) {}
 
-  private wrap(data: any) {
+  private wrap(data: unknown) {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -56,7 +56,7 @@ export class DashboardService {
       GROUP BY FORMAT(created_at, 'yyyy-MM')
       ORDER BY month
     `);
-    return this.wrap(rows.map((r: any) => ({ month: r.month, amount: Number(r.amount) })));
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })));
   }
 
   /* ══════════════════════════════════════════════════════════
@@ -114,7 +114,7 @@ export class DashboardService {
       GROUP BY FORMAT(created_at, 'yyyy-MM')
       ORDER BY month
     `);
-    return this.wrap(rows.map((r: any) => ({
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({
       month: r.month,
       revenue: Number(r.revenue),
       count: Number(r.count),
@@ -133,7 +133,7 @@ export class DashboardService {
       GROUP BY client_company_name, client_phone
       ORDER BY revenue DESC
     `);
-    return this.wrap(rows.map((r: any) => ({
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({
       clientName: r.clientName,
       clientPhone: r.clientPhone,
       invoiceCount: Number(r.invoiceCount),
@@ -147,7 +147,7 @@ export class DashboardService {
       FROM fne_invoices
       GROUP BY status
     `);
-    return this.wrap(rows.map((r: any) => ({
+    return this.wrap(rows.map((r: Record<string, unknown>) => ({
       status: r.status as string,
       count: Number(r.count),
     })));

@@ -289,7 +289,7 @@ export class ExpensesService {
     const l2Roles: string[] = this.configService.get<string[]>('workflow.l2Roles') ?? ['DAF', 'ADMIN'];
 
     if (expense.status === ExpenseStatus.PENDING) {
-      return this.approveL1(expense, dto, user, threshold, l2Roles);
+      return this.approveL1(expense, dto, user, threshold);
     }
     if (expense.status === ExpenseStatus.APPROVED_L1) {
       return this.approveL2(expense, dto, user, l2Roles);
@@ -306,7 +306,6 @@ export class ExpensesService {
     dto: ApproveExpenseDto,
     user: WorkflowUser,
     threshold: number,
-    l2Roles: string[],
   ) {
     if (!user.departmentId || user.departmentId !== expense.departmentId) {
       throw new ForbiddenException(

@@ -25,8 +25,8 @@ describe('RolesService', () => {
       findOne: jest.fn(),
       findOneOrFail: jest.fn(),
       update: jest.fn().mockResolvedValue({ affected: 1 }),
-      create: jest.fn((dto: any) => ({ ...dto, id: 'new-uuid' })),
-      save: jest.fn((entity: any) => Promise.resolve({ ...mockRole, ...entity })),
+      create: jest.fn((dto: Record<string, unknown>) => ({ ...dto, id: 'new-uuid' })),
+      save: jest.fn((entity: Record<string, unknown>) => Promise.resolve({ ...mockRole, ...entity })),
     };
     auditService = {
       log: jest.fn().mockResolvedValue(undefined),

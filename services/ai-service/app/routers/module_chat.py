@@ -1,6 +1,7 @@
 """Module-aware AI chat endpoint — bridges frontend to chatbot engine."""
 
 import logging
+import re
 import time
 from datetime import datetime, timezone
 
@@ -83,7 +84,7 @@ async def module_chat(
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
-    except Exception as exc:
+    except Exception:
         logger.exception("ModuleChat failed")
         raise HTTPException(status_code=500, detail="Erreur interne de l'assistant IA.")
 
@@ -191,7 +192,7 @@ async def conversational_chat(
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
-    except Exception as exc:
+    except Exception:
         logger.exception("Conversational chat failed")
         raise HTTPException(status_code=500, detail="Erreur interne du chatbot.")
 
@@ -259,8 +260,6 @@ def _conversational_fallback(message: str) -> str:
 
 
 # ── Helpers ──────────────────────────────────────────────────────
-
-import re
 
 _ACTION_RE = re.compile(r"\[ACTION:\s*(\w+)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\]")
 

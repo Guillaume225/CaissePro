@@ -7,22 +7,22 @@ export class NotificationsController {
   constructor(private readonly svc: NotificationsService) {}
 
   @Get()
-  findAll(@CurrentUser() user: any, @Query() query: any) {
+  findAll(@CurrentUser() user: { id: string }, @Query() query: { type?: string; isRead?: string }) {
     return this.svc.findAll(user.id, query);
   }
 
   @Get('unread-count')
-  unreadCount(@CurrentUser() user: any) {
+  unreadCount(@CurrentUser() user: { id: string }) {
     return this.svc.unreadCount(user.id);
   }
 
   @Patch('read-all')
-  markAllAsRead(@CurrentUser() user: any) {
+  markAllAsRead(@CurrentUser() user: { id: string }) {
     return this.svc.markAllAsRead(user.id);
   }
 
   @Patch(':id/read')
-  markAsRead(@Param('id') id: string, @CurrentUser() user: any) {
+  markAsRead(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     return this.svc.markAsRead(id, user.id);
   }
 }

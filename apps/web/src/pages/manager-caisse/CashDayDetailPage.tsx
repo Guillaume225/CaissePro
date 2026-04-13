@@ -1,5 +1,5 @@
 import { useMemo, useState, Fragment } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -88,7 +88,6 @@ const PAYMENT_LABELS: Record<string, string> = {
 export default function CashDayDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: day, isLoading: dayLoading } = useCashDayDetail(id);
   const { data: ops, isLoading: opsLoading } = useCashDayOperations(id);
@@ -118,8 +117,9 @@ export default function CashDayDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['closing', 'day', id] });
       queryClient.invalidateQueries({ queryKey: ['closing', 'day', id, 'operations'] });
       queryClient.invalidateQueries({ queryKey: ['closing', 'open-days'] });
-    } catch (err: any) {
-      const msg = err?.response?.data?.error?.message || err?.message || t('common.error');
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      const msg = e?.response?.data?.error?.message || e?.message || t('common.error');
       setCloseError(msg);
     }
   };

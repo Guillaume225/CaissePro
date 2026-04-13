@@ -43,7 +43,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       const userId = payload.sub as string;
 
       // Attach userId to socket data
-      (client as any).userId = userId;
+      (client as unknown as { userId: string }).userId = userId;
 
       // Join user-specific room
       await client.join(`user:${userId}`);
@@ -61,7 +61,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   handleDisconnect(client: Socket): void {
-    const userId = (client as any).userId as string | undefined;
+    const userId = (client as unknown as { userId?: string }).userId;
     if (userId) {
       const sockets = this.userSockets.get(userId);
       if (sockets) {

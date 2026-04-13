@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ShieldCheck, Shield, Smartphone, QrCode, Copy,
+  ShieldCheck, Shield, Smartphone, Copy,
   CheckCircle2, AlertTriangle, Loader2, KeyRound,
 } from 'lucide-react';
 import { Button, Modal, Badge } from '@/components/ui';

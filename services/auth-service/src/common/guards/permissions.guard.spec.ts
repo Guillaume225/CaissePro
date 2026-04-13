@@ -11,7 +11,7 @@ describe('PermissionsGuard', () => {
     guard = new PermissionsGuard(reflector);
   });
 
-  function createMockContext(user?: any, permissions?: string[]): ExecutionContext {
+  function createMockContext(user?: Record<string, unknown>, permissions?: string[]): ExecutionContext {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(permissions || undefined);
 
     return {
@@ -20,7 +20,7 @@ describe('PermissionsGuard', () => {
       }),
       getHandler: () => jest.fn(),
       getClass: () => jest.fn(),
-    } as any;
+    } as unknown as ExecutionContext;
   }
 
   it('should allow access when no permissions are required', () => {

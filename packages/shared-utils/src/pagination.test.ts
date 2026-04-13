@@ -3,7 +3,6 @@ import {
   buildPaginationMeta,
   paginateArray,
 } from './pagination.js';
-import type { PaginationInput, PaginationMeta, PaginatedResult } from './pagination.js';
 
 describe('pagination', () => {
   describe('normalizePagination', () => {
