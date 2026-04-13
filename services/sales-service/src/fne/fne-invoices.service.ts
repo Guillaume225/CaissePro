@@ -955,9 +955,12 @@ export class FneInvoicesService {
       order: { createdAt: 'DESC' },
     });
 
-    return { ...inv, creditNotes: creditNotes.length ? creditNotes : undefined } as FneInvoice & {
-      creditNotes?: FneInvoice[];
-    };
+    const mapped = creditNotes.map((cn) => ({
+      id: cn.id,
+      reference: cn.reference ?? '',
+      status: cn.status,
+    }));
+    return { ...inv, creditNotes: mapped.length ? mapped : undefined };
   }
 
   /* ─── List with filters ─── */

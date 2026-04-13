@@ -59,6 +59,7 @@ describe('SalesService', () => {
 
   const mockSaleRepo = {
     createQueryBuilder: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
@@ -66,6 +67,7 @@ describe('SalesService', () => {
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(null),
+      getRawOne: jest.fn().mockResolvedValue(null),
       getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
     }),
     findOne: jest.fn(),
