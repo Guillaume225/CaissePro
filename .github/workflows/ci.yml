@@ -168,15 +168,40 @@ jobs:
       - name: Start SQL Server
         shell: pwsh
         run: |
-          # SQL Server is pre-installed on windows-latest runners
-          # Configure and start it for tests
-          $sqlInstance = (Get-Service -Name 'MSSQLSERVER' -ErrorAction SilentlyContinue) ??
-                        (Get-Service -Name 'MSSQL$SQLEXPRESS' -ErrorAction SilentlyContinue)
-          if ($sqlInstance) {
-            Start-Service $sqlInstance.Name -ErrorAction SilentlyContinue
+          # Try to find a pre-installed SQL Server instance
+          $svc = Get-Service -Name 'MSSQLSERVER' -ErrorAction SilentlyContinue
+          if (-not $svc) { $svc = Get-Service -Name 'MSSQL$SQLEXPRESS' -ErrorAction SilentlyContinue }
+
+          if (-not $svc) {
+            Write-Host "No SQL Server found — installing SQL Server Express LocalDB via choco..."
+            choco install sql-server-express -y --no-progress
+            # Refresh PATH so sqlcmd is available
+            refreshenv
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            # Start the default instance
+            $svc = Get-Service -Name 'MSSQLSERVER' -ErrorAction SilentlyContinue
+            if (-not $svc) { $svc = Get-Service -Name 'MSSQL$SQLEXPRESS' -ErrorAction SilentlyContinue }
           }
-          # Create test database via sqlcmd
-          sqlcmd -S localhost -E -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'caisseflow_test') CREATE DATABASE caisseflow_test"
+
+          if ($svc) {
+            Write-Host "Starting SQL Server service: $($svc.Name)"
+            Start-Service $svc.Name -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 5
+          } else {
+            Write-Error "Could not find any SQL Server instance after install"
+            exit 1
+          }
+
+          # Enable SA login with password for tests
+          $instance = if ($svc.Name -eq 'MSSQLSERVER') { 'localhost' } else { 'localhost\SQLEXPRESS' }
+          sqlcmd -S $instance -E -C -Q "
+            ALTER LOGIN [sa] WITH PASSWORD = 'TestPassword123!';
+            ALTER LOGIN [sa] ENABLE;
+            GO
+          "
+
+          # Create test database
+          sqlcmd -S $instance -U sa -P 'TestPassword123!' -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'caisseflow_test') CREATE DATABASE caisseflow_test"
 
       - name: Run e2e tests
         shell: pwsh
