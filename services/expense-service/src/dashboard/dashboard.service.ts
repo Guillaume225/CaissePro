@@ -18,7 +18,8 @@ export class DashboardService {
     const lastYear = thisMonth === 1 ? thisYear - 1 : thisYear;
 
     const [[row]] = await Promise.all([
-      this.dataSource.query(`
+      this.dataSource.query(
+        `
         SELECT
           COALESCE((SELECT SUM(CASE WHEN type='ENTRY' THEN amount ELSE -amount END) FROM cash_movements), 0) AS cashBalance,
           COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@0 AND YEAR([date])=@1 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS monthExpenses,
@@ -26,7 +27,9 @@ export class DashboardService {
           COALESCE((SELECT SUM(outstanding_amount) FROM receivables WHERE is_settled = 0), 0) AS outstandingReceivables,
           COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@2 AND YEAR([date])=@3 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS prevMonthExpenses,
           COALESCE((SELECT SUM(total_ttc) FROM sales WHERE MONTH(created_at)=@2 AND YEAR(created_at)=@3 AND status != 'CANCELLED'), 0) AS prevMonthRevenue
-      `, [thisMonth, thisYear, lastMonth, lastYear]),
+      `,
+        [thisMonth, thisYear, lastMonth, lastYear],
+      ),
     ]);
 
     const trend = (cur: number, prev: number) =>
@@ -55,7 +58,9 @@ export class DashboardService {
       GROUP BY FORMAT(created_at, 'yyyy-MM')
       ORDER BY month
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })),
+    );
   }
 
   /* ── Monthly comparison (/dashboard/monthly-comparison) */
@@ -80,11 +85,13 @@ export class DashboardService {
       ) s ON s.month = m.month
       ORDER BY m.month
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({
-      month: r.month,
-      expenses: Number(r.expenses),
-      revenue: Number(r.revenue),
-    })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({
+        month: r.month,
+        expenses: Number(r.expenses),
+        revenue: Number(r.revenue),
+      })),
+    );
   }
 
   /* ── Expense categories breakdown (/dashboard/expense-categories) */
@@ -99,7 +106,9 @@ export class DashboardService {
       GROUP BY c.name
       ORDER BY value DESC
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({ name: r.name, value: Number(r.value) })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({ name: r.name, value: Number(r.value) })),
+    );
   }
 
   /* ── Top clients (/dashboard/top-clients) ──────────── */
@@ -112,11 +121,13 @@ export class DashboardService {
       GROUP BY c.id, c.name
       ORDER BY revenue DESC
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({
-      clientId: r.clientId,
-      clientName: r.clientName,
-      revenue: Number(r.revenue),
-    })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({
+        clientId: r.clientId,
+        clientName: r.clientName,
+        revenue: Number(r.revenue),
+      })),
+    );
   }
 
   /* ── Expense module KPIs (/dashboard/expense/kpis) ─── */
@@ -126,14 +137,17 @@ export class DashboardService {
     const lastMonth = thisMonth === 1 ? 12 : thisMonth - 1;
     const lastYear = thisMonth === 1 ? thisYear - 1 : thisYear;
 
-    const [row] = await this.dataSource.query(`
+    const [row] = await this.dataSource.query(
+      `
       SELECT
         COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@0 AND YEAR([date])=@1 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS totalExpenses,
         COALESCE((SELECT COUNT(*) FROM expenses WHERE status = 'PENDING'), 0) AS pendingApprovals,
         COALESCE((SELECT COUNT(*) FROM expenses WHERE status = 'APPROVED_L2' AND DATEDIFF(DAY, [date], GETDATE()) > 30), 0) AS overduePayments,
         COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@2 AND YEAR([date])=@3 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS prevTotal,
         COALESCE((SELECT COUNT(*) FROM expenses WHERE status = 'PENDING' AND MONTH([date])=@2 AND YEAR([date])=@3), 0) AS prevPending
-    `, [thisMonth, thisYear, lastMonth, lastYear]);
+    `,
+      [thisMonth, thisYear, lastMonth, lastYear],
+    );
 
     const trend = (cur: number, prev: number) =>
       prev === 0 ? 0 : Math.round(((cur - prev) / prev) * 100);
@@ -158,7 +172,9 @@ export class DashboardService {
       GROUP BY FORMAT([date], 'yyyy-MM')
       ORDER BY month
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })),
+    );
   }
 
   /* ── Recent expenses (/dashboard/expense/recent) ───── */
@@ -169,14 +185,16 @@ export class DashboardService {
       LEFT JOIN expense_categories c ON c.id = e.category_id
       ORDER BY e.created_at DESC
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({
-      id: r.id,
-      reference: r.reference,
-      date: r.date,
-      amount: Number(r.amount),
-      categoryName: r.categoryName,
-      status: r.status,
-      beneficiary: r.beneficiary || null,
-    })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({
+        id: r.id,
+        reference: r.reference,
+        date: r.date,
+        amount: Number(r.amount),
+        categoryName: r.categoryName,
+        status: r.status,
+        beneficiary: r.beneficiary || null,
+      })),
+    );
   }
 }

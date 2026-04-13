@@ -15,11 +15,16 @@ const FNE_POS_KEYS = {
   detail: (id: string) => [...FNE_POS_KEYS.details(), id] as const,
 };
 
-export function useFnePointsOfSale(params: { search?: string; page?: number; perPage?: number; establishmentId?: string } = {}) {
+export function useFnePointsOfSale(
+  params: { search?: string; page?: number; perPage?: number; establishmentId?: string } = {},
+) {
   return useQuery({
     queryKey: FNE_POS_KEYS.list(params),
     queryFn: async () => {
-      const { data } = await api.get<FnePaginatedResponse<FnePointOfSaleRecord>>('/fne-points-of-sale', { params });
+      const { data } = await api.get<FnePaginatedResponse<FnePointOfSaleRecord>>(
+        '/fne-points-of-sale',
+        { params },
+      );
       return data;
     },
     enabled: !!params.establishmentId,

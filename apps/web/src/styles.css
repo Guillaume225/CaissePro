@@ -33,11 +33,24 @@
 }
 
 /* ═══ Print styles ═══ */
-.print-only { display: none !important; }
+.print-only {
+  display: none !important;
+}
 @media print {
   /* Hide everything that isn't the print view */
-  body { background: white !important; margin: 0 !important; padding: 0 !important; }
-  .no-print, nav, aside, header, footer, [data-no-print] { display: none !important; }
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .no-print,
+  nav,
+  aside,
+  header,
+  footer,
+  [data-no-print] {
+    display: none !important;
+  }
 
   /* Reset all layout wrappers: remove sidebar margin, padding, flex, overflow */
   body > #root,
@@ -78,8 +91,17 @@
     opacity: 1 !important;
   }
 
-  @page { size: A4 portrait; margin: 10mm; }
-  table { page-break-inside: auto; }
-  tr { page-break-inside: avoid; }
-  thead { display: table-header-group; }
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
 }

@@ -1,12 +1,10 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="report-header">
   <div class="company-info">
     <div class="company-name">{{ company_name }}</div>
     <div class="company-details">
-      {% if company_address %}{{ company_address }}<br>{% endif %}
-      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
-      {% if company_email %} — {{ company_email }}{% endif %}
+      {% if company_address %}{{ company_address }}<br />{% endif %} {% if company_phone %}Tél: {{
+      company_phone }}{% endif %} {% if company_email %} — {{ company_email }}{% endif %}
     </div>
   </div>
   <div class="report-meta">
@@ -78,11 +76,26 @@
       </tr>
     </thead>
     <tbody>
-      <tr><td>Solde d'ouverture</td><td class="text-right">{{ opening_balance }}</td></tr>
-      <tr><td>(+) Total encaissements</td><td class="text-right">{{ total_income }}</td></tr>
-      <tr><td>(−) Total décaissements (dépenses)</td><td class="text-right">{{ total_outflow }}</td></tr>
-      <tr class="subtotal-row"><td class="font-bold">Solde théorique</td><td class="text-right font-bold">{{ theoretical_balance }}</td></tr>
-      <tr><td>Solde réel compté</td><td class="text-right">{{ actual_balance }}</td></tr>
+      <tr>
+        <td>Solde d'ouverture</td>
+        <td class="text-right">{{ opening_balance }}</td>
+      </tr>
+      <tr>
+        <td>(+) Total encaissements</td>
+        <td class="text-right">{{ total_income }}</td>
+      </tr>
+      <tr>
+        <td>(−) Total décaissements (dépenses)</td>
+        <td class="text-right">{{ total_outflow }}</td>
+      </tr>
+      <tr class="subtotal-row">
+        <td class="font-bold">Solde théorique</td>
+        <td class="text-right font-bold">{{ theoretical_balance }}</td>
+      </tr>
+      <tr>
+        <td>Solde réel compté</td>
+        <td class="text-right">{{ actual_balance }}</td>
+      </tr>
       <tr class="total-row">
         <td>ÉCART (Réel − Théorique)</td>
         <td class="text-right">{{ variance }}</td>
@@ -92,9 +105,19 @@
 </div>
 
 {% if variance_abs > 0 %}
-<div style="background:#FDE8D8;border:1px solid #E87017;border-radius:6px;padding:10px 14px;margin-top:10px">
-  <strong style="color:#E87017">⚠ Écart détecté :</strong>
-  <span>Un écart de {{ variance }} a été constaté entre le solde théorique et le solde réel. Veuillez vérifier les opérations de la journée.</span>
+<div
+  style="
+    background: #fde8d8;
+    border: 1px solid #e87017;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 10px;
+  "
+>
+  <strong style="color: #e87017">⚠ Écart détecté :</strong>
+  <span
+    >Un écart de {{ variance }} a été constaté entre le solde théorique et le solde réel. Veuillez
+    vérifier les opérations de la journée.</span
+  >
 </div>
-{% endif %}
-{% endblock %}
+{% endif %} {% endblock %}

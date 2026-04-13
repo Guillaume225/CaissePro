@@ -4,8 +4,7 @@ import { Vault, UnlockKeyhole, Clock, CalendarDays } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
 import { useOpenCash, useCashState } from '@/hooks/useClosing';
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
 export default function CashDayRequiredPage() {
   const { t } = useTranslation();
@@ -30,13 +29,9 @@ export default function CashDayRequiredPage() {
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900">
-          {t('cashDayRequired.title')}
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('cashDayRequired.title')}</h1>
 
-        <p className="mt-3 text-gray-500">
-          {t('cashDayRequired.description')}
-        </p>
+        <p className="mt-3 text-gray-500">{t('cashDayRequired.description')}</p>
 
         {/* Info cards */}
         <div className="mt-6 space-y-3">
@@ -58,10 +53,7 @@ export default function CashDayRequiredPage() {
         </div>
 
         {/* Open button */}
-        <Button
-          className="mt-8 px-8 py-3 text-base"
-          onClick={() => setShowOpenModal(true)}
-        >
+        <Button className="mt-8 px-8 py-3 text-base" onClick={() => setShowOpenModal(true)}>
           <UnlockKeyhole className="mr-2 h-5 w-5" />
           {t('closing.openCash')}
         </Button>
@@ -81,9 +73,7 @@ export default function CashDayRequiredPage() {
                   <p className="text-sm font-medium text-emerald-800">
                     {t('closing.openModal.description')}
                   </p>
-                  <p className="text-xs text-emerald-600">
-                    {t('closing.openModal.hint')}
-                  </p>
+                  <p className="text-xs text-emerald-600">{t('closing.openModal.hint')}</p>
                 </div>
               </div>
             </div>
@@ -98,9 +88,7 @@ export default function CashDayRequiredPage() {
 
             {openingBalance !== '' && (
               <div className="rounded-lg bg-gray-50 p-3">
-                <p className="text-xs text-gray-500">
-                  {t('closing.openModal.preview')}
-                </p>
+                <p className="text-xs text-gray-500">{t('closing.openModal.preview')}</p>
                 <p className="text-lg font-bold text-gray-900">
                   {fmt(Number(openingBalance) || 0)}
                 </p>
@@ -108,10 +96,7 @@ export default function CashDayRequiredPage() {
             )}
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button
-                variant="ghost"
-                onClick={() => setShowOpenModal(false)}
-              >
+              <Button variant="ghost" onClick={() => setShowOpenModal(false)}>
                 {t('common.cancel')}
               </Button>
               <Button

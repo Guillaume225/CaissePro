@@ -27,9 +27,5 @@ export interface BadgeProps extends VariantProps<typeof badgeVariants> {
 }
 
 export function Badge({ children, variant, className }: BadgeProps) {
-  return (
-    <span className={cn(badgeVariants({ variant }), className)}>
-      {children}
-    </span>
-  );
+  return <span className={cn(badgeVariants({ variant }), className)}>{children}</span>;
 }

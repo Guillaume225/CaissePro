@@ -34,7 +34,9 @@ export default function ApprovalCircuitPage() {
   const [name, setName] = useState('');
   const [minAmount, setMinAmount] = useState('0');
   const [maxAmount, setMaxAmount] = useState('');
-  const [steps, setSteps] = useState<ApprovalCircuitStep[]>([{ level: 1, role: 'chef_comptable', approverId: '', approverName: '' }]);
+  const [steps, setSteps] = useState<ApprovalCircuitStep[]>([
+    { level: 1, role: 'chef_comptable', approverId: '', approverName: '' },
+  ]);
 
   // Filter users eligible for approval (only managers)
   const eligibleUsers = users.filter((u) => u.isActive && u.role === 'manager');
@@ -57,7 +59,11 @@ export default function ApprovalCircuitPage() {
     setName(c.name);
     setMinAmount(String(c.minAmount));
     setMaxAmount(c.maxAmount != null ? String(c.maxAmount) : '');
-    setSteps(c.steps.length ? c.steps.map(s => ({ ...s })) : [{ level: 1, role: 'chef_comptable' as const, approverId: '', approverName: '' }]);
+    setSteps(
+      c.steps.length
+        ? c.steps.map((s) => ({ ...s }))
+        : [{ level: 1, role: 'chef_comptable' as const, approverId: '', approverName: '' }],
+    );
     setShowModal(true);
   };
 
@@ -88,7 +94,10 @@ export default function ApprovalCircuitPage() {
   };
 
   const addStep = () => {
-    setSteps((prev) => [...prev, { level: prev.length + 1, role: 'chef_comptable', approverId: '', approverName: '' }]);
+    setSteps((prev) => [
+      ...prev,
+      { level: prev.length + 1, role: 'chef_comptable', approverId: '', approverName: '' },
+    ]);
   };
 
   const removeStep = (idx: number) => {
@@ -101,7 +110,11 @@ export default function ApprovalCircuitPage() {
         if (i !== idx) return s;
         if (field === 'approverId') {
           const user = eligibleUsers.find((u) => u.id === value);
-          return { ...s, approverId: value, approverName: user ? `${user.firstName} ${user.lastName}` : '' };
+          return {
+            ...s,
+            approverId: value,
+            approverName: user ? `${user.firstName} ${user.lastName}` : '',
+          };
         }
         return { ...s, [field]: value };
       }),
@@ -128,9 +141,7 @@ export default function ApprovalCircuitPage() {
             <h2 className="text-lg font-semibold text-white">
               {t('admin.approvalCircuits.title')}
             </h2>
-            <p className="text-sm text-slate-400">
-              {t('admin.approvalCircuits.subtitle')}
-            </p>
+            <p className="text-sm text-slate-400">{t('admin.approvalCircuits.subtitle')}</p>
           </div>
         </div>
         <Button onClick={openCreate}>
@@ -188,9 +199,17 @@ export default function ApprovalCircuitPage() {
                     <button
                       onClick={() => toggleActive(c)}
                       className="rounded p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
-                      title={c.isActive ? t('admin.approvalCircuits.deactivate') : t('admin.approvalCircuits.activate')}
+                      title={
+                        c.isActive
+                          ? t('admin.approvalCircuits.deactivate')
+                          : t('admin.approvalCircuits.activate')
+                      }
                     >
-                      {c.isActive ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                      {c.isActive ? (
+                        <PowerOff className="h-4 w-4" />
+                      ) : (
+                        <Power className="h-4 w-4" />
+                      )}
                     </button>
                     <button
                       onClick={() => openEdit(c)}
@@ -224,7 +243,11 @@ export default function ApprovalCircuitPage() {
             <label className="mb-1 block text-sm font-medium text-gray-700">
               {t('admin.approvalCircuits.name')}
             </label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Petit décaissement" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Petit décaissement"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -268,7 +291,10 @@ export default function ApprovalCircuitPage() {
             </div>
             <div className="space-y-2">
               {steps.map((step, idx) => (
-                <div key={idx} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2">
+                <div
+                  key={idx}
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2"
+                >
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-gold/20 text-xs font-bold text-brand-gold">
                     {idx + 1}
                   </span>
@@ -324,7 +350,12 @@ export default function ApprovalCircuitPage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!name.trim() || steps.some(s => !s.approverId) || createCircuit.isPending || updateCircuit.isPending}
+              disabled={
+                !name.trim() ||
+                steps.some((s) => !s.approverId) ||
+                createCircuit.isPending ||
+                updateCircuit.isPending
+              }
             >
               {editCircuit ? t('common.save') : t('common.create')}
             </Button>

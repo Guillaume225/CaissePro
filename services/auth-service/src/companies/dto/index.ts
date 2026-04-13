@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsBoolean,
-  IsEmail,
-  MaxLength,
-  Matches,
-} from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEmail, MaxLength, Matches } from 'class-validator';
 
 export class CreateCompanyDto {
   @IsString()
@@ -14,7 +7,10 @@ export class CreateCompanyDto {
 
   @IsString()
   @MaxLength(20)
-  @Matches(/^[A-Z0-9_-]+$/, { message: 'Le code doit contenir uniquement des lettres majuscules, chiffres, tirets ou underscores' })
+  @Matches(/^[A-Z0-9_-]+$/, {
+    message:
+      'Le code doit contenir uniquement des lettres majuscules, chiffres, tirets ou underscores',
+  })
   code!: string;
 
   @IsOptional()

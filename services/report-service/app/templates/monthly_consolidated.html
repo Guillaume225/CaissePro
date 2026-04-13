@@ -1,12 +1,10 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="report-header">
   <div class="company-info">
     <div class="company-name">{{ company_name }}</div>
     <div class="company-details">
-      {% if company_address %}{{ company_address }}<br>{% endif %}
-      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
-      {% if company_email %} — {{ company_email }}{% endif %}
+      {% if company_address %}{{ company_address }}<br />{% endif %} {% if company_phone %}Tél: {{
+      company_phone }}{% endif %} {% if company_email %} — {{ company_email }}{% endif %}
     </div>
   </div>
   <div class="report-meta">
@@ -95,7 +93,10 @@
         <td class="text-right">{{ cat.budget }}</td>
         <td class="text-right">{{ cat.spent }}</td>
         <td class="text-center">
-          <span class="badge badge-{% if cat.rate > 90 %}danger{% elif cat.rate > 75 %}warning{% else %}success{% endif %}">{{ cat.rate }}%</span>
+          <span
+            class="badge badge-{% if cat.rate > 90 %}danger{% elif cat.rate > 75 %}warning{% else %}success{% endif %}"
+            >{{ cat.rate }}%</span
+          >
         </td>
         <td class="text-right">{{ cat.count }}</td>
       </tr>
@@ -128,9 +129,9 @@
         <td class="font-bold">{{ kpi.label }}</td>
         <td class="text-right">{{ kpi.value }}</td>
         <td>
-          {% if kpi.trend == "up" %}<span style="color:#16a34a">▲ {{ kpi.change }}</span>
-          {% elif kpi.trend == "down" %}<span style="color:#E87017">▼ {{ kpi.change }}</span>
-          {% else %}<span style="color:#4884BD">● {{ kpi.change }}</span>{% endif %}
+          {% if kpi.trend == "up" %}<span style="color: #16a34a">▲ {{ kpi.change }}</span> {% elif
+          kpi.trend == "down" %}<span style="color: #e87017">▼ {{ kpi.change }}</span> {% else
+          %}<span style="color: #4884bd">● {{ kpi.change }}</span>{% endif %}
         </td>
       </tr>
       {% endfor %}

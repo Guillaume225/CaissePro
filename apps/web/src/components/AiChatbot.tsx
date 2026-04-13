@@ -125,72 +125,90 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
     setAgentMessages([]);
   }, [activeModule]);
 
-  const handleSend = useCallback((text?: string) => {
-    const content = (text ?? input).trim();
-    if (!content || isTyping) return;
+  const handleSend = useCallback(
+    (text?: string) => {
+      const content = (text ?? input).trim();
+      if (!content || isTyping) return;
 
-    // Block chatbot tab if limit reached
-    if (activeTab === 'chatbot' && chatbotLimitReached) return;
+      // Block chatbot tab if limit reached
+      if (activeTab === 'chatbot' && chatbotLimitReached) return;
 
-    const userMsg: ChatMessage = {
-      id: `u-${Date.now()}`,
-      role: 'user',
-      content,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInput('');
-    setIsTyping(true);
-
-    const conversationHistory = messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-    const onError = () => {
-      setMessages((prev) => [...prev, {
-        id: `e-${Date.now()}`,
-        role: 'assistant' as const,
-        content: t('common.error'),
+      const userMsg: ChatMessage = {
+        id: `u-${Date.now()}`,
+        role: 'user',
+        content,
         timestamp: new Date().toISOString(),
-      }]);
-      setIsTyping(false);
-    };
+      };
 
-    if (activeTab === 'agent') {
-      agentMutation.mutate(
-        {
-          message: content,
-          module: activeModule,
-          conversationHistory,
-          userRole: user?.role ?? 'viewer',
-          allowedModules: user?.allowedModules ?? [activeModule],
-        },
-        {
-          onSuccess: (data: ChatMessage) => {
-            setAgentMessages((prev) => [...prev, data]);
-            setIsTyping(false);
+      setMessages((prev) => [...prev, userMsg]);
+      setInput('');
+      setIsTyping(true);
+
+      const conversationHistory = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const onError = () => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `e-${Date.now()}`,
+            role: 'assistant' as const,
+            content: t('common.error'),
+            timestamp: new Date().toISOString(),
           },
-          onError,
-        },
-      );
-    } else {
-      chatbotMutation.mutate(
-        {
-          message: content,
-          conversationHistory,
-        },
-        {
-          onSuccess: (data: ChatMessage) => {
-            setChatbotMessages((prev) => [...prev, data]);
-            setIsTyping(false);
+        ]);
+        setIsTyping(false);
+      };
+
+      if (activeTab === 'agent') {
+        agentMutation.mutate(
+          {
+            message: content,
+            module: activeModule,
+            conversationHistory,
+            userRole: user?.role ?? 'viewer',
+            allowedModules: user?.allowedModules ?? [activeModule],
           },
-          onError,
-        },
-      );
-    }
-  }, [input, isTyping, messages, activeTab, activeModule, user, agentMutation, chatbotMutation, setMessages, t, chatbotLimitReached]);
+          {
+            onSuccess: (data: ChatMessage) => {
+              setAgentMessages((prev) => [...prev, data]);
+              setIsTyping(false);
+            },
+            onError,
+          },
+        );
+      } else {
+        chatbotMutation.mutate(
+          {
+            message: content,
+            conversationHistory,
+          },
+          {
+            onSuccess: (data: ChatMessage) => {
+              setChatbotMessages((prev) => [...prev, data]);
+              setIsTyping(false);
+            },
+            onError,
+          },
+        );
+      }
+    },
+    [
+      input,
+      isTyping,
+      messages,
+      activeTab,
+      activeModule,
+      user,
+      agentMutation,
+      chatbotMutation,
+      setMessages,
+      t,
+      chatbotLimitReached,
+    ],
+  );
 
   const handleAction = (action: ChatSuggestedAction) => {
     if (action.action_type === 'navigate') {
@@ -205,9 +223,10 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
 
   if (!open) return null;
 
-  const quickSuggestions = activeTab === 'agent'
-    ? (MODULE_SUGGESTIONS[activeModule] ?? MODULE_SUGGESTIONS.expense)
-    : CHATBOT_SUGGESTIONS;
+  const quickSuggestions =
+    activeTab === 'agent'
+      ? (MODULE_SUGGESTIONS[activeModule] ?? MODULE_SUGGESTIONS.expense)
+      : CHATBOT_SUGGESTIONS;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex h-[620px] w-[440px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl">
@@ -232,12 +251,14 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-sidebar-foreground/40 hover:bg-white/10 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-sidebar-foreground/40 hover:bg-white/10 hover:text-white transition-colors"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
       </div>
-
       {/* ── Tab Switcher ───────────────── */}
       <div className="flex shrink-0 border-b border-gray-100">
         <button
@@ -264,18 +285,17 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
           <MessageCircle className="h-3.5 w-3.5" />
           Chatbot
           {chatbotQuestionCount > 0 && (
-            <span className={cn(
-              'ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
-              chatbotLimitReached
-                ? 'bg-red-100 text-red-600'
-                : 'bg-blue-100 text-blue-600',
-            )}>
+            <span
+              className={cn(
+                'ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
+                chatbotLimitReached ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600',
+              )}
+            >
               {chatbotQuestionCount}/{MAX_CHATBOT_QUESTIONS}
             </span>
           )}
         </button>
       </div>
-
       {/* ── Messages ───────────────────── */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.length === 0 && !isTyping && (
@@ -284,11 +304,10 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
               <>
                 <Cpu className="h-10 w-10 text-gray-200 mb-3" />
                 <p className="text-sm font-medium text-gray-400">Agent IA</p>
-                <p className="mt-1 text-xs text-gray-300">
-                  Module : {MODULE_LABELS[activeModule]}
-                </p>
+                <p className="mt-1 text-xs text-gray-300">Module : {MODULE_LABELS[activeModule]}</p>
                 <p className="mt-2 max-w-[260px] text-[11px] text-gray-300">
-                  Posez des questions sur votre module, exécutez des actions et naviguez dans l'application.
+                  Posez des questions sur votre module, exécutez des actions et naviguez dans
+                  l'application.
                 </p>
               </>
             ) : (
@@ -304,30 +323,38 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
         )}
 
         {messages.map((msg) => (
-          <div key={msg.id} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-            <div className={cn(
-              'relative max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm',
-              msg.role === 'user'
-                ? 'bg-brand-gold text-white rounded-br-md'
-                : activeTab === 'agent'
-                  ? 'bg-gray-100 text-gray-800 rounded-bl-md'
-                  : 'bg-blue-50 text-gray-800 rounded-bl-md',
-            )}>
-              {/* Avatar */}
-              <span className={cn(
-                'absolute -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px]',
+          <div
+            key={msg.id}
+            className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}
+          >
+            <div
+              className={cn(
+                'relative max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm',
                 msg.role === 'user'
-                  ? '-right-2 bg-brand-gold/20 text-brand-gold'
+                  ? 'bg-brand-gold text-white rounded-br-md'
                   : activeTab === 'agent'
-                    ? '-left-2 bg-gray-200 text-gray-500'
-                    : '-left-2 bg-blue-100 text-blue-500',
-              )}>
-                {msg.role === 'user'
-                  ? <User className="h-3 w-3" />
-                  : activeTab === 'agent'
-                    ? <Cpu className="h-3 w-3" />
-                    : <Bot className="h-3 w-3" />
-                }
+                    ? 'bg-gray-100 text-gray-800 rounded-bl-md'
+                    : 'bg-blue-50 text-gray-800 rounded-bl-md',
+              )}
+            >
+              {/* Avatar */}
+              <span
+                className={cn(
+                  'absolute -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px]',
+                  msg.role === 'user'
+                    ? '-right-2 bg-brand-gold/20 text-brand-gold'
+                    : activeTab === 'agent'
+                      ? '-left-2 bg-gray-200 text-gray-500'
+                      : '-left-2 bg-blue-100 text-blue-500',
+                )}
+              >
+                {msg.role === 'user' ? (
+                  <User className="h-3 w-3" />
+                ) : activeTab === 'agent' ? (
+                  <Cpu className="h-3 w-3" />
+                ) : (
+                  <Bot className="h-3 w-3" />
+                )}
               </span>
 
               <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -340,20 +367,22 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
               )}
 
               {/* Suggested actions (agent only) */}
-              {activeTab === 'agent' && msg.suggested_actions && msg.suggested_actions.length > 0 && (
-                <div className="mt-2 flex flex-col gap-1.5">
-                  {msg.suggested_actions.map((action, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleAction(action)}
-                      className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-600 transition-colors hover:border-brand-gold hover:text-brand-gold text-left"
-                    >
-                      <ArrowRight className="h-3 w-3 shrink-0" />
-                      {action.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {activeTab === 'agent' &&
+                msg.suggested_actions &&
+                msg.suggested_actions.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    {msg.suggested_actions.map((action, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleAction(action)}
+                        className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-600 transition-colors hover:border-brand-gold hover:text-brand-gold text-left"
+                      >
+                        <ArrowRight className="h-3 w-3 shrink-0" />
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
         ))}
@@ -361,18 +390,28 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
         {/* Typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
-            <div className={cn(
-              'flex items-center gap-1.5 rounded-2xl rounded-bl-md px-4 py-3',
-              activeTab === 'agent' ? 'bg-gray-100' : 'bg-blue-50',
-            )}>
-              <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }} />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }} />
+            <div
+              className={cn(
+                'flex items-center gap-1.5 rounded-2xl rounded-bl-md px-4 py-3',
+                activeTab === 'agent' ? 'bg-gray-100' : 'bg-blue-50',
+              )}
+            >
+              <span
+                className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                style={{ animationDelay: '0ms' }}
+              />
+              <span
+                className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                style={{ animationDelay: '150ms' }}
+              />
+              <span
+                className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                style={{ animationDelay: '300ms' }}
+              />
             </div>
           </div>
         )}
       </div>
-
       {/* ── Quick suggestions ──────────── */}
       {messages.length === 0 && (
         <div className="flex gap-2 px-4 pb-2 flex-wrap">
@@ -392,49 +431,57 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
           ))}
         </div>
       )}
-
-      {/* ── Input bar ──────────────────── */}      {activeTab === 'chatbot' && chatbotLimitReached ? (
+      {/* ── Input bar ──────────────────── */}{' '}
+      {activeTab === 'chatbot' && chatbotLimitReached ? (
         <div className="shrink-0 border-t border-gray-100 px-3 py-3">
           <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-center">
             <p className="text-xs font-medium text-amber-700">
               Limite de {MAX_CHATBOT_QUESTIONS} questions atteinte
             </p>
             <p className="mt-1 text-[11px] text-amber-600">
-              Utilisez l'<strong>Agent IA</strong> pour vos questions métier ou effacez la conversation
+              Utilisez l'<strong>Agent IA</strong> pour vos questions métier ou effacez la
+              conversation
             </p>
           </div>
         </div>
-      ) : (      <div className="shrink-0 border-t border-gray-100 px-3 py-2.5">
-        <div className="flex items-center gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder={activeTab === 'agent' ? t('chatbot.placeholder') : 'Discutez librement...'}
-            disabled={isTyping}
-            className={cn(
-              'flex-1 rounded-xl border bg-gray-50 px-3.5 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 disabled:opacity-50',
-              activeTab === 'agent'
-                ? 'border-gray-200 focus:border-brand-gold focus:ring-brand-gold'
-                : 'border-blue-200 focus:border-blue-400 focus:ring-blue-400',
-            )}
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isTyping}
-            className={cn(
-              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white transition-colors disabled:opacity-40',
-              activeTab === 'agent'
-                ? 'bg-brand-gold hover:bg-brand-gold-dark'
-                : 'bg-blue-500 hover:bg-blue-600',
-            )}
-          >
-            {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </button>
+      ) : (
+        <div className="shrink-0 border-t border-gray-100 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+              placeholder={
+                activeTab === 'agent' ? t('chatbot.placeholder') : 'Discutez librement...'
+              }
+              disabled={isTyping}
+              className={cn(
+                'flex-1 rounded-xl border bg-gray-50 px-3.5 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 disabled:opacity-50',
+                activeTab === 'agent'
+                  ? 'border-gray-200 focus:border-brand-gold focus:ring-brand-gold'
+                  : 'border-blue-200 focus:border-blue-400 focus:ring-blue-400',
+              )}
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isTyping}
+              className={cn(
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white transition-colors disabled:opacity-40',
+                activeTab === 'agent'
+                  ? 'bg-brand-gold hover:bg-brand-gold-dark'
+                  : 'bg-blue-500 hover:bg-blue-600',
+              )}
+            >
+              {isTyping ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
-      </div>
       )}
     </div>
   );
@@ -445,31 +492,39 @@ function MiniChart({ chartData }: { chartData: ChatChartData }) {
   const { type, data, dataKey } = chartData;
 
   return (
-      <ResponsiveContainer width="100%" height={128}>
-        {type === 'bar' ? (
-          <BarChart data={data}>
-            <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-            <YAxis hide />
-            <Tooltip formatter={(v) => formatCFA(Number(v))} contentStyle={TOOLTIP_STYLE} />
-            <Bar dataKey={dataKey} fill="#D4A843" radius={[3, 3, 0, 0]} />
-          </BarChart>
-        ) : type === 'line' ? (
-          <LineChart data={data}>
-            <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-            <YAxis hide />
-            <Tooltip formatter={(v) => formatCFA(Number(v))} contentStyle={TOOLTIP_STYLE} />
-            <Line type="monotone" dataKey={dataKey} stroke="#3B82F6" strokeWidth={2} dot={{ r: 2 }} />
-          </LineChart>
-        ) : (
-          <PieChart>
-            <Pie data={data} cx="50%" cy="50%" innerRadius={25} outerRadius={45} paddingAngle={2} dataKey={dataKey}>
-              {data.map((_: unknown, i: number) => (
-                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(v) => formatCFA(Number(v))} contentStyle={TOOLTIP_STYLE} />
-          </PieChart>
-        )}
-      </ResponsiveContainer>
+    <ResponsiveContainer width="100%" height={128}>
+      {type === 'bar' ? (
+        <BarChart data={data}>
+          <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+          <YAxis hide />
+          <Tooltip formatter={(v) => formatCFA(Number(v))} contentStyle={TOOLTIP_STYLE} />
+          <Bar dataKey={dataKey} fill="#D4A843" radius={[3, 3, 0, 0]} />
+        </BarChart>
+      ) : type === 'line' ? (
+        <LineChart data={data}>
+          <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+          <YAxis hide />
+          <Tooltip formatter={(v) => formatCFA(Number(v))} contentStyle={TOOLTIP_STYLE} />
+          <Line type="monotone" dataKey={dataKey} stroke="#3B82F6" strokeWidth={2} dot={{ r: 2 }} />
+        </LineChart>
+      ) : (
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={25}
+            outerRadius={45}
+            paddingAngle={2}
+            dataKey={dataKey}
+          >
+            {data.map((_: unknown, i: number) => (
+              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip formatter={(v) => formatCFA(Number(v))} contentStyle={TOOLTIP_STYLE} />
+        </PieChart>
+      )}
+    </ResponsiveContainer>
   );
 }

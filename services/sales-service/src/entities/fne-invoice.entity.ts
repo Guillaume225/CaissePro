@@ -49,7 +49,12 @@ export class FneInvoice {
   @Column({ type: 'simple-enum', enum: FneTemplate })
   template!: FneTemplate;
 
-  @Column({ type: 'simple-enum', enum: FneInvoiceType, name: 'invoice_type', default: FneInvoiceType.SALE })
+  @Column({
+    type: 'simple-enum',
+    enum: FneInvoiceType,
+    name: 'invoice_type',
+    default: FneInvoiceType.SALE,
+  })
   invoiceType!: FneInvoiceType;
 
   @Column({ type: 'simple-enum', enum: FnePaymentMethod, name: 'payment_method' })

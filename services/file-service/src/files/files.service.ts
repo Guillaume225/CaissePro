@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -36,10 +32,7 @@ export class FilesService {
     entityId?: string,
   ): Promise<FileResponseDto> {
     // Validate file (type, size, MIME spoofing)
-    const { detectedMime, extension } = await this.validation.validate(
-      file,
-      this.maxFileSize,
-    );
+    const { detectedMime, extension } = await this.validation.validate(file, this.maxFileSize);
 
     // Generate storage key: /module/YYYY/MM/uuid.ext
     const now = new Date();
@@ -49,10 +42,7 @@ export class FilesService {
     const storageKey = `${module}/${year}/${month}/${fileId}${extension}`;
 
     // Compute checksum
-    const checksum = crypto
-      .createHash('sha256')
-      .update(file.buffer)
-      .digest('hex');
+    const checksum = crypto.createHash('sha256').update(file.buffer).digest('hex');
 
     // Upload to MinIO
     await this.storage.upload(storageKey, file.buffer, detectedMime);
@@ -98,10 +88,7 @@ export class FilesService {
     if (!file) {
       throw new NotFoundException(`File ${id} not found`);
     }
-    const url = await this.storage.getPresignedDownloadUrl(
-      file.storageKey,
-      file.originalName,
-    );
+    const url = await this.storage.getPresignedDownloadUrl(file.storageKey, file.originalName);
     return { url, filename: file.originalName };
   }
 

@@ -56,11 +56,12 @@ export class FnePointsOfSaleService {
     const perPage = Math.min(Math.max(Number(query.perPage) || 25, 1), 100);
     const skip = (page - 1) * perPage;
 
-    const qb = this.repo.createQueryBuilder('p')
-      .where('p.isActive = 1');
+    const qb = this.repo.createQueryBuilder('p').where('p.isActive = 1');
 
     if (query.establishmentId) {
-      qb.andWhere('p.establishmentId = :establishmentId', { establishmentId: query.establishmentId });
+      qb.andWhere('p.establishmentId = :establishmentId', {
+        establishmentId: query.establishmentId,
+      });
     }
 
     if (query.search) {

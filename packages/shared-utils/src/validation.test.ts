@@ -122,7 +122,7 @@ describe('validation', () => {
       expect(isNonEmptyString('')).toBe(false);
     });
 
-    test('rejette une string d\'espaces', () => {
+    test("rejette une string d'espaces", () => {
       expect(isNonEmptyString('   ')).toBe(false);
     });
 

@@ -117,10 +117,7 @@ export class ExpensesController {
   @Post(':id/pay')
   @SkipCashClosingCheck()
   @Permissions(EXPENSE_PERMISSIONS.PAY)
-  markPaid(
-    @Param('id', ParseLooseUUIDPipe) id: string,
-    @CurrentUser() user: WorkflowUser,
-  ) {
+  markPaid(@Param('id', ParseLooseUUIDPipe) id: string, @CurrentUser() user: WorkflowUser) {
     return this.expensesService.markPaid(id, user);
   }
 

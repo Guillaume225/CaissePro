@@ -12,7 +12,10 @@ export class DisbursementRequestsService {
   ) {}
 
   /** List all requests for a tenant, optionally filtered by status */
-  async findAll(tenantId: string, status?: DisbursementRequestStatus): Promise<DisbursementRequest[]> {
+  async findAll(
+    tenantId: string,
+    status?: DisbursementRequestStatus,
+  ): Promise<DisbursementRequest[]> {
     const where: Record<string, unknown> = { tenantId };
     if (status) where.status = status;
     return this.repo.find({ where, order: { createdAt: 'DESC' } });
@@ -50,17 +53,20 @@ export class DisbursementRequestsService {
   }
 
   /** Create a new request (from employee portal) */
-  async create(tenantId: string, dto: {
-    lastName: string;
-    firstName: string;
-    position?: string;
-    service?: string;
-    phone?: string;
-    matricule?: string;
-    email?: string;
-    amount: number;
-    reason: string;
-  }): Promise<DisbursementRequest> {
+  async create(
+    tenantId: string,
+    dto: {
+      lastName: string;
+      firstName: string;
+      position?: string;
+      service?: string;
+      phone?: string;
+      matricule?: string;
+      email?: string;
+      amount: number;
+      reason: string;
+    },
+  ): Promise<DisbursementRequest> {
     const entity = this.repo.create({
       tenantId,
       reference: '', // trigger will auto-generate
@@ -89,7 +95,12 @@ export class DisbursementRequestsService {
   }
 
   /** Reject a request */
-  async reject(id: string, tenantId: string, userId: string, comment?: string): Promise<DisbursementRequest> {
+  async reject(
+    id: string,
+    tenantId: string,
+    userId: string,
+    comment?: string,
+  ): Promise<DisbursementRequest> {
     const req = await this.findOne(id, tenantId);
     req.status = DisbursementRequestStatus.REJECTED;
     req.processedById = userId;
@@ -98,7 +109,12 @@ export class DisbursementRequestsService {
   }
 
   /** Mark as processed (linked to expense) — sets VALIDATING */
-  async markProcessed(id: string, tenantId: string, userId: string, linkedExpenseId?: string): Promise<DisbursementRequest> {
+  async markProcessed(
+    id: string,
+    tenantId: string,
+    userId: string,
+    linkedExpenseId?: string,
+  ): Promise<DisbursementRequest> {
     const req = await this.findOne(id, tenantId);
     if (req.status !== DisbursementRequestStatus.APPROVED) {
       throw new BadRequestException(

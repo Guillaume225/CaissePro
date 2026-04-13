@@ -2,21 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Clock,
-  XCircle,
-  CheckCircle2,
-  Eye,
-  Check,
-  X,
-  Send,
-} from 'lucide-react';
-import {
-  Button,
-  Badge,
-  DataTable,
-  Modal,
-} from '@/components/ui';
+import { Clock, XCircle, CheckCircle2, Eye, Check, X, Send } from 'lucide-react';
+import { Button, Badge, DataTable, Modal } from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
 import {
   usePendingDisbursementRequests,
@@ -28,8 +15,7 @@ import type { DisbursementRequest } from '@/hooks/useDisbursementRequests';
 
 type AnyRow = Record<string, unknown>;
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
 export default function PendingRequestsPage() {
   const { t } = useTranslation();
@@ -48,16 +34,29 @@ export default function PendingRequestsPage() {
     setHiddenIds((prev) => new Set(prev).add(id));
     setShowDetailModal(false);
     approveMutation.mutate(id, {
-      onError: () => setHiddenIds((prev) => { const next = new Set(prev); next.delete(id); return next; }),
+      onError: () =>
+        setHiddenIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        }),
     });
   };
 
   const handleReject = (id: string) => {
     setHiddenIds((prev) => new Set(prev).add(id));
     setShowDetailModal(false);
-    rejectMutation.mutate({ id }, {
-      onError: () => setHiddenIds((prev) => { const next = new Set(prev); next.delete(id); return next; }),
-    });
+    rejectMutation.mutate(
+      { id },
+      {
+        onError: () =>
+          setHiddenIds((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          }),
+      },
+    );
   };
 
   const handleProcess = (request: DisbursementRequest) => {
@@ -71,12 +70,19 @@ export default function PendingRequestsPage() {
       (old) => old?.filter((r) => r.id !== request.id) ?? [],
     );
 
-    processMutation.mutate({ id: request.id }, {
-      onError: () => {
-        setHiddenIds((prev) => { const next = new Set(prev); next.delete(request.id); return next; });
-        queryClient.invalidateQueries({ queryKey: ['disbursement-requests', 'pending'] });
+    processMutation.mutate(
+      { id: request.id },
+      {
+        onError: () => {
+          setHiddenIds((prev) => {
+            const next = new Set(prev);
+            next.delete(request.id);
+            return next;
+          });
+          queryClient.invalidateQueries({ queryKey: ['disbursement-requests', 'pending'] });
+        },
       },
-    });
+    );
     navigate('/expenses/new', {
       state: {
         fromRequest: true,
@@ -92,7 +98,9 @@ export default function PendingRequestsPage() {
   };
 
   const pendingOnly = pendingRequests.filter((r) => r.status === 'PENDING' && !hiddenIds.has(r.id));
-  const approvedRequests = pendingRequests.filter((r) => r.status === 'APPROVED' && !hiddenIds.has(r.id));
+  const approvedRequests = pendingRequests.filter(
+    (r) => r.status === 'APPROVED' && !hiddenIds.has(r.id),
+  );
 
   const pendingColumns: Column<Record<string, unknown>>[] = [
     {
@@ -110,7 +118,9 @@ export default function PendingRequestsPage() {
         const row = r as unknown as DisbursementRequest;
         return (
           <div>
-            <p className="text-sm font-medium">{row.firstName} {row.lastName}</p>
+            <p className="text-sm font-medium">
+              {row.firstName} {row.lastName}
+            </p>
             <p className="text-xs text-gray-400">{row.matricule}</p>
           </div>
         );
@@ -119,7 +129,9 @@ export default function PendingRequestsPage() {
     {
       key: 'service',
       header: t('closing.pendingRequests.service'),
-      render: (r) => <span className="text-sm">{(r as unknown as DisbursementRequest).service}</span>,
+      render: (r) => (
+        <span className="text-sm">{(r as unknown as DisbursementRequest).service}</span>
+      ),
     },
     {
       key: 'amount',
@@ -136,7 +148,9 @@ export default function PendingRequestsPage() {
       header: t('closing.pendingRequests.reason'),
       render: (r) => {
         const row = r as unknown as DisbursementRequest;
-        return <span className="text-sm text-gray-600 truncate max-w-[200px] block">{row.reason}</span>;
+        return (
+          <span className="text-sm text-gray-600 truncate max-w-[200px] block">{row.reason}</span>
+        );
       },
     },
     {
@@ -145,7 +159,11 @@ export default function PendingRequestsPage() {
       sortable: true,
       render: (r) => {
         const row = r as unknown as DisbursementRequest;
-        return <span className="text-xs text-gray-500">{new Date(row.createdAt).toLocaleDateString('fr-FR')}</span>;
+        return (
+          <span className="text-xs text-gray-500">
+            {new Date(row.createdAt).toLocaleDateString('fr-FR')}
+          </span>
+        );
       },
     },
     {
@@ -160,16 +178,15 @@ export default function PendingRequestsPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => { setSelectedRequest(row); setShowDetailModal(true); }}
+                onClick={() => {
+                  setSelectedRequest(row);
+                  setShowDetailModal(true);
+                }}
                 className="text-gray-500 hover:text-brand-gold"
               >
                 <Eye className="h-4 w-4" />
               </Button>
-              <Button
-                size="sm"
-                onClick={() => handleProcess(row)}
-                className="text-xs"
-              >
+              <Button size="sm" onClick={() => handleProcess(row)} className="text-xs">
                 <Send className="h-4 w-4 mr-1" />
                 {t('closing.pendingRequests.process')}
               </Button>
@@ -181,7 +198,10 @@ export default function PendingRequestsPage() {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => { setSelectedRequest(row); setShowDetailModal(true); }}
+              onClick={() => {
+                setSelectedRequest(row);
+                setShowDetailModal(true);
+              }}
               className="text-gray-500 hover:text-brand-gold"
             >
               <Eye className="h-4 w-4" />
@@ -219,9 +239,13 @@ export default function PendingRequestsPage() {
       {/* Pending requests */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-gray-800">{t('closing.pendingRequests.title')}</h2>
+          <h2 className="text-lg font-semibold text-gray-800">
+            {t('closing.pendingRequests.title')}
+          </h2>
           {pendingOnly.length > 0 && (
-            <Badge variant="warning" className="tabular-nums">{pendingOnly.length}</Badge>
+            <Badge variant="warning" className="tabular-nums">
+              {pendingOnly.length}
+            </Badge>
           )}
         </div>
         <DataTable
@@ -235,7 +259,9 @@ export default function PendingRequestsPage() {
       {/* Approved requests (waiting to be processed) */}
       {approvedRequests.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-gray-800">{t('closing.pendingRequests.approved')}</h2>
+          <h2 className="mb-3 text-lg font-semibold text-gray-800">
+            {t('closing.pendingRequests.approved')}
+          </h2>
           <DataTable
             columns={pendingColumns}
             data={approvedRequests as unknown as AnyRow[]}
@@ -265,7 +291,9 @@ export default function PendingRequestsPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <p className="text-xs text-gray-500">{t('demande.form.lastName')}</p>
-                <p className="text-sm font-medium">{selectedRequest.lastName} {selectedRequest.firstName}</p>
+                <p className="text-sm font-medium">
+                  {selectedRequest.lastName} {selectedRequest.firstName}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">{t('demande.form.service')}</p>
@@ -301,32 +329,26 @@ export default function PendingRequestsPage() {
 
             <div>
               <p className="text-xs text-gray-500">{t('closing.pendingRequests.date')}</p>
-              <p className="text-sm text-gray-600">{new Date(selectedRequest.createdAt).toLocaleString('fr-FR')}</p>
+              <p className="text-sm text-gray-600">
+                {new Date(selectedRequest.createdAt).toLocaleString('fr-FR')}
+              </p>
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:justify-end">
               {selectedRequest.status === 'PENDING' && (
                 <>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleReject(selectedRequest.id)}
-                  >
+                  <Button variant="destructive" onClick={() => handleReject(selectedRequest.id)}>
                     <XCircle className="mr-2 h-4 w-4" />
                     {t('closing.pendingRequests.reject')}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleApprove(selectedRequest.id)}
-                  >
+                  <Button variant="ghost" onClick={() => handleApprove(selectedRequest.id)}>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                     {t('closing.pendingRequests.approve')}
                   </Button>
                 </>
               )}
               {selectedRequest.status === 'APPROVED' && (
-                <Button
-                  onClick={() => handleProcess(selectedRequest)}
-                >
+                <Button onClick={() => handleProcess(selectedRequest)}>
                   <Send className="mr-2 h-4 w-4" />
                   {t('closing.pendingRequests.process')}
                 </Button>

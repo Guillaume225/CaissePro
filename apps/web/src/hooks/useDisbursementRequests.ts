@@ -90,7 +90,9 @@ export function useCreateDisbursementRequest() {
 }
 
 /** Track a disbursement request by reference (public) */
-export async function trackDisbursementRequest(reference: string): Promise<DisbursementRequest | null> {
+export async function trackDisbursementRequest(
+  reference: string,
+): Promise<DisbursementRequest | null> {
   const { data } = await api.get(`/disbursement-requests/track/${encodeURIComponent(reference)}`);
   return data.data ?? null;
 }
@@ -114,7 +116,13 @@ export function useApproveDisbursementRequest() {
 export function useRejectDisbursementRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, comment }: { id: string; comment?: string }): Promise<DisbursementRequest> => {
+    mutationFn: async ({
+      id,
+      comment,
+    }: {
+      id: string;
+      comment?: string;
+    }): Promise<DisbursementRequest> => {
       const { data } = await api.patch(`/disbursement-requests/${id}/reject`, { comment });
       return data.data;
     },
@@ -129,7 +137,13 @@ export function useRejectDisbursementRequest() {
 export function useProcessDisbursementRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, linkedExpenseId }: { id: string; linkedExpenseId?: string }): Promise<DisbursementRequest> => {
+    mutationFn: async ({
+      id,
+      linkedExpenseId,
+    }: {
+      id: string;
+      linkedExpenseId?: string;
+    }): Promise<DisbursementRequest> => {
       const { data } = await api.patch(`/disbursement-requests/${id}/process`, { linkedExpenseId });
       return data.data;
     },

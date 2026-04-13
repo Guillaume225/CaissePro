@@ -1,8 +1,14 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ShieldCheck, Shield, Smartphone, Copy,
-  CheckCircle2, AlertTriangle, Loader2, KeyRound,
+  ShieldCheck,
+  Shield,
+  Smartphone,
+  Copy,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  KeyRound,
 } from 'lucide-react';
 import { Button, Modal, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/auth-store';
@@ -35,12 +41,16 @@ export default function SecurityPage() {
 
   // Fetch current MFA status
   useState(() => {
-    api.get('/users/me').then(({ data }) => {
-      const profile = data.data ?? data;
-      setMfaEnabled(profile.mfaEnabled ?? false);
-    }).catch(() => {
-      setMfaEnabled(false);
-    }).finally(() => setLoadingStatus(false));
+    api
+      .get('/users/me')
+      .then(({ data }) => {
+        const profile = data.data ?? data;
+        setMfaEnabled(profile.mfaEnabled ?? false);
+      })
+      .catch(() => {
+        setMfaEnabled(false);
+      })
+      .finally(() => setLoadingStatus(false));
   });
 
   const startSetup = async () => {
@@ -134,10 +144,13 @@ export default function SecurityPage() {
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-gold/10 text-sm font-bold text-brand-gold">
-            {user?.firstName?.[0]}{user?.lastName?.[0]}
+            {user?.firstName?.[0]}
+            {user?.lastName?.[0]}
           </div>
           <div>
-            <p className="font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+            <p className="font-medium text-gray-900">
+              {user?.firstName} {user?.lastName}
+            </p>
             <p className="text-sm text-gray-500">{user?.email}</p>
           </div>
         </div>
@@ -147,16 +160,16 @@ export default function SecurityPage() {
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-              mfaEnabled ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'
-            }`}>
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                mfaEnabled ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'
+              }`}
+            >
               {mfaEnabled ? <ShieldCheck className="h-6 w-6" /> : <Shield className="h-6 w-6" />}
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {t('security.mfa.title')}
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t('security.mfa.title')}</h3>
                 <Badge variant={mfaEnabled ? 'success' : 'warning'}>
                   {mfaEnabled ? t('security.mfa.enabled') : t('security.mfa.disabled')}
                 </Badge>
@@ -171,21 +184,27 @@ export default function SecurityPage() {
           <h4 className="mb-3 text-sm font-medium text-gray-700">{t('security.mfa.howItWorks')}</h4>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gold/10 text-xs font-bold text-brand-gold">1</div>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gold/10 text-xs font-bold text-brand-gold">
+                1
+              </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">{t('security.mfa.step1Title')}</p>
                 <p className="text-xs text-gray-500">{t('security.mfa.step1Desc')}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gold/10 text-xs font-bold text-brand-gold">2</div>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gold/10 text-xs font-bold text-brand-gold">
+                2
+              </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">{t('security.mfa.step2Title')}</p>
                 <p className="text-xs text-gray-500">{t('security.mfa.step2Desc')}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gold/10 text-xs font-bold text-brand-gold">3</div>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gold/10 text-xs font-bold text-brand-gold">
+                3
+              </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">{t('security.mfa.step3Title')}</p>
                 <p className="text-xs text-gray-500">{t('security.mfa.step3Desc')}</p>
@@ -216,14 +235,19 @@ export default function SecurityPage() {
 
       {/* Compatible apps */}
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">{t('security.mfa.compatibleApps')}</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">
+          {t('security.mfa.compatibleApps')}
+        </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             { name: 'Google Authenticator', icon: Smartphone, desc: 'Android / iOS' },
             { name: 'Microsoft Authenticator', icon: KeyRound, desc: 'Android / iOS' },
             { name: 'Authy', icon: Shield, desc: 'Multi-plateforme' },
           ].map((app) => (
-            <div key={app.name} className="flex items-center gap-3 rounded-lg border border-gray-100 p-3">
+            <div
+              key={app.name}
+              className="flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+            >
               <app.icon className="h-5 w-5 text-gray-400" />
               <div>
                 <p className="text-sm font-medium text-gray-700">{app.name}</p>
@@ -237,7 +261,9 @@ export default function SecurityPage() {
       {/* ── Setup Modal ─────────────────────────────────── */}
       <Modal
         open={showSetupModal}
-        onClose={() => { if (setupStep !== 'verify') setShowSetupModal(false); }}
+        onClose={() => {
+          if (setupStep !== 'verify') setShowSetupModal(false);
+        }}
         title={t('security.mfa.setupTitle')}
         size="md"
       >
@@ -250,17 +276,15 @@ export default function SecurityPage() {
             {/* QR Code */}
             <div className="flex justify-center">
               <div className="rounded-xl border-2 border-dashed border-gray-200 p-4">
-                <img
-                  src={qrData.qrCodeDataUrl}
-                  alt="QR Code"
-                  className="h-48 w-48"
-                />
+                <img src={qrData.qrCodeDataUrl} alt="QR Code" className="h-48 w-48" />
               </div>
             </div>
 
             {/* Manual entry secret */}
             <div className="rounded-lg bg-gray-50 p-4">
-              <p className="mb-2 text-xs font-medium text-gray-500">{t('security.mfa.manualEntry')}</p>
+              <p className="mb-2 text-xs font-medium text-gray-500">
+                {t('security.mfa.manualEntry')}
+              </p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 rounded bg-white px-3 py-2 text-sm font-mono tracking-wider text-gray-900 border border-gray-200">
                   {qrData.secret}
@@ -269,12 +293,22 @@ export default function SecurityPage() {
                   onClick={copySecret}
                   className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                 >
-                  {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  {copied ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            <Button className="w-full" onClick={() => { setSetupStep('verify'); setTimeout(() => inputRefs.current[0]?.focus(), 100); }}>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setSetupStep('verify');
+                setTimeout(() => inputRefs.current[0]?.focus(), 100);
+              }}
+            >
               {t('security.mfa.continueToVerify')}
             </Button>
           </div>
@@ -294,7 +328,9 @@ export default function SecurityPage() {
                 {verifyCode.map((digit, i) => (
                   <input
                     key={i}
-                    ref={(el) => { inputRefs.current[i] = el; }}
+                    ref={(el) => {
+                      inputRefs.current[i] = el;
+                    }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
@@ -331,7 +367,9 @@ export default function SecurityPage() {
               <CheckCircle2 className="h-8 w-8 text-emerald-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">{t('security.mfa.successTitle')}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {t('security.mfa.successTitle')}
+              </h3>
               <p className="mt-1 text-sm text-gray-500">{t('security.mfa.successDesc')}</p>
             </div>
             <Button className="w-full" onClick={() => setShowSetupModal(false)}>
@@ -355,11 +393,7 @@ export default function SecurityPage() {
           </div>
 
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setShowDisableModal(false)}
-            >
+            <Button variant="outline" className="flex-1" onClick={() => setShowDisableModal(false)}>
               {t('common.cancel')}
             </Button>
             <Button
@@ -368,9 +402,7 @@ export default function SecurityPage() {
               onClick={handleDisable}
               disabled={mfaDisable.isPending}
             >
-              {mfaDisable.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+              {mfaDisable.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('security.mfa.confirmDisable')}
             </Button>
           </div>

@@ -1,8 +1,22 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FolderTree, Plus, Pencil, Trash2, GripVertical, ChevronRight, ChevronDown } from 'lucide-react';
+import {
+  FolderTree,
+  Plus,
+  Pencil,
+  Trash2,
+  GripVertical,
+  ChevronRight,
+  ChevronDown,
+} from 'lucide-react';
 import { Button, Input, Modal, Badge } from '@/components/ui';
-import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, useReorderCategories } from '@/hooks/useAdmin';
+import {
+  useCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+  useReorderCategories,
+} from '@/hooks/useAdmin';
 import type { ExpenseCategory, CreateCategoryDto } from '@/types/admin';
 
 export default function CategoryManagementPage() {
@@ -16,7 +30,11 @@ export default function CategoryManagementPage() {
   const [showModal, setShowModal] = useState(false);
   const [editCat, setEditCat] = useState<ExpenseCategory | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
-  const [form, setForm] = useState<CreateCategoryDto>({ name: '', parentId: null, direction: 'EXIT' });
+  const [form, setForm] = useState<CreateCategoryDto>({
+    name: '',
+    parentId: null,
+    direction: 'EXIT',
+  });
   const [confirmDelete, setConfirmDelete] = useState<ExpenseCategory | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [dragItem, setDragItem] = useState<string | null>(null);
@@ -53,7 +71,11 @@ export default function CategoryManagementPage() {
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
@@ -65,7 +87,7 @@ export default function CategoryManagementPage() {
   const handleDrop = (targetId: string) => {
     if (!dragItem || dragItem === targetId) return;
     // Build new order: move dragItem before targetId at same level
-    const flatIds = categories.map(c => c.id);
+    const flatIds = categories.map((c) => c.id);
     const fromIdx = flatIds.indexOf(dragItem);
     const toIdx = flatIds.indexOf(targetId);
     if (fromIdx === -1 || toIdx === -1) return;
@@ -76,7 +98,7 @@ export default function CategoryManagementPage() {
     setDragItem(null);
   };
 
-  // Build tree from flat list  
+  // Build tree from flat list
   const rootCats = categories.filter((c) => !c.parentId);
 
   const renderCategory = (cat: ExpenseCategory, depth: number) => {
@@ -98,8 +120,15 @@ export default function CategoryManagementPage() {
           <GripVertical className="h-4 w-4 cursor-grab text-gray-300" />
 
           {children.length > 0 ? (
-            <button onClick={() => toggleExpand(cat.id)} className="text-gray-400 hover:text-gray-600">
-              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <button
+              onClick={() => toggleExpand(cat.id)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
             </button>
           ) : (
             <span className="w-4" />
@@ -116,13 +145,23 @@ export default function CategoryManagementPage() {
           </Badge>
 
           <div className="flex items-center gap-1">
-            <button onClick={() => openCreate(cat.id)} className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-brand-gold" title={t('admin.categories.addChild')}>
+            <button
+              onClick={() => openCreate(cat.id)}
+              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-brand-gold"
+              title={t('admin.categories.addChild')}
+            >
               <Plus className="h-3.5 w-3.5" />
             </button>
-            <button onClick={() => openEdit(cat)} className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+            <button
+              onClick={() => openEdit(cat)}
+              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            >
               <Pencil className="h-3.5 w-3.5" />
             </button>
-            <button onClick={() => setConfirmDelete(cat)} className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600">
+            <button
+              onClick={() => setConfirmDelete(cat)}
+              className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+            >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -160,11 +199,22 @@ export default function CategoryManagementPage() {
       )}
 
       {/* Create / Edit Modal */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={editCat ? t('admin.categories.editCategory') : t('admin.categories.addCategory')} size="sm">
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editCat ? t('admin.categories.editCategory') : t('admin.categories.addCategory')}
+        size="sm"
+      >
         <div className="space-y-4">
-          <Input label={t('admin.categories.name')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Input
+            label={t('admin.categories.name')}
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">{t('admin.categories.direction')}</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t('admin.categories.direction')}
+            </label>
             <select
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
               value={form.direction || 'EXIT'}
@@ -180,8 +230,13 @@ export default function CategoryManagementPage() {
             </p>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSubmit} loading={createCategory.isPending || updateCategory.isPending}>
+            <Button variant="ghost" onClick={() => setShowModal(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              loading={createCategory.isPending || updateCategory.isPending}
+            >
               {editCat ? t('common.save') : t('common.create')}
             </Button>
           </div>
@@ -189,11 +244,22 @@ export default function CategoryManagementPage() {
       </Modal>
 
       {/* Delete Confirmation */}
-      <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title={t('admin.categories.confirmDelete')} size="sm">
-        <p className="mb-4 text-sm text-gray-600">{t('admin.categories.confirmDeleteMsg', { name: confirmDelete?.name })}</p>
+      <Modal
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title={t('admin.categories.confirmDelete')}
+        size="sm"
+      >
+        <p className="mb-4 text-sm text-gray-600">
+          {t('admin.categories.confirmDeleteMsg', { name: confirmDelete?.name })}
+        </p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</Button>
-          <Button variant="destructive" onClick={handleDelete} loading={deleteCategory.isPending}>{t('common.delete')}</Button>
+          <Button variant="ghost" onClick={() => setConfirmDelete(null)}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} loading={deleteCategory.isPending}>
+            {t('common.delete')}
+          </Button>
         </div>
       </Modal>
     </div>

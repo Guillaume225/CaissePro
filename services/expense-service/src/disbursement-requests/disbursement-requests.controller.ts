@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Param,
-  Body,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query } from '@nestjs/common';
 import { DisbursementRequestsService } from './disbursement-requests.service';
 import { CurrentUser, Public } from '../common/decorators';
 import { DisbursementRequestStatus } from '../entities/enums';
@@ -57,10 +49,7 @@ export class DisbursementRequestsController {
 
   /** GET /disbursement-requests/:id — single request by ID */
   @Get(':id')
-  async findOne(
-    @CurrentUser() user: CashClosingUser,
-    @Param('id') id: string,
-  ) {
+  async findOne(@CurrentUser() user: CashClosingUser, @Param('id') id: string) {
     const data = await this.service.findOne(id, user.tenantId);
     return { data };
   }
@@ -69,7 +58,8 @@ export class DisbursementRequestsController {
   @Public()
   @Post()
   async create(
-    @Body() dto: {
+    @Body()
+    dto: {
       tenantId?: string;
       lastName: string;
       firstName: string;
@@ -89,10 +79,7 @@ export class DisbursementRequestsController {
 
   /** PATCH /disbursement-requests/:id/approve */
   @Patch(':id/approve')
-  async approve(
-    @Param('id') id: string,
-    @CurrentUser() user: CashClosingUser,
-  ) {
+  async approve(@Param('id') id: string, @CurrentUser() user: CashClosingUser) {
     const data = await this.service.approve(id, user.tenantId, user.userId);
     return { data };
   }

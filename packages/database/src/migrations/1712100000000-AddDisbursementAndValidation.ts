@@ -19,8 +19,12 @@ export class AddDisbursementAndValidation1712100000000 implements MigrationInter
         CONSTRAINT FK_approval_circuits_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
       )
     `);
-    await queryRunner.query(`CREATE INDEX IDX_approval_circuits_tenant ON approval_circuits(tenant_id)`);
-    await queryRunner.query(`CREATE INDEX IDX_approval_circuits_active ON approval_circuits(is_active)`);
+    await queryRunner.query(
+      `CREATE INDEX IDX_approval_circuits_tenant ON approval_circuits(tenant_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IDX_approval_circuits_active ON approval_circuits(is_active)`,
+    );
 
     // ── Approval Circuit Steps ────────────────────────
     await queryRunner.query(`
@@ -112,7 +116,9 @@ export class AddDisbursementAndValidation1712100000000 implements MigrationInter
       )
     `);
     await queryRunner.query(`CREATE INDEX IDX_vh_tenant ON validation_history(tenant_id)`);
-    await queryRunner.query(`CREATE INDEX IDX_vh_target ON validation_history(target_type, target_id)`);
+    await queryRunner.query(
+      `CREATE INDEX IDX_vh_target ON validation_history(target_type, target_id)`,
+    );
     await queryRunner.query(`CREATE INDEX IDX_vh_validator ON validation_history(validator_id)`);
     await queryRunner.query(`CREATE INDEX IDX_vh_created ON validation_history(created_at)`);
 
@@ -133,7 +139,9 @@ export class AddDisbursementAndValidation1712100000000 implements MigrationInter
 
     // Drop trigger + sequence
     await queryRunner.query(`DROP TRIGGER IF EXISTS trg_disbursement_request_ref`);
-    await queryRunner.query(`IF EXISTS (SELECT * FROM sys.sequences WHERE name = 'disbursement_request_seq') DROP SEQUENCE disbursement_request_seq`);
+    await queryRunner.query(
+      `IF EXISTS (SELECT * FROM sys.sequences WHERE name = 'disbursement_request_seq') DROP SEQUENCE disbursement_request_seq`,
+    );
 
     // Drop tables in dependency order
     await queryRunner.query(`DROP TABLE IF EXISTS validation_history`);

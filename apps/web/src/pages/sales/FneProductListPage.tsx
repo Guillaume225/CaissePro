@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  Plus,
-  Search,
-  Edit2,
-  Trash2,
-  ArrowLeft,
-  Loader2,
-  X,
-  Check,
-  Package,
-} from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowLeft, Loader2, X, Check, Package } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import {
   useFneProducts,
@@ -60,7 +50,15 @@ export default function FneProductListPage() {
 
   const openNew = () => {
     setEditingProduct(null);
-    setForm({ description: '', reference: '', unitPrice: 0, measurementUnit: '', defaultTaxes: ['TVA'], accountCode: '', vatAccountCode: '' });
+    setForm({
+      description: '',
+      reference: '',
+      unitPrice: 0,
+      measurementUnit: '',
+      defaultTaxes: ['TVA'],
+      accountCode: '',
+      vatAccountCode: '',
+    });
     setShowModal(true);
   };
 
@@ -113,7 +111,8 @@ export default function FneProductListPage() {
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const formValid = form.description && form.unitPrice > 0;
 
-  const INPUT = 'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
+  const INPUT =
+    'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
 
   return (
     <div className="space-y-6">
@@ -131,7 +130,10 @@ export default function FneProductListPage() {
               {t('fne.products', 'Produits FNE')}
             </h1>
             <p className="text-sm text-gray-500">
-              {t('fne.productsDesc', 'Gérez la liste des produits pré-enregistrés pour la facturation FNE')}
+              {t(
+                'fne.productsDesc',
+                'Gérez la liste des produits pré-enregistrés pour la facturation FNE',
+              )}
             </p>
           </div>
         </div>
@@ -145,7 +147,10 @@ export default function FneProductListPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           placeholder={t('fne.searchProducts', 'Rechercher un produit...')}
           className={cn(INPUT, 'pl-10')}
         />
@@ -187,7 +192,9 @@ export default function FneProductListPage() {
                   <td className="px-4 py-3 text-gray-500">{p.reference || '—'}</td>
                   <td className="px-4 py-3 text-gray-700">{formatCFA(p.unitPrice)}</td>
                   <td className="px-4 py-3 text-gray-500">{p.measurementUnit || '—'}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{(p.defaultTaxes ?? []).join(', ') || '—'}</td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">
+                    {(p.defaultTaxes ?? []).join(', ') || '—'}
+                  </td>
                   <td className="px-4 py-3 text-gray-500">{p.accountCode || '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{p.vatAccountCode || '—'}</td>
                   <td className="px-4 py-3 text-right">
@@ -220,10 +227,20 @@ export default function FneProductListPage() {
             Page {meta.page} / {meta.totalPages} — {meta.total} produit{meta.total > 1 ? 's' : ''}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
               Précédent
             </Button>
-            <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage((p) => p + 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= meta.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
               Suivant
             </Button>
           </div>
@@ -238,7 +255,10 @@ export default function FneProductListPage() {
               <h2 className="text-lg font-semibold text-gray-900">
                 {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -246,31 +266,66 @@ export default function FneProductListPage() {
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-gray-700">Description *</label>
-                <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className={INPUT} />
+                <input
+                  value={form.description}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  className={INPUT}
+                />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-gray-700">Référence</label>
-                  <input value={form.reference ?? ''} onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))} className={INPUT} />
+                  <input
+                    value={form.reference ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))}
+                    className={INPUT}
+                  />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">Prix unitaire HT *</label>
-                  <input type="number" min={0} value={form.unitPrice} onChange={(e) => setForm((f) => ({ ...f, unitPrice: Number(e.target.value) }))} className={INPUT} />
+                  <label className="block text-sm font-medium text-gray-700">
+                    Prix unitaire HT *
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.unitPrice}
+                    onChange={(e) => setForm((f) => ({ ...f, unitPrice: Number(e.target.value) }))}
+                    className={INPUT}
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-gray-700">Unité de mesure</label>
-                <input placeholder="ex: kg, pièce, litre..." value={form.measurementUnit ?? ''} onChange={(e) => setForm((f) => ({ ...f, measurementUnit: e.target.value }))} className={INPUT} />
+                <input
+                  placeholder="ex: kg, pièce, litre..."
+                  value={form.measurementUnit ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, measurementUnit: e.target.value }))}
+                  className={INPUT}
+                />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">Compte comptable produit</label>
-                  <input placeholder="ex: 701000" value={form.accountCode ?? ''} onChange={(e) => setForm((f) => ({ ...f, accountCode: e.target.value }))} className={INPUT} />
+                  <label className="block text-sm font-medium text-gray-700">
+                    Compte comptable produit
+                  </label>
+                  <input
+                    placeholder="ex: 701000"
+                    value={form.accountCode ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, accountCode: e.target.value }))}
+                    className={INPUT}
+                  />
                 </div>
                 {(form.defaultTaxes ?? []).some((t) => t === 'TVA' || t === 'TVAB') && (
                   <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-gray-700">Compte comptable TVA</label>
-                    <input placeholder="ex: 445710" value={form.vatAccountCode ?? ''} onChange={(e) => setForm((f) => ({ ...f, vatAccountCode: e.target.value }))} className={INPUT} />
+                    <label className="block text-sm font-medium text-gray-700">
+                      Compte comptable TVA
+                    </label>
+                    <input
+                      placeholder="ex: 445710"
+                      value={form.vatAccountCode ?? ''}
+                      onChange={(e) => setForm((f) => ({ ...f, vatAccountCode: e.target.value }))}
+                      className={INPUT}
+                    />
                   </div>
                 )}
               </div>
@@ -278,13 +333,17 @@ export default function FneProductListPage() {
                 <label className="block text-sm font-medium text-gray-700">Taxes par défaut</label>
                 <div className="flex flex-wrap gap-2">
                   {TAX_OPTIONS.map((tax) => (
-                    <button key={tax.value} type="button" onClick={() => toggleFormTax(tax.value)}
+                    <button
+                      key={tax.value}
+                      type="button"
+                      onClick={() => toggleFormTax(tax.value)}
                       className={cn(
                         'rounded-md border px-3 py-1 text-xs font-medium transition-all',
                         (form.defaultTaxes ?? []).includes(tax.value)
                           ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
                           : 'border-gray-300 text-gray-500 hover:border-gray-400',
-                      )}>
+                      )}
+                    >
                       {tax.label}
                     </button>
                   ))}
@@ -293,12 +352,18 @@ export default function FneProductListPage() {
             </div>
 
             <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-              <Button variant="ghost" onClick={() => setShowModal(false)}>Annuler</Button>
+              <Button variant="ghost" onClick={() => setShowModal(false)}>
+                Annuler
+              </Button>
               <Button onClick={handleSave} disabled={!formValid || isSaving}>
                 {isSaving ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enregistrement...</>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enregistrement...
+                  </>
                 ) : (
-                  <><Check className="mr-2 h-4 w-4" /> {editingProduct ? 'Modifier' : 'Créer'}</>
+                  <>
+                    <Check className="mr-2 h-4 w-4" /> {editingProduct ? 'Modifier' : 'Créer'}
+                  </>
                 )}
               </Button>
             </div>

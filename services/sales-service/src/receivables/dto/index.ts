@@ -1,12 +1,4 @@
-import {
-  IsOptional,
-  IsEnum,
-  IsBoolean,
-  IsInt,
-  IsString,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsOptional, IsEnum, IsBoolean, IsInt, IsString, Min, Max } from 'class-validator';
 import { IsUUID } from '../../is-uuid-loose';
 import { Type, Transform } from 'class-transformer';
 import { AgingBucket } from '../../entities/enums';

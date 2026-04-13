@@ -1,4 +1,10 @@
-import { Injectable, Logger, BadRequestException, UnauthorizedException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  UnauthorizedException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -97,7 +103,14 @@ export class FneApiService {
   ): Promise<FneRefundResponse> {
     const cfg = await this.resolveConfig(companyId);
     const url = `${cfg.apiUrl}/external/invoices/${fneInvoiceId}/refund`;
-    return this.callWithRetry<FneRefundResponse>('POST', url, body as unknown as Record<string, unknown>, localInvoiceId, userId, cfg);
+    return this.callWithRetry<FneRefundResponse>(
+      'POST',
+      url,
+      body as unknown as Record<string, unknown>,
+      localInvoiceId,
+      userId,
+      cfg,
+    );
   }
 
   /** Generic HTTP call with retry for 500 errors */
@@ -130,7 +143,11 @@ export class FneApiService {
 
         let resBody: Record<string, unknown> | null = null;
         const text = await res.text();
-        try { resBody = JSON.parse(text); } catch { resBody = { raw: text }; }
+        try {
+          resBody = JSON.parse(text);
+        } catch {
+          resBody = { raw: text };
+        }
 
         log.responseStatus = res.status;
         log.responseBody = resBody;
@@ -145,21 +162,22 @@ export class FneApiService {
         }
 
         if (res.status === 401) {
-          throw new UnauthorizedException(resBody || 'Clé API FNE invalide ou expirée — vérifiez vos paramètres');
+          throw new UnauthorizedException(
+            resBody || 'Clé API FNE invalide ou expirée — vérifiez vos paramètres',
+          );
         }
 
         if (res.status >= 500) {
-          lastError = new ServiceUnavailableException('Service FNE indisponible — réessayez plus tard');
+          lastError = new ServiceUnavailableException(
+            'Service FNE indisponible — réessayez plus tard',
+          );
           this.logger.warn(`FNE API 500 on attempt ${attempt}/${cfg.maxRetries}`);
           continue; // retry
         }
 
         throw new BadRequestException(`FNE API error (${res.status}): ${text}`);
       } catch (err) {
-        if (
-          err instanceof BadRequestException ||
-          err instanceof UnauthorizedException
-        ) {
+        if (err instanceof BadRequestException || err instanceof UnauthorizedException) {
           throw err;
         }
 
@@ -168,7 +186,9 @@ export class FneApiService {
         lastError = err instanceof Error ? err : new Error(String(err));
 
         if (attempt < cfg.maxRetries) {
-          this.logger.warn(`FNE API network error attempt ${attempt}/${cfg.maxRetries}: ${lastError.message}`);
+          this.logger.warn(
+            `FNE API network error attempt ${attempt}/${cfg.maxRetries}: ${lastError.message}`,
+          );
           continue;
         }
       }

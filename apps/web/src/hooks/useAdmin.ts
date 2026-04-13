@@ -1,14 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import type {
-  AdminUser, CreateUserDto, UpdateUserDto,
-  Role, CreateRoleDto,
+  AdminUser,
+  CreateUserDto,
+  UpdateUserDto,
+  Role,
+  CreateRoleDto,
   AppSettings,
-  AuditLogEntry, AuditLogFilters,
-  ExpenseCategory, CreateCategoryDto, UpdateCategoryDto,
-  Company, CreateCompanyDto, UpdateCompanyDto,
-  ApprovalCircuit, CreateApprovalCircuitDto, UpdateApprovalCircuitDto,
-  EmployeeAccount, CreateEmployeeDto, UpdateEmployeeDto,
+  AuditLogEntry,
+  AuditLogFilters,
+  ExpenseCategory,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  Company,
+  CreateCompanyDto,
+  UpdateCompanyDto,
+  ApprovalCircuit,
+  CreateApprovalCircuitDto,
+  UpdateApprovalCircuitDto,
+  EmployeeAccount,
+  CreateEmployeeDto,
+  UpdateEmployeeDto,
 } from '@/types/admin';
 
 // ── Query keys ───────────────────────────────────────────
@@ -31,8 +43,6 @@ const ROLE_NAME_TO_FRONTEND: Record<string, string> = {
   CASHIER: 'cashier',
   ACCOUNTANT: 'viewer',
 };
-
-
 
 function mapBackendUser(u: Record<string, unknown>): AdminUser {
   const roleName = u.roleName as string;
@@ -466,7 +476,12 @@ export function useAdminQuery(
     queryKey: ['admin-query', entity, search, status, page] as const,
     queryFn: async (): Promise<AdminQueryResult> => {
       const { data } = await api.get('/admin-query/search', {
-        params: { entity, search: search || undefined, status: status || undefined, page: page || 1 },
+        params: {
+          entity,
+          search: search || undefined,
+          status: status || undefined,
+          page: page || 1,
+        },
       });
       return data;
     },

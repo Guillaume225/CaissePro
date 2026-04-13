@@ -21,7 +21,16 @@ export default function CashSettingsPage() {
   };
 
   useEffect(() => {
-    if (settings) setForm({ ...defaultSettings, ...settings, validation: { ...defaultSettings.validation, ...settings.validation }, finance: { ...defaultSettings.finance, ...settings.finance }, ai: { ...defaultSettings.ai, ...settings.ai }, smtp: { ...defaultSettings.smtp, ...settings.smtp }, company: { ...defaultSettings.company, ...settings.company } });
+    if (settings)
+      setForm({
+        ...defaultSettings,
+        ...settings,
+        validation: { ...defaultSettings.validation, ...settings.validation },
+        finance: { ...defaultSettings.finance, ...settings.finance },
+        ai: { ...defaultSettings.ai, ...settings.ai },
+        smtp: { ...defaultSettings.smtp, ...settings.smtp },
+        company: { ...defaultSettings.company, ...settings.company },
+      });
   }, [settings]);
 
   if (isLoading || !form) {
@@ -74,7 +83,9 @@ export default function CashSettingsPage() {
               label={t('admin.settings.advanceDays')}
               type="number"
               value={form.validation.advanceJustificationDays}
-              onChange={(e) => updateNested('validation', 'advanceJustificationDays', +e.target.value)}
+              onChange={(e) =>
+                updateNested('validation', 'advanceJustificationDays', +e.target.value)
+              }
               hint={t('admin.settings.advanceDaysHint')}
             />
           </CardContent>
@@ -97,7 +108,9 @@ export default function CashSettingsPage() {
               hint={t('admin.settings.defaultTvaHint')}
             />
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">{t('admin.settings.maxDiscounts')}</p>
+              <p className="mb-2 text-sm font-medium text-gray-700">
+                {t('admin.settings.maxDiscounts')}
+              </p>
               {Object.entries(form.finance.maxDiscountByRole).map(([role, val]) => (
                 <div key={role} className="flex items-center gap-3 mb-2">
                   <span className="w-24 text-xs text-gray-500 capitalize">{role}</span>
@@ -111,7 +124,10 @@ export default function CashSettingsPage() {
                               ...f,
                               finance: {
                                 ...f.finance,
-                                maxDiscountByRole: { ...f.finance.maxDiscountByRole, [role]: +e.target.value },
+                                maxDiscountByRole: {
+                                  ...f.finance.maxDiscountByRole,
+                                  [role]: +e.target.value,
+                                },
                               },
                             }
                           : f,

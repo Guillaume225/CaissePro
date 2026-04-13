@@ -26,7 +26,9 @@ describe('RolesService', () => {
       findOneOrFail: jest.fn(),
       update: jest.fn().mockResolvedValue({ affected: 1 }),
       create: jest.fn((dto: Record<string, unknown>) => ({ ...dto, id: 'new-uuid' })),
-      save: jest.fn((entity: Record<string, unknown>) => Promise.resolve({ ...mockRole, ...entity })),
+      save: jest.fn((entity: Record<string, unknown>) =>
+        Promise.resolve({ ...mockRole, ...entity }),
+      ),
     };
     auditService = {
       log: jest.fn().mockResolvedValue(undefined),
@@ -104,7 +106,11 @@ describe('RolesService', () => {
       roleRepo.findOne.mockResolvedValue(nonSystemRole);
       roleRepo.findOneOrFail.mockResolvedValue({ ...nonSystemRole, permissions: ['sale.create'] });
 
-      const result = await service.update('role-uuid', { permissions: ['sale.create'] }, 'admin-uuid');
+      const result = await service.update(
+        'role-uuid',
+        { permissions: ['sale.create'] },
+        'admin-uuid',
+      );
 
       expect(result).toBeDefined();
       expect(roleRepo.update).toHaveBeenCalled();
@@ -113,9 +119,9 @@ describe('RolesService', () => {
     it('should throw ForbiddenException when renaming a system role', async () => {
       roleRepo.findOne.mockResolvedValue(mockRole);
 
-      await expect(
-        service.update('role-uuid', { name: 'NEW_NAME' }, 'admin-uuid'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.update('role-uuid', { name: 'NEW_NAME' }, 'admin-uuid')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 });

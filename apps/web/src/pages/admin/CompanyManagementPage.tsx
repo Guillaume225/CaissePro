@@ -1,14 +1,37 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Building2, Plus, Pencil, MapPin, Phone, Mail, FileText, Banknote, Upload, X } from 'lucide-react';
+import {
+  Building2,
+  Plus,
+  Pencil,
+  MapPin,
+  Phone,
+  Mail,
+  FileText,
+  Banknote,
+  Upload,
+  X,
+} from 'lucide-react';
 import { Button, Input, Modal, Badge } from '@/components/ui';
-import { useCompanies, useCreateCompany, useUpdateCompany, useUploadCompanyLogo } from '@/hooks/useAdmin';
+import {
+  useCompanies,
+  useCreateCompany,
+  useUpdateCompany,
+  useUploadCompanyLogo,
+} from '@/hooks/useAdmin';
 import type { Company, CreateCompanyDto, UpdateCompanyDto } from '@/types/admin';
 
 type FormState = CreateCompanyDto & { isActive?: boolean };
 
 const defaultForm: FormState = {
-  name: '', code: '', address: '', phone: '', email: '', taxId: '', tradeRegister: '', currency: 'XOF',
+  name: '',
+  code: '',
+  address: '',
+  phone: '',
+  email: '',
+  taxId: '',
+  tradeRegister: '',
+  currency: 'XOF',
 };
 
 export default function CompanyManagementPage() {
@@ -65,7 +88,8 @@ export default function CompanyManagementPage() {
         if (form.phone !== (editCompany.phone || '')) dto.phone = form.phone || undefined;
         if (form.email !== (editCompany.email || '')) dto.email = form.email || undefined;
         if (form.taxId !== (editCompany.taxId || '')) dto.taxId = form.taxId || undefined;
-        if (form.tradeRegister !== (editCompany.tradeRegister || '')) dto.tradeRegister = form.tradeRegister || undefined;
+        if (form.tradeRegister !== (editCompany.tradeRegister || ''))
+          dto.tradeRegister = form.tradeRegister || undefined;
         if (form.currency !== editCompany.currency) dto.currency = form.currency || undefined;
         if (form.isActive !== editCompany.isActive) dto.isActive = form.isActive;
         await updateCompany.mutateAsync(dto);
@@ -89,8 +113,11 @@ export default function CompanyManagementPage() {
       }
       setShowModal(false);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-      setSubmitError(Array.isArray(msg) ? msg.join(', ') : (msg as string) || 'Erreur lors de l\'enregistrement');
+      const msg = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data
+        ?.message;
+      setSubmitError(
+        Array.isArray(msg) ? msg.join(', ') : (msg as string) || "Erreur lors de l'enregistrement",
+      );
     }
   };
 
@@ -183,7 +210,9 @@ export default function CompanyManagementPage() {
                 {c.taxId && (
                   <div className="flex items-center gap-2">
                     <FileText className="h-3.5 w-3.5 text-gray-400" />
-                    <span>{t('admin.companies.taxId')}: {c.taxId}</span>
+                    <span>
+                      {t('admin.companies.taxId')}: {c.taxId}
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">

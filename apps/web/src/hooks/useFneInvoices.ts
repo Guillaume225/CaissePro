@@ -94,7 +94,13 @@ export function useUpdateFneInvoice() {
 export function useUpdateDecisionComment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, comment }: { id: string; comment: string | null }): Promise<FneInvoice> => {
+    mutationFn: async ({
+      id,
+      comment,
+    }: {
+      id: string;
+      comment: string | null;
+    }): Promise<FneInvoice> => {
       const { data } = await api.patch(`/fne-invoices/${id}/decision-comment`, { comment });
       return data;
     },
@@ -165,7 +171,9 @@ export function useDeleteFneInvoice() {
 export function useBulkDeleteFneInvoices() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (ids: string[]): Promise<{ deleted: number; skipped: number; errors: string[] }> => {
+    mutationFn: async (
+      ids: string[],
+    ): Promise<{ deleted: number; skipped: number; errors: string[] }> => {
       const { data } = await api.post('/fne-invoices/bulk-delete', { ids });
       return data;
     },
@@ -180,7 +188,12 @@ export function useBulkDeleteFneInvoices() {
 export function useBulkCertifyFneInvoices() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (ids: string[]): Promise<{ certified: number; errors: Array<{ id: string; reference?: string; error: string }> }> => {
+    mutationFn: async (
+      ids: string[],
+    ): Promise<{
+      certified: number;
+      errors: Array<{ id: string; reference?: string; error: string }>;
+    }> => {
       const { data } = await api.post('/fne-invoices/bulk-certify', { ids });
       return data;
     },
@@ -196,7 +209,9 @@ export function useBulkCertifyFneInvoices() {
 export function useImportFneInvoices() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (invoices: CreateFneInvoicePayload[]): Promise<{ imported: number; errors: Array<{ index: number; error: string }> }> => {
+    mutationFn: async (
+      invoices: CreateFneInvoicePayload[],
+    ): Promise<{ imported: number; errors: Array<{ index: number; error: string }> }> => {
       const { data } = await api.post('/fne-invoices/import', { invoices });
       return data;
     },

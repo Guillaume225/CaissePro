@@ -12,7 +12,13 @@ import { Expense } from '../entities/expense.entity';
 import { ExpenseAttachment } from '../entities/expense-attachment.entity';
 import { ExpenseApproval } from '../entities/expense-approval.entity';
 import { ExpenseCategory } from '../entities/expense-category.entity';
-import { ExpenseStatus, ApprovalStatus, CashDayStatus, CashType, DisbursementRequestStatus } from '../entities/enums';
+import {
+  ExpenseStatus,
+  ApprovalStatus,
+  CashDayStatus,
+  CashType,
+  DisbursementRequestStatus,
+} from '../entities/enums';
 import { DisbursementRequest } from '../entities/disbursement-request.entity';
 import { CashDay } from '../entities/cash-day.entity';
 import { AuditService } from '../audit/audit.service';
@@ -286,7 +292,10 @@ export class ExpensesService {
     }
 
     const threshold = this.configService.get<number>('workflow.approvalThresholdL2') ?? 500000;
-    const l2Roles: string[] = this.configService.get<string[]>('workflow.l2Roles') ?? ['DAF', 'ADMIN'];
+    const l2Roles: string[] = this.configService.get<string[]>('workflow.l2Roles') ?? [
+      'DAF',
+      'ADMIN',
+    ];
 
     if (expense.status === ExpenseStatus.PENDING) {
       return this.approveL1(expense, dto, user, threshold);
@@ -295,9 +304,7 @@ export class ExpensesService {
       return this.approveL2(expense, dto, user, l2Roles);
     }
 
-    throw new BadRequestException(
-      'Expense must be in PENDING or APPROVED_L1 status for approval',
-    );
+    throw new BadRequestException('Expense must be in PENDING or APPROVED_L1 status for approval');
   }
 
   /* ── L1 internal ── */
@@ -308,9 +315,7 @@ export class ExpensesService {
     threshold: number,
   ) {
     if (!user.departmentId || user.departmentId !== expense.departmentId) {
-      throw new ForbiddenException(
-        'L1 approver must belong to the same department as the expense',
-      );
+      throw new ForbiddenException('L1 approver must belong to the same department as the expense');
     }
 
     const approval = this.approvalRepo.create({
@@ -346,7 +351,12 @@ export class ExpensesService {
         action: AuditAction.APPROVE,
         entityType: 'expense',
         entityId: expense.id,
-        newValue: { level: 1, autoL2: true, status: ExpenseStatus.APPROVED_L2, comment: dto.comment },
+        newValue: {
+          level: 1,
+          autoL2: true,
+          status: ExpenseStatus.APPROVED_L2,
+          comment: dto.comment,
+        },
       });
 
       await this.eventsService.publish(ExpenseEvent.APPROVED, {
@@ -448,16 +458,17 @@ export class ExpensesService {
       }
     } else if (expense.status === ExpenseStatus.APPROVED_L1) {
       level = 2;
-      const l2Roles: string[] = this.configService.get<string[]>('workflow.l2Roles') ?? ['DAF', 'ADMIN'];
+      const l2Roles: string[] = this.configService.get<string[]>('workflow.l2Roles') ?? [
+        'DAF',
+        'ADMIN',
+      ];
       if (!l2Roles.includes(user.roleName)) {
         throw new ForbiddenException(
           `L2 rejection requires one of the following roles: ${l2Roles.join(', ')}`,
         );
       }
     } else {
-      throw new BadRequestException(
-        'Only PENDING or APPROVED_L1 expenses can be rejected',
-      );
+      throw new BadRequestException('Only PENDING or APPROVED_L1 expenses can be rejected');
     }
 
     const approval = this.approvalRepo.create({
@@ -501,12 +512,15 @@ export class ExpensesService {
       const statusMessages: Record<string, string> = {
         DRAFT: 'Cette pièce est encore en brouillon. Elle doit être soumise puis validée.',
         PENDING: 'Cette pièce est en attente de soumission.',
-        APPROVED_L1: 'Cette pièce est en cours de validation (niveau 1 validé). Elle doit encore être approuvée au niveau 2 avant paiement.',
+        APPROVED_L1:
+          'Cette pièce est en cours de validation (niveau 1 validé). Elle doit encore être approuvée au niveau 2 avant paiement.',
         PAID: 'Cette pièce a déjà été payée.',
         REJECTED: 'Cette pièce a été rejetée et ne peut pas être payée.',
         CANCELLED: 'Cette pièce a été annulée.',
       };
-      const msg = statusMessages[expense.status] ?? `Statut actuel : ${expense.status}. Seules les pièces approuvées (N2) peuvent être payées.`;
+      const msg =
+        statusMessages[expense.status] ??
+        `Statut actuel : ${expense.status}. Seules les pièces approuvées (N2) peuvent être payées.`;
       throw new BadRequestException(msg);
     }
 
@@ -536,7 +550,9 @@ export class ExpensesService {
 
     // Update linked disbursement request to VALIDATED
     if (expense.disbursementRequestId) {
-      const dr = await this.disbursementRequestRepo.findOne({ where: { id: expense.disbursementRequestId } });
+      const dr = await this.disbursementRequestRepo.findOne({
+        where: { id: expense.disbursementRequestId },
+      });
       if (dr && dr.status === DisbursementRequestStatus.VALIDATING) {
         dr.status = DisbursementRequestStatus.VALIDATED;
         await this.disbursementRequestRepo.save(dr);
@@ -634,7 +650,8 @@ export class ExpensesService {
 
     if (filters?.dateFrom) qb.andWhere('e.date >= :dateFrom', { dateFrom: filters.dateFrom });
     if (filters?.dateTo) qb.andWhere('e.date <= :dateTo', { dateTo: filters.dateTo });
-    if (filters?.categoryId) qb.andWhere('e.category_id = :categoryId', { categoryId: filters.categoryId });
+    if (filters?.categoryId)
+      qb.andWhere('e.category_id = :categoryId', { categoryId: filters.categoryId });
 
     const totalResult = await qb
       .select('COUNT(*)', 'count')
@@ -713,7 +730,8 @@ export class ExpensesService {
     if (query.paymentMethod) qb.andWhere('e.payment_method = :pm', { pm: query.paymentMethod });
     if (query.categoryId) qb.andWhere('e.category_id = :catId', { catId: query.categoryId });
     if (query.createdById) qb.andWhere('e.created_by = :uid', { uid: query.createdById });
-    if (query.beneficiary) qb.andWhere('e.beneficiary LIKE :ben', { ben: `%${query.beneficiary}%` });
+    if (query.beneficiary)
+      qb.andWhere('e.beneficiary LIKE :ben', { ben: `%${query.beneficiary}%` });
     if (query.dateFrom) qb.andWhere('e.date >= :dateFrom', { dateFrom: query.dateFrom });
     if (query.dateTo) qb.andWhere('e.date <= :dateTo', { dateTo: query.dateTo });
     if (query.amountMin) qb.andWhere('e.amount >= :amountMin', { amountMin: query.amountMin });
@@ -743,9 +761,7 @@ export class ExpensesService {
       cashDayRef: e.cashDay?.reference || null,
       disbursementRequestId: e.disbursementRequestId || null,
       createdById: e.createdById,
-      createdByName: e.createdBy
-        ? `${e.createdBy.firstName} ${e.createdBy.lastName}`.trim()
-        : null,
+      createdByName: e.createdBy ? `${e.createdBy.firstName} ${e.createdBy.lastName}`.trim() : null,
       departmentId: e.departmentId,
       costCenterId: e.costCenterId,
       projectId: e.projectId,
@@ -753,9 +769,7 @@ export class ExpensesService {
       approvals: (e.approvals || []).map((a) => ({
         id: a.id,
         approverId: a.approverId,
-        approverName: a.approver
-          ? `${a.approver.firstName} ${a.approver.lastName}`.trim()
-          : null,
+        approverName: a.approver ? `${a.approver.firstName} ${a.approver.lastName}`.trim() : null,
         level: a.level,
         status: a.status,
         comment: a.comment,

@@ -9,7 +9,13 @@ import {
   Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { FneInvoicesService, CreateFneInvoiceDto, UpdateFneInvoiceDto, RefundItemDto, ListFneInvoicesQuery } from './fne-invoices.service';
+import {
+  FneInvoicesService,
+  CreateFneInvoiceDto,
+  UpdateFneInvoiceDto,
+  RefundItemDto,
+  ListFneInvoicesQuery,
+} from './fne-invoices.service';
 import { Permissions, CurrentUser } from '../common/decorators';
 import { FNE_PERMISSIONS } from '../common/permissions';
 
@@ -57,19 +63,13 @@ export class FneInvoicesController {
 
   @Post('bulk-delete')
   @Permissions(FNE_PERMISSIONS.UPDATE)
-  bulkRemove(
-    @Body() dto: { ids: string[] },
-    @CurrentUser('id') userId: string,
-  ) {
+  bulkRemove(@Body() dto: { ids: string[] }, @CurrentUser('id') userId: string) {
     return this.fneInvoicesService.bulkRemove(dto.ids, userId);
   }
 
   @Post('import')
   @Permissions(FNE_PERMISSIONS.CREATE)
-  bulkImport(
-    @Body() dto: { invoices: CreateFneInvoiceDto[] },
-    @CurrentUser('id') userId: string,
-  ) {
+  bulkImport(@Body() dto: { invoices: CreateFneInvoiceDto[] }, @CurrentUser('id') userId: string) {
     return this.fneInvoicesService.bulkImport(dto.invoices, userId);
   }
 
@@ -115,10 +115,7 @@ export class FneInvoicesController {
 
   @Delete(':id')
   @Permissions(FNE_PERMISSIONS.UPDATE)
-  remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.fneInvoicesService.remove(id, userId);
   }
 }

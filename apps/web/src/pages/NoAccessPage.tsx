@@ -16,13 +16,9 @@ export default function NoAccessPage() {
           <Building2 className="h-10 w-10 text-amber-500" />
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900">
-          {t('noAccess.title')}
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('noAccess.title')}</h1>
 
-        <p className="mt-3 text-gray-500">
-          {t('noAccess.description')}
-        </p>
+        <p className="mt-3 text-gray-500">{t('noAccess.description')}</p>
 
         <div className="mt-6 space-y-3">
           {hasNoCompany && (
@@ -39,9 +35,7 @@ export default function NoAccessPage() {
           )}
         </div>
 
-        <p className="mt-6 text-sm text-gray-400">
-          {t('noAccess.contactAdmin')}
-        </p>
+        <p className="mt-6 text-sm text-gray-400">{t('noAccess.contactAdmin')}</p>
 
         <button
           onClick={logout}

@@ -17,12 +17,7 @@ import { SaleStatus, AgingBucket } from '../entities/enums';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { EventsService, SalesEvent } from '../events/events.service';
-import {
-  CreateSaleDto,
-  UpdateSaleDto,
-  ListSalesQueryDto,
-  SaleItemDto,
-} from './dto';
+import { CreateSaleDto, UpdateSaleDto, ListSalesQueryDto, SaleItemDto } from './dto';
 
 /** Shape produced by JwtStrategy.validate() */
 export interface SalesUser {
@@ -79,9 +74,7 @@ export class SalesService {
     };
     const ceiling = ceilings[roleName];
     if (ceiling === undefined) {
-      throw new ForbiddenException(
-        `Role ${roleName} is not authorized to apply discounts`,
-      );
+      throw new ForbiddenException(`Role ${roleName} is not authorized to apply discounts`);
     }
     if (discountPct > ceiling) {
       throw new ForbiddenException(
@@ -441,10 +434,9 @@ export class SalesService {
     if (query.amountMin) qb.andWhere('s.totalTtc >= :amountMin', { amountMin: query.amountMin });
     if (query.amountMax) qb.andWhere('s.totalTtc <= :amountMax', { amountMax: query.amountMax });
     if (query.search) {
-      qb.andWhere(
-        '(s.reference ILIKE :search OR client.name ILIKE :search)',
-        { search: `%${query.search}%` },
-      );
+      qb.andWhere('(s.reference ILIKE :search OR client.name ILIKE :search)', {
+        search: `%${query.search}%`,
+      });
     }
   }
 

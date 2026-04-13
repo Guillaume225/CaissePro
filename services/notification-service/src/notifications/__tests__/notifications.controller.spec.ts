@@ -74,8 +74,7 @@ describe('NotificationsController', () => {
     it('should throw NotFoundException when notification not found', async () => {
       (service.markAsRead as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(controller.markAsRead('notif-999', 'user-1'))
-        .rejects.toThrow(NotFoundException);
+      await expect(controller.markAsRead('notif-999', 'user-1')).rejects.toThrow(NotFoundException);
     });
   });
 });

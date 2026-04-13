@@ -36,8 +36,12 @@ export class SettingsController {
       const params: unknown[] = [company.id];
       let idx = 1;
       const map: Record<string, string> = {
-        name: 'name', address: 'address', phone: 'phone',
-        email: 'email', taxId: 'tax_id', currency: 'currency',
+        name: 'name',
+        address: 'address',
+        phone: 'phone',
+        email: 'email',
+        taxId: 'tax_id',
+        currency: 'currency',
       };
       for (const [key, col] of Object.entries(map)) {
         if (dto[key] !== undefined) {
@@ -54,7 +58,8 @@ export class SettingsController {
       }
       if (sets.length) {
         await this.dataSource.query(
-          `UPDATE companies SET ${sets.join(', ')} WHERE id = @0`, params,
+          `UPDATE companies SET ${sets.join(', ')} WHERE id = @0`,
+          params,
         );
       }
     }
@@ -89,8 +94,7 @@ export class AuditLogsController {
     @Query('page') page = 1,
     @Query('perPage') perPage = 50,
   ) {
-    const qb = this.auditRepo.createQueryBuilder('log')
-      .orderBy('log.timestamp', 'DESC');
+    const qb = this.auditRepo.createQueryBuilder('log').orderBy('log.timestamp', 'DESC');
 
     if (action) {
       qb.andWhere('log.action = :action', { action });

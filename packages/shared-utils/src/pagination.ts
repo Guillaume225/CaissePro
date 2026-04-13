@@ -2,11 +2,7 @@
  *  Helpers de pagination
  * ═══════════════════════════════════════════ */
 
-import {
-  DEFAULT_PAGE,
-  DEFAULT_PER_PAGE,
-  MAX_PER_PAGE,
-} from './constants.js';
+import { DEFAULT_PAGE, DEFAULT_PER_PAGE, MAX_PER_PAGE } from './constants.js';
 
 /* ------------ Types -------------------- */
 
@@ -47,11 +43,7 @@ export function normalizePagination(input: PaginationInput = {}): {
 }
 
 /** Construit les métadonnées de pagination. */
-export function buildPaginationMeta(
-  page: number,
-  perPage: number,
-  total: number,
-): PaginationMeta {
+export function buildPaginationMeta(page: number, perPage: number, total: number): PaginationMeta {
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   return {
     page,
@@ -64,10 +56,7 @@ export function buildPaginationMeta(
 }
 
 /** Crée un résultat paginé complet. */
-export function paginateArray<T>(
-  items: T[],
-  input: PaginationInput = {},
-): PaginatedResult<T> {
+export function paginateArray<T>(items: T[], input: PaginationInput = {}): PaginatedResult<T> {
   const { page, perPage, skip } = normalizePagination(input);
   const data = items.slice(skip, skip + perPage);
   const meta = buildPaginationMeta(page, perPage, items.length);

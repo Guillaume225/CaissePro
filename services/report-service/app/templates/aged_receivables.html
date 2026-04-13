@@ -1,12 +1,10 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="report-header">
   <div class="company-info">
     <div class="company-name">{{ company_name }}</div>
     <div class="company-details">
-      {% if company_address %}{{ company_address }}<br>{% endif %}
-      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
-      {% if company_email %} — {{ company_email }}{% endif %}
+      {% if company_address %}{{ company_address }}<br />{% endif %} {% if company_phone %}Tél: {{
+      company_phone }}{% endif %} {% if company_email %} — {{ company_email }}{% endif %}
     </div>
   </div>
   <div class="report-meta">
@@ -64,11 +62,11 @@
         <td class="text-right font-bold">{{ client.total }}</td>
         <td class="text-center">
           {% if client.max_age > 90 %}
-            <span class="badge badge-danger">ÉLEVÉ</span>
+          <span class="badge badge-danger">ÉLEVÉ</span>
           {% elif client.max_age > 60 %}
-            <span class="badge badge-warning">MOYEN</span>
+          <span class="badge badge-warning">MOYEN</span>
           {% else %}
-            <span class="badge badge-success">FAIBLE</span>
+          <span class="badge badge-success">FAIBLE</span>
           {% endif %}
         </td>
       </tr>
@@ -108,7 +106,9 @@
         <td>{{ inv.client_name }}</td>
         <td>{{ inv.due_date }}</td>
         <td class="text-center">
-          <span class="badge badge-{% if inv.days_overdue > 90 %}danger{% elif inv.days_overdue > 60 %}warning{% else %}info{% endif %}">
+          <span
+            class="badge badge-{% if inv.days_overdue > 90 %}danger{% elif inv.days_overdue > 60 %}warning{% else %}info{% endif %}"
+          >
             {{ inv.days_overdue }}j
           </span>
         </td>

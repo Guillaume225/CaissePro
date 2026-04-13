@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileBarChart, Download, Loader2, FileText, FileSpreadsheet } from 'lucide-react';
-import { Button, Select, Input, Badge, DataTable, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
+import {
+  Button,
+  Select,
+  Input,
+  Badge,
+  DataTable,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
 import { useGenerateReport, useReportHistory } from '@/hooks/useReports';
 import type { ReportType, ReportRequest, GeneratedReport } from '@/types/admin';
@@ -23,7 +33,9 @@ export default function ReportGeneratorPage() {
 
   const [form, setForm] = useState<ReportRequest>({
     type: 'monthly-expenses',
-    dateFrom: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+    dateFrom: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .slice(0, 10),
     dateTo: new Date().toISOString().slice(0, 10),
     format: 'pdf',
   });
@@ -50,48 +62,71 @@ export default function ReportGeneratorPage() {
       key: 'name',
       header: t('reports.history.name'),
       sortable: true,
-      render: (row) => { const r = row as unknown as GeneratedReport; return (
-        <div className="flex items-center gap-2">
-          {r.format === 'pdf' ? (
-            <FileText className="h-4 w-4 text-red-500" />
-          ) : (
-            <FileSpreadsheet className="h-4 w-4 text-green-600" />
-          )}
-          <span className="font-medium text-gray-900">{r.name}</span>
-        </div>
-      ); },
+      render: (row) => {
+        const r = row as unknown as GeneratedReport;
+        return (
+          <div className="flex items-center gap-2">
+            {r.format === 'pdf' ? (
+              <FileText className="h-4 w-4 text-red-500" />
+            ) : (
+              <FileSpreadsheet className="h-4 w-4 text-green-600" />
+            )}
+            <span className="font-medium text-gray-900">{r.name}</span>
+          </div>
+        );
+      },
     },
     {
       key: 'type',
       header: t('reports.history.type'),
       sortable: true,
-      render: (row) => <Badge variant="info">{t(`reports.types.${(row as unknown as GeneratedReport).type}`)}</Badge>,
+      render: (row) => (
+        <Badge variant="info">
+          {t(`reports.types.${(row as unknown as GeneratedReport).type}`)}
+        </Badge>
+      ),
     },
     {
       key: 'dateFrom',
       header: t('reports.history.period'),
-      render: (row) => { const r = row as unknown as GeneratedReport; return (
-        <span className="text-xs text-gray-500">
-          {new Date(r.dateFrom).toLocaleDateString('fr-FR')} — {new Date(r.dateTo).toLocaleDateString('fr-FR')}
-        </span>
-      ); },
+      render: (row) => {
+        const r = row as unknown as GeneratedReport;
+        return (
+          <span className="text-xs text-gray-500">
+            {new Date(r.dateFrom).toLocaleDateString('fr-FR')} —{' '}
+            {new Date(r.dateTo).toLocaleDateString('fr-FR')}
+          </span>
+        );
+      },
     },
     {
       key: 'size',
       header: t('reports.history.size'),
-      render: (row) => <span className="text-xs text-gray-500">{formatSize((row as unknown as GeneratedReport).size)}</span>,
+      render: (row) => (
+        <span className="text-xs text-gray-500">
+          {formatSize((row as unknown as GeneratedReport).size)}
+        </span>
+      ),
     },
     {
       key: 'createdAt',
       header: t('common.date'),
       sortable: true,
-      render: (row) => <span className="text-xs text-gray-500">{new Date((row as unknown as GeneratedReport).createdAt).toLocaleString('fr-FR')}</span>,
+      render: (row) => (
+        <span className="text-xs text-gray-500">
+          {new Date((row as unknown as GeneratedReport).createdAt).toLocaleString('fr-FR')}
+        </span>
+      ),
     },
     {
       key: 'downloadUrl',
       header: '',
       render: (row) => (
-        <a href={(row as unknown as GeneratedReport).downloadUrl} download className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-brand-gold">
+        <a
+          href={(row as unknown as GeneratedReport).downloadUrl}
+          download
+          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-brand-gold"
+        >
           <Download className="h-4 w-4" />
         </a>
       ),
@@ -167,7 +202,12 @@ export default function ReportGeneratorPage() {
         {historyLoading ? (
           <p className="text-sm text-gray-500">{t('common.loading')}</p>
         ) : (
-          <DataTable columns={columns} data={history as unknown as AnyRow[]} pageSize={10} emptyMessage={t('reports.history.empty')} />
+          <DataTable
+            columns={columns}
+            data={history as unknown as AnyRow[]}
+            pageSize={10}
+            emptyMessage={t('reports.history.empty')}
+          />
         )}
       </div>
     </div>

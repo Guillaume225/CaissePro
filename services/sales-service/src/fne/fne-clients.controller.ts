@@ -9,7 +9,12 @@ import {
   Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { FneClientsService, CreateFneClientDto, UpdateFneClientDto, ListFneClientsQuery } from './fne-clients.service';
+import {
+  FneClientsService,
+  CreateFneClientDto,
+  UpdateFneClientDto,
+  ListFneClientsQuery,
+} from './fne-clients.service';
 import { Permissions } from '../common/decorators';
 import { FNE_PERMISSIONS } from '../common/permissions';
 

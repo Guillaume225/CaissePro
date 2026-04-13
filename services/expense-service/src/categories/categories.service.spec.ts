@@ -81,10 +81,7 @@ describe('CategoriesService', () => {
       repo.save.mockResolvedValue(savedCat);
       repo.find.mockResolvedValue([savedCat]); // for toTree in findById
 
-      await service.create(
-        { name: 'New', code: 'NEW' },
-        'user-1',
-      );
+      await service.create({ name: 'New', code: 'NEW' }, 'user-1');
       expect(repo.create).toHaveBeenCalled();
       expect(repo.save).toHaveBeenCalled();
       expect(audit.log).toHaveBeenCalled();
@@ -92,9 +89,7 @@ describe('CategoriesService', () => {
 
     it('should throw if code already exists', async () => {
       repo.findOne.mockResolvedValue({ id: '1', code: 'DUP' });
-      await expect(
-        service.create({ name: 'Dup', code: 'DUP' }, 'user-1'),
-      ).rejects.toThrow();
+      await expect(service.create({ name: 'Dup', code: 'DUP' }, 'user-1')).rejects.toThrow();
     });
   });
 });

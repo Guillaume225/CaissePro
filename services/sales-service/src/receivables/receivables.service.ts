@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
@@ -36,12 +32,10 @@ export class ReceivablesService {
 
     if (query.clientId) qb.andWhere('r.clientId = :clientId', { clientId: query.clientId });
     if (query.agingBucket) qb.andWhere('r.agingBucket = :bucket', { bucket: query.agingBucket });
-    if (query.isSettled !== undefined) qb.andWhere('r.isSettled = :settled', { settled: query.isSettled });
+    if (query.isSettled !== undefined)
+      qb.andWhere('r.isSettled = :settled', { settled: query.isSettled });
     if (query.search) {
-      qb.andWhere(
-        '(sale.reference ILIKE :s OR client.name ILIKE :s)',
-        { s: `%${query.search}%` },
-      );
+      qb.andWhere('(sale.reference ILIKE :s OR client.name ILIKE :s)', { s: `%${query.search}%` });
     }
 
     const sortBy = query.sortBy || 'dueDate';
@@ -141,9 +135,7 @@ export class ReceivablesService {
 
     for (const r of unsettled) {
       const dueDate = new Date(r.dueDate);
-      const daysOverdue = Math.floor(
-        (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
-      );
+      const daysOverdue = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
 
       let newBucket: AgingBucket;
       if (daysOverdue <= 30) {

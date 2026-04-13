@@ -194,7 +194,8 @@ export default function ExpenseCreatePage() {
         if (f.file.type.startsWith('image/') && currentAmount > 0) {
           // Simulate OCR checking after a delay
           setTimeout(() => {
-            const ocrAmount = currentAmount + (Math.random() > 0.5 ? Math.round(Math.random() * 5000) : 0);
+            const ocrAmount =
+              currentAmount + (Math.random() > 0.5 ? Math.round(Math.random() * 5000) : 0);
             if (ocrAmount !== currentAmount && currentAmount > 0) {
               setOcrWarning(
                 t('expenses.ocrAmountMismatch', {
@@ -339,7 +340,9 @@ export default function ExpenseCreatePage() {
               >
                 <option value="">{t('expenses.selectCategory')}</option>
                 {categories?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
               {errors.categoryId && (
@@ -358,7 +361,9 @@ export default function ExpenseCreatePage() {
                 >
                   <option value="">{t('expenses.selectSubCategory')}</option>
                   {subCategories.map((sc) => (
-                    <option key={sc.id} value={sc.id}>{sc.name}</option>
+                    <option key={sc.id} value={sc.id}>
+                      {sc.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -366,10 +371,14 @@ export default function ExpenseCreatePage() {
 
             {requestState?.fromRequest && requestState.description && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-1">
-                <p className="text-xs font-medium text-amber-800">{t('expenses.requestDescription')}</p>
+                <p className="text-xs font-medium text-amber-800">
+                  {t('expenses.requestDescription')}
+                </p>
                 <p className="text-sm text-amber-900">{requestState.description}</p>
                 {requestState.reference && (
-                  <p className="text-xs text-amber-600">{requestState.reference} — {requestState.beneficiary} ({requestState.matricule})</p>
+                  <p className="text-xs text-amber-600">
+                    {requestState.reference} — {requestState.beneficiary} ({requestState.matricule})
+                  </p>
                 )}
               </div>
             )}
@@ -415,7 +424,9 @@ export default function ExpenseCreatePage() {
                 className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
               >
                 {PAYMENT_METHODS.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -451,10 +462,15 @@ export default function ExpenseCreatePage() {
               <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
                 <div>
-                  <p className="text-sm font-medium text-amber-800">{t('expenses.ocrWarningTitle')}</p>
+                  <p className="text-sm font-medium text-amber-800">
+                    {t('expenses.ocrWarningTitle')}
+                  </p>
                   <p className="mt-1 text-sm text-amber-600">{ocrWarning}</p>
                 </div>
-                <button onClick={() => setOcrWarning(null)} className="ml-auto text-amber-400 hover:text-amber-600">
+                <button
+                  onClick={() => setOcrWarning(null)}
+                  className="ml-auto text-amber-400 hover:text-amber-600"
+                >
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -462,7 +478,10 @@ export default function ExpenseCreatePage() {
 
             {/* Drag & drop zone */}
             <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               className={cn(
@@ -500,11 +519,7 @@ export default function ExpenseCreatePage() {
                     className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white"
                   >
                     {f.preview ? (
-                      <img
-                        src={f.preview}
-                        alt={f.file.name}
-                        className="h-32 w-full object-cover"
-                      />
+                      <img src={f.preview} alt={f.file.name} className="h-32 w-full object-cover" />
                     ) : (
                       <div className="flex h-32 items-center justify-center bg-gray-50">
                         <FileText className="h-10 w-10 text-gray-300" />
@@ -512,9 +527,7 @@ export default function ExpenseCreatePage() {
                     )}
                     <div className="p-2">
                       <p className="truncate text-xs font-medium text-gray-700">{f.file.name}</p>
-                      <p className="text-xs text-gray-400">
-                        {(f.file.size / 1024).toFixed(0)} KB
-                      </p>
+                      <p className="text-xs text-gray-400">{(f.file.size / 1024).toFixed(0)} KB</p>
                       {f.ocrDetectedAmount && (
                         <Badge variant="warning" className="mt-1">
                           OCR: {formatCFA(f.ocrDetectedAmount)}
@@ -542,11 +555,11 @@ export default function ExpenseCreatePage() {
             {/* Recap */}
             <div className="rounded-lg border border-gray-200 divide-y divide-gray-100">
               <SummaryRow label={t('common.date')} value={getValues('date')} />
+              <SummaryRow label={t('expenses.category')} value={selectedCategory?.name ?? '—'} />
               <SummaryRow
-                label={t('expenses.category')}
-                value={selectedCategory?.name ?? '—'}
+                label={t('expenses.beneficiary')}
+                value={getValues('beneficiary') || '—'}
               />
-              <SummaryRow label={t('expenses.beneficiary')} value={getValues('beneficiary') || '—'} />
               <SummaryRow
                 label={t('common.amount')}
                 value={watchedAmount ? formatCFA(parseFloat(watchedAmount)) : '—'}
@@ -554,9 +567,14 @@ export default function ExpenseCreatePage() {
               />
               <SummaryRow
                 label={t('expenses.paymentMethod')}
-                value={PAYMENT_METHODS.find((m) => m.value === getValues('paymentMethod'))?.label ?? '—'}
+                value={
+                  PAYMENT_METHODS.find((m) => m.value === getValues('paymentMethod'))?.label ?? '—'
+                }
               />
-              <SummaryRow label={t('expenses.description')} value={getValues('description') || '—'} />
+              <SummaryRow
+                label={t('expenses.description')}
+                value={getValues('description') || '—'}
+              />
               <SummaryRow
                 label={t('expenses.attachments')}
                 value={`${files.length} ${t('expenses.filesCount')}`}
@@ -573,7 +591,8 @@ export default function ExpenseCreatePage() {
                 <div className="mt-2 flex items-center gap-2">
                   <Badge variant="info">{aiCategoryMutation.data.categoryName}</Badge>
                   <span className="text-xs text-blue-600">
-                    {t('expenses.confidence')}: {Math.round(aiCategoryMutation.data.confidence * 100)}%
+                    {t('expenses.confidence')}:{' '}
+                    {Math.round(aiCategoryMutation.data.confidence * 100)}%
                   </span>
                 </div>
                 {aiCategoryMutation.data.alternatives.length > 0 && (
@@ -614,7 +633,9 @@ export default function ExpenseCreatePage() {
                   {aiAnomalyMutation.data.reasons.length > 0 && (
                     <ul className="mt-2 space-y-1">
                       {aiAnomalyMutation.data.reasons.map((r, i) => (
-                        <li key={i} className="text-xs text-amber-700">• {r}</li>
+                        <li key={i} className="text-xs text-amber-700">
+                          • {r}
+                        </li>
                       ))}
                     </ul>
                   )}
@@ -687,7 +708,12 @@ function SummaryRow({
   return (
     <div className="flex items-center justify-between px-4 py-3">
       <span className="text-sm text-gray-500">{label}</span>
-      <span className={cn('text-sm', highlight ? 'font-bold text-gray-900' : 'font-medium text-gray-700')}>
+      <span
+        className={cn(
+          'text-sm',
+          highlight ? 'font-bold text-gray-900' : 'font-medium text-gray-700',
+        )}
+      >
         {value}
       </span>
     </div>

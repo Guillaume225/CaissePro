@@ -57,10 +57,7 @@ export class ClientsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Permissions(CLIENT_PERMISSIONS.DELETE)
-  remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.clientsService.remove(id, userId);
   }
 }

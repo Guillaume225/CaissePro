@@ -2,11 +2,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface Tab {
-  id: string;       // unique key = path
-  path: string;     // route path
-  labelKey: string;  // i18n key
-  icon?: string;     // lucide icon name
-  pinned?: boolean;  // pinned tabs can't be closed
+  id: string; // unique key = path
+  path: string; // route path
+  labelKey: string; // i18n key
+  icon?: string; // lucide icon name
+  pinned?: boolean; // pinned tabs can't be closed
 }
 
 interface TabState {

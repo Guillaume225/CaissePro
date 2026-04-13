@@ -8,10 +8,7 @@ import { CashClosingController } from './cash-closing.controller';
 import { CashClosingRequiredGuard } from './guards/cash-closing-required.guard';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([CashDay, Payment]),
-    AuditModule,
-  ],
+  imports: [TypeOrmModule.forFeature([CashDay, Payment]), AuditModule],
   controllers: [CashClosingController],
   providers: [CashClosingService, CashClosingRequiredGuard],
   exports: [CashClosingService, CashClosingRequiredGuard],

@@ -11,7 +11,10 @@ describe('PermissionsGuard', () => {
     guard = new PermissionsGuard(reflector);
   });
 
-  function createMockContext(user?: Record<string, unknown>, permissions?: string[]): ExecutionContext {
+  function createMockContext(
+    user?: Record<string, unknown>,
+    permissions?: string[],
+  ): ExecutionContext {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(permissions || undefined);
 
     return {
@@ -29,18 +32,15 @@ describe('PermissionsGuard', () => {
   });
 
   it('should allow access when user has all required permissions', () => {
-    const ctx = createMockContext(
-      { permissions: ['sale.create', 'sale.read', 'user.create'] },
-      ['sale.create', 'sale.read'],
-    );
+    const ctx = createMockContext({ permissions: ['sale.create', 'sale.read', 'user.create'] }, [
+      'sale.create',
+      'sale.read',
+    ]);
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
   it('should deny access when user is missing a permission', () => {
-    const ctx = createMockContext(
-      { permissions: ['sale.create'] },
-      ['sale.create', 'sale.read'],
-    );
+    const ctx = createMockContext({ permissions: ['sale.create'] }, ['sale.create', 'sale.read']);
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
   });
 

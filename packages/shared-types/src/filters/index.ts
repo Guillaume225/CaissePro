@@ -25,7 +25,7 @@ export interface SortParams {
 
 export interface DateRange {
   from?: string; // ISO date
-  to?: string;   // ISO date
+  to?: string; // ISO date
 }
 
 /* ─── Expense ─── */

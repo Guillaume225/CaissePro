@@ -13,7 +13,7 @@ describe('reference-generator', () => {
       expect(generateReference('DEP', 99999, 2024)).toBe('DEP-2024-99999');
     });
 
-    test('utilise l\'année courante par défaut', () => {
+    test("utilise l'année courante par défaut", () => {
       const year = new Date().getFullYear();
       expect(generateReference('TST', 1)).toBe(`TST-${year}-00001`);
     });
@@ -23,7 +23,7 @@ describe('reference-generator', () => {
       expect(() => generateReference('DEP', -1, 2024)).toThrow(RangeError);
     });
 
-    test('lève une erreur si seq n\'est pas un entier', () => {
+    test("lève une erreur si seq n'est pas un entier", () => {
       expect(() => generateReference('DEP', 1.5, 2024)).toThrow(RangeError);
     });
   });

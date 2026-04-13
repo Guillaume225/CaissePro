@@ -7,10 +7,7 @@ import { CompaniesController } from './companies.controller';
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Company, User]),
-    AuditModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Company, User]), AuditModule],
   controllers: [CompaniesController],
   providers: [CompaniesService],
   exports: [CompaniesService],

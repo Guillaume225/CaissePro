@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Body,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Body, Query } from '@nestjs/common';
 import { AdminQueryService, EntityType } from './admin-query.service';
 import { Roles, CurrentUser } from '../common/decorators';
 

@@ -23,16 +23,7 @@ import {
   LockKeyhole,
   AlertTriangle,
 } from 'lucide-react';
-import {
-  Badge,
-  Button,
-  Input,
-  Card,
-  CardContent,
-  Stat,
-  DataTable,
-  Modal,
-} from '@/components/ui';
+import { Badge, Button, Input, Card, CardContent, Stat, DataTable, Modal } from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
 import {
   useCashDayDetail,
@@ -45,8 +36,7 @@ import { useExpense } from '@/hooks/useExpenses';
 
 type AnyRow = Record<string, unknown>;
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
 function timeSince(dateStr: string): string {
   const now = new Date();
@@ -99,10 +89,7 @@ export default function CashDayDetailPage() {
   const [closeComment, setCloseComment] = useState('');
   const [closeError, setCloseError] = useState<string | null>(null);
 
-  const gap =
-    actualBalance !== '' && day
-      ? Number(actualBalance) - day.theoreticalBalance
-      : null;
+  const gap = actualBalance !== '' && day ? Number(actualBalance) - day.theoreticalBalance : null;
 
   const handleClose = async () => {
     try {
@@ -128,7 +115,9 @@ export default function CashDayDetailPage() {
   const expenses = ops?.expenses ?? [];
 
   const expenseStats = useMemo(() => {
-    let entries = 0, exits = 0, total = 0;
+    let entries = 0,
+      exits = 0,
+      total = 0;
     for (const e of expenses) {
       total += e.amount;
       if (e.categoryDirection === 'ENTRY') entries++;
@@ -137,7 +126,14 @@ export default function CashDayDetailPage() {
     return { entries, exits, total, totalAmount: total };
   }, [expenses]);
 
-  const STATUS_ORDER = ['DRAFT', 'PENDING', 'APPROVED_L1', 'APPROVED_L2', 'PAID', 'REJECTED'] as const;
+  const STATUS_ORDER = [
+    'DRAFT',
+    'PENDING',
+    'APPROVED_L1',
+    'APPROVED_L2',
+    'PAID',
+    'REJECTED',
+  ] as const;
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
@@ -165,7 +161,8 @@ export default function CashDayDetailPage() {
     let list = expenses;
     if (filterStatus !== 'ALL') list = list.filter((e) => e.status === filterStatus);
     if (filterPayment !== 'ALL') list = list.filter((e) => e.paymentMethod === filterPayment);
-    if (filterDirection !== 'ALL') list = list.filter((e) => e.categoryDirection === filterDirection);
+    if (filterDirection !== 'ALL')
+      list = list.filter((e) => e.categoryDirection === filterDirection);
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase().trim();
       list = list.filter(
@@ -185,12 +182,17 @@ export default function CashDayDetailPage() {
       list.push(e);
       grouped.set(e.status, list);
     }
-    return STATUS_ORDER
-      .filter((s) => grouped.has(s))
-      .map((s) => ({ status: s, items: grouped.get(s)! }));
+    return STATUS_ORDER.filter((s) => grouped.has(s)).map((s) => ({
+      status: s,
+      items: grouped.get(s)!,
+    }));
   }, [filteredExpenses]);
 
-  const hasActiveFilters = filterStatus !== 'ALL' || filterPayment !== 'ALL' || filterDirection !== 'ALL' || searchTerm.trim() !== '';
+  const hasActiveFilters =
+    filterStatus !== 'ALL' ||
+    filterPayment !== 'ALL' ||
+    filterDirection !== 'ALL' ||
+    searchTerm.trim() !== '';
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -209,7 +211,11 @@ export default function CashDayDetailPage() {
       header: t('closing.operations.time'),
       render: (r) => {
         const row = r as unknown as CashDayMovement;
-        return <span className="text-xs text-gray-500">{new Date(row.time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>;
+        return (
+          <span className="text-xs text-gray-500">
+            {new Date(row.time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        );
       },
     },
     {
@@ -217,7 +223,11 @@ export default function CashDayDetailPage() {
       header: t('closing.operations.type'),
       render: (r) => {
         const row = r as unknown as CashDayMovement;
-        return <Badge variant={row.type === 'ENTRY' ? 'success' : 'destructive'}>{row.type === 'ENTRY' ? t('closing.operations.entry') : t('closing.operations.exit')}</Badge>;
+        return (
+          <Badge variant={row.type === 'ENTRY' ? 'success' : 'destructive'}>
+            {row.type === 'ENTRY' ? t('closing.operations.entry') : t('closing.operations.exit')}
+          </Badge>
+        );
       },
     },
     {
@@ -226,7 +236,11 @@ export default function CashDayDetailPage() {
       render: (r) => {
         const row = r as unknown as CashDayMovement;
         const v: Record<string, 'success' | 'destructive' | 'info' | 'warning' | 'default'> = {
-          SALE: 'success', EXPENSE: 'destructive', PAYMENT: 'info', ADJUSTMENT: 'warning', OTHER: 'default',
+          SALE: 'success',
+          EXPENSE: 'destructive',
+          PAYMENT: 'info',
+          ADJUSTMENT: 'warning',
+          OTHER: 'default',
         };
         return <Badge variant={v[row.category] || 'default'}>{row.category}</Badge>;
       },
@@ -235,7 +249,11 @@ export default function CashDayDetailPage() {
     {
       key: 'description',
       header: t('closing.operations.description'),
-      render: (r) => <span className="text-sm text-gray-600">{(r as unknown as CashDayMovement).description}</span>,
+      render: (r) => (
+        <span className="text-sm text-gray-600">
+          {(r as unknown as CashDayMovement).description}
+        </span>
+      ),
     },
     {
       key: 'amount',
@@ -244,8 +262,11 @@ export default function CashDayDetailPage() {
       render: (r) => {
         const row = r as unknown as CashDayMovement;
         return (
-          <span className={`font-medium ${row.type === 'EXIT' ? 'text-red-600' : 'text-green-600'}`}>
-            {row.type === 'EXIT' ? '−' : '+'}{fmt(Math.abs(row.amount))}
+          <span
+            className={`font-medium ${row.type === 'EXIT' ? 'text-red-600' : 'text-green-600'}`}
+          >
+            {row.type === 'EXIT' ? '−' : '+'}
+            {fmt(Math.abs(row.amount))}
           </span>
         );
       },
@@ -280,22 +301,45 @@ export default function CashDayDetailPage() {
           </h1>
           <div className="mt-1 flex items-center gap-3">
             <span className="font-mono text-sm text-brand-gold">{day.reference}</span>
-            <Badge variant={day.status === 'OPEN' ? 'success' : day.status === 'PENDING_CLOSE' ? 'warning' : 'default'}>
-              {day.status === 'OPEN' ? t('closing.statusOpen') : day.status === 'PENDING_CLOSE' ? t('closing.statusPendingClose') : t('closing.statusClosed')}
+            <Badge
+              variant={
+                day.status === 'OPEN'
+                  ? 'success'
+                  : day.status === 'PENDING_CLOSE'
+                    ? 'warning'
+                    : 'default'
+              }
+            >
+              {day.status === 'OPEN'
+                ? t('closing.statusOpen')
+                : day.status === 'PENDING_CLOSE'
+                  ? t('closing.statusPendingClose')
+                  : t('closing.statusClosed')}
             </Badge>
             {(day.status === 'OPEN' || day.status === 'PENDING_CLOSE') && (
-              <span className={`text-xs ${hours > 12 ? 'font-medium text-red-500' : 'text-gray-400'}`}>
+              <span
+                className={`text-xs ${hours > 12 ? 'font-medium text-red-500' : 'text-gray-400'}`}
+              >
                 <Clock className="mr-0.5 inline h-3 w-3" />
                 {timeSince(day.openedAt)}
               </span>
             )}
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            {t('cashDayDetail.openedBy', { name: day.openedByName, date: new Date(day.openedAt).toLocaleString('fr-FR') })}
+            {t('cashDayDetail.openedBy', {
+              name: day.openedByName,
+              date: new Date(day.openedAt).toLocaleString('fr-FR'),
+            })}
           </p>
         </div>
         {day.status === 'PENDING_CLOSE' && (
-          <Button variant="destructive" onClick={() => { setCloseError(null); setShowCloseModal(true); }}>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              setCloseError(null);
+              setShowCloseModal(true);
+            }}
+          >
             <LockKeyhole className="mr-2 h-4 w-4" />
             {t('closing.closeCash')}
           </Button>
@@ -314,8 +358,21 @@ export default function CashDayDetailPage() {
             <Vault className="h-8 w-8 text-brand-gold" />
             <div>
               <p className="text-xs text-gray-500">{t('closing.status')}</p>
-              <Badge variant={day.status === 'OPEN' ? 'success' : day.status === 'PENDING_CLOSE' ? 'warning' : 'default'} className="mt-1">
-                {day.status === 'OPEN' ? t('closing.statusOpen') : day.status === 'PENDING_CLOSE' ? t('closing.statusPendingClose') : t('closing.statusClosed')}
+              <Badge
+                variant={
+                  day.status === 'OPEN'
+                    ? 'success'
+                    : day.status === 'PENDING_CLOSE'
+                      ? 'warning'
+                      : 'default'
+                }
+                className="mt-1"
+              >
+                {day.status === 'OPEN'
+                  ? t('closing.statusOpen')
+                  : day.status === 'PENDING_CLOSE'
+                    ? t('closing.statusPendingClose')
+                    : t('closing.statusClosed')}
               </Badge>
             </div>
           </CardContent>
@@ -377,7 +434,8 @@ export default function CashDayDetailPage() {
       <div>
         <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-gray-800">
           <Receipt className="h-5 w-5 text-blue-500" />
-          {t('cashDayDetail.expensesTitle')} ({filteredExpenses.length}{filteredExpenses.length !== expenses.length ? ` / ${expenses.length}` : ''})
+          {t('cashDayDetail.expensesTitle')} ({filteredExpenses.length}
+          {filteredExpenses.length !== expenses.length ? ` / ${expenses.length}` : ''})
         </h2>
 
         {/* Filter bar */}
@@ -403,7 +461,9 @@ export default function CashDayDetailPage() {
             >
               <option value="ALL">{t('cashDayDetail.filterAllStatuses')}</option>
               {STATUS_ORDER.map((s) => (
-                <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
+                <option key={s} value={s}>
+                  {STATUS_LABELS[s] ?? s}
+                </option>
               ))}
             </select>
 
@@ -415,7 +475,9 @@ export default function CashDayDetailPage() {
             >
               <option value="ALL">{t('cashDayDetail.filterAllPayments')}</option>
               {availablePayments.map((p) => (
-                <option key={p} value={p}>{PAYMENT_LABELS[p] ?? p}</option>
+                <option key={p} value={p}>
+                  {PAYMENT_LABELS[p] ?? p}
+                </option>
               ))}
             </select>
 
@@ -475,15 +537,22 @@ export default function CashDayDetailPage() {
                         onClick={() => toggleGroup(status)}
                       >
                         <td className="px-4 py-2.5">
-                          {isCollapsed
-                            ? <ChevronRight className="h-4 w-4 text-gray-500" />
-                            : <ChevronDown className="h-4 w-4 text-gray-500" />}
+                          {isCollapsed ? (
+                            <ChevronRight className="h-4 w-4 text-gray-500" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-gray-500" />
+                          )}
                         </td>
                         <td colSpan={5} className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
-                            <Badge variant={statusColors[status] || 'default'}>{STATUS_LABELS[status] ?? status}</Badge>
+                            <Badge variant={statusColors[status] || 'default'}>
+                              {STATUS_LABELS[status] ?? status}
+                            </Badge>
                             <span className="text-sm text-gray-500">
-                              — {items.length} {items.length > 1 ? t('cashDayDetail.expenses') : t('cashDayDetail.expense')}
+                              — {items.length}{' '}
+                              {items.length > 1
+                                ? t('cashDayDetail.expenses')
+                                : t('cashDayDetail.expense')}
                             </span>
                           </div>
                         </td>
@@ -492,41 +561,54 @@ export default function CashDayDetailPage() {
                         </td>
                         <td />
                       </tr>
-                      {!isCollapsed && items.map((exp) => (
-                        <tr key={exp.id} className="border-b last:border-b-0 bg-white hover:bg-gray-50/60">
-                          <td className="px-4 py-2" />
-                          <td className="px-4 py-2 text-sm">
-                            {new Date(exp.date).toLocaleDateString('fr-FR')}
-                          </td>
-                          <td className="px-4 py-2">
-                            <span className="font-mono text-xs text-brand-gold">{exp.reference}</span>
-                          </td>
-                          <td className="px-4 py-2 text-sm">{exp.beneficiary}</td>
-                          <td className="px-4 py-2">
-                            <div className="flex items-center gap-1">
-                              {exp.categoryDirection === 'ENTRY'
-                                ? <ArrowUpRight className="h-3.5 w-3.5 text-green-500" />
-                                : <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />}
-                              <span className="text-sm">{exp.categoryName ?? '—'}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-2 text-xs text-gray-500">{PAYMENT_LABELS[exp.paymentMethod] ?? exp.paymentMethod}</td>
-                          <td className="px-4 py-2 text-right">
-                            <span className={`font-medium ${exp.categoryDirection === 'EXIT' ? 'text-red-600' : 'text-green-600'}`}>
-                              {exp.categoryDirection === 'EXIT' ? '−' : '+'}{fmt(exp.amount)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <button
-                              onClick={() => setSelectedExpense(exp)}
-                              className="rounded p-1 text-gray-400 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors"
-                              title={t('cashDayDetail.viewExpense')}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {!isCollapsed &&
+                        items.map((exp) => (
+                          <tr
+                            key={exp.id}
+                            className="border-b last:border-b-0 bg-white hover:bg-gray-50/60"
+                          >
+                            <td className="px-4 py-2" />
+                            <td className="px-4 py-2 text-sm">
+                              {new Date(exp.date).toLocaleDateString('fr-FR')}
+                            </td>
+                            <td className="px-4 py-2">
+                              <span className="font-mono text-xs text-brand-gold">
+                                {exp.reference}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-sm">{exp.beneficiary}</td>
+                            <td className="px-4 py-2">
+                              <div className="flex items-center gap-1">
+                                {exp.categoryDirection === 'ENTRY' ? (
+                                  <ArrowUpRight className="h-3.5 w-3.5 text-green-500" />
+                                ) : (
+                                  <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />
+                                )}
+                                <span className="text-sm">{exp.categoryName ?? '—'}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-xs text-gray-500">
+                              {PAYMENT_LABELS[exp.paymentMethod] ?? exp.paymentMethod}
+                            </td>
+                            <td className="px-4 py-2 text-right">
+                              <span
+                                className={`font-medium ${exp.categoryDirection === 'EXIT' ? 'text-red-600' : 'text-green-600'}`}
+                              >
+                                {exp.categoryDirection === 'EXIT' ? '−' : '+'}
+                                {fmt(exp.amount)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              <button
+                                onClick={() => setSelectedExpense(exp)}
+                                className="rounded p-1 text-gray-400 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors"
+                                title={t('cashDayDetail.viewExpense')}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
                     </Fragment>
                   );
                 })}
@@ -582,7 +664,9 @@ export default function CashDayDetailPage() {
             <div className="space-y-4 px-6 py-5 overflow-y-auto">
               {/* Reference + status */}
               <div className="flex items-center justify-between">
-                <span className="font-mono text-sm text-brand-gold">{selectedExpense.reference}</span>
+                <span className="font-mono text-sm text-brand-gold">
+                  {selectedExpense.reference}
+                </span>
                 <Badge variant={statusColors[selectedExpense.status] || 'default'}>
                   {STATUS_LABELS[selectedExpense.status] ?? selectedExpense.status}
                 </Badge>
@@ -592,41 +676,64 @@ export default function CashDayDetailPage() {
               <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div>
                   <p className="text-xs font-medium uppercase text-gray-400">{t('common.date')}</p>
-                  <p className="text-gray-800">{new Date(selectedExpense.date).toLocaleDateString('fr-FR')}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium uppercase text-gray-400">{t('common.amount')}</p>
-                  <p className={`font-semibold ${selectedExpense.categoryDirection === 'EXIT' ? 'text-red-600' : 'text-green-600'}`}>
-                    {selectedExpense.categoryDirection === 'EXIT' ? '−' : '+'}{fmt(selectedExpense.amount)}
+                  <p className="text-gray-800">
+                    {new Date(selectedExpense.date).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-400">{t('cashDayDetail.beneficiary')}</p>
+                  <p className="text-xs font-medium uppercase text-gray-400">
+                    {t('common.amount')}
+                  </p>
+                  <p
+                    className={`font-semibold ${selectedExpense.categoryDirection === 'EXIT' ? 'text-red-600' : 'text-green-600'}`}
+                  >
+                    {selectedExpense.categoryDirection === 'EXIT' ? '−' : '+'}
+                    {fmt(selectedExpense.amount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-gray-400">
+                    {t('cashDayDetail.beneficiary')}
+                  </p>
                   <p className="text-gray-800">{selectedExpense.beneficiary}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-400">{t('cashDayDetail.paymentMethod')}</p>
-                  <p className="text-gray-800">{PAYMENT_LABELS[selectedExpense.paymentMethod] ?? selectedExpense.paymentMethod}</p>
+                  <p className="text-xs font-medium uppercase text-gray-400">
+                    {t('cashDayDetail.paymentMethod')}
+                  </p>
+                  <p className="text-gray-800">
+                    {PAYMENT_LABELS[selectedExpense.paymentMethod] ?? selectedExpense.paymentMethod}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-400">{t('closing.operations.category')}</p>
+                  <p className="text-xs font-medium uppercase text-gray-400">
+                    {t('closing.operations.category')}
+                  </p>
                   <div className="flex items-center gap-1 text-gray-800">
-                    {selectedExpense.categoryDirection === 'ENTRY'
-                      ? <ArrowUpRight className="h-3.5 w-3.5 text-green-500" />
-                      : <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />}
+                    {selectedExpense.categoryDirection === 'ENTRY' ? (
+                      <ArrowUpRight className="h-3.5 w-3.5 text-green-500" />
+                    ) : (
+                      <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />
+                    )}
                     {selectedExpense.categoryName ?? '—'}
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-400">{t('cashDayDetail.createdAt')}</p>
-                  <p className="text-gray-800">{new Date(selectedExpense.createdAt).toLocaleString('fr-FR')}</p>
+                  <p className="text-xs font-medium uppercase text-gray-400">
+                    {t('cashDayDetail.createdAt')}
+                  </p>
+                  <p className="text-gray-800">
+                    {new Date(selectedExpense.createdAt).toLocaleString('fr-FR')}
+                  </p>
                 </div>
               </div>
 
               {/* Observations */}
               {selectedExpense.observations && (
                 <div>
-                  <p className="mb-1 text-xs font-medium uppercase text-gray-400">{t('cashDayDetail.observations')}</p>
+                  <p className="mb-1 text-xs font-medium uppercase text-gray-400">
+                    {t('cashDayDetail.observations')}
+                  </p>
                   <p className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700">
                     {selectedExpense.observations}
                   </p>
@@ -667,9 +774,17 @@ export default function CashDayDetailPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-medium text-gray-700">{appr.approverName}</p>
-                            <Badge variant="outline" className="text-[10px]">N{appr.level}</Badge>
+                            <Badge variant="outline" className="text-[10px]">
+                              N{appr.level}
+                            </Badge>
                             <Badge
-                              variant={appr.status === 'APPROVED' ? 'success' : appr.status === 'REJECTED' ? 'destructive' : 'warning'}
+                              variant={
+                                appr.status === 'APPROVED'
+                                  ? 'success'
+                                  : appr.status === 'REJECTED'
+                                    ? 'destructive'
+                                    : 'warning'
+                              }
                               className="text-[10px]"
                             >
                               {appr.status === 'APPROVED'
@@ -745,9 +860,7 @@ export default function CashDayDetailPage() {
           {gap !== null && (
             <div
               className={`flex items-center gap-2 rounded-lg p-3 ${
-                gap === 0
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-amber-50 text-amber-700'
+                gap === 0 ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
               }`}
             >
               {gap === 0 ? (
@@ -757,11 +870,10 @@ export default function CashDayDetailPage() {
               )}
               <div>
                 <p className="text-sm font-medium">
-                  {t('closing.closeModal.gap')}: {gap > 0 ? '+' : ''}{fmt(gap)}
+                  {t('closing.closeModal.gap')}: {gap > 0 ? '+' : ''}
+                  {fmt(gap)}
                 </p>
-                {gap !== 0 && (
-                  <p className="text-xs">{t('closing.closeModal.gapWarning')}</p>
-                )}
+                {gap !== 0 && <p className="text-xs">{t('closing.closeModal.gapWarning')}</p>}
               </div>
             </div>
           )}
@@ -790,10 +902,7 @@ export default function CashDayDetailPage() {
               variant="destructive"
               onClick={handleClose}
               loading={closeCash.isPending}
-              disabled={
-                actualBalance === '' ||
-                (gap !== null && gap !== 0 && !closeComment.trim())
-              }
+              disabled={actualBalance === '' || (gap !== null && gap !== 0 && !closeComment.trim())}
             >
               <LockKeyhole className="mr-2 h-4 w-4" />
               {t('closing.closeCash')}

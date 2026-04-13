@@ -84,7 +84,7 @@ export const EMAIL_TEMPLATES: Record<string, string> = {
   /* ------------------------------------------------------------------ */
   [NotificationType.EXPENSE_REJECTED]: wrap(
     '❌ Dépense rejetée',
-    'Votre dépense n\'a pas été approuvée',
+    "Votre dépense n'a pas été approuvée",
     `<h2>Dépense rejetée</h2>
      <div class="danger-box">
        <div class="detail-row"><span class="detail-label">Référence :</span> <span class="detail-value">{{reference}}</span></div>
@@ -111,7 +111,7 @@ export const EMAIL_TEMPLATES: Record<string, string> = {
   /* ------------------------------------------------------------------ */
   [NotificationType.ADVANCE_UNJUSTIFIED]: wrap(
     '🔔 Avance non justifiée',
-    'Rappel de justification d\'avance',
+    "Rappel de justification d'avance",
     `<h2>Rappel : avance non justifiée</h2>
      <div class="alert-box">
        <div class="detail-row"><span class="detail-label">Référence :</span> <span class="detail-value">{{reference}}</span></div>
@@ -151,7 +151,7 @@ export const EMAIL_TEMPLATES: Record<string, string> = {
   /* ------------------------------------------------------------------ */
   [NotificationType.AI_ANOMALY_DETECTED]: wrap(
     '🤖 Anomalie IA détectée',
-    'Le système d\'intelligence artificielle a identifié une anomalie',
+    "Le système d'intelligence artificielle a identifié une anomalie",
     `<h2>Anomalie détectée</h2>
      <div class="danger-box">
        <div class="detail-row"><span class="detail-label">Type :</span> <span class="detail-value">{{anomalyType}}</span></div>

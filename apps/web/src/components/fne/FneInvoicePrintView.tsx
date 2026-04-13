@@ -18,14 +18,21 @@ const INVOICE_TYPE_LABELS: Record<string, string> = {
 };
 
 function fmt(n: number): string {
-  return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 function fmtDateTime(iso: string): string {
   const d = new Date(iso);
   return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   }).format(d);
 }
 
@@ -47,20 +54,38 @@ export default function FneInvoicePrintView({ invoice, company, fneSetting, prep
   const taxSummary = buildTaxSummary(invoice);
 
   // Compute autres taxes total
-  const autresTaxes = invoice.customTaxes?.reduce((sum, ct) => sum + (invoice.subtotalHt * ct.amount / 100), 0) ?? 0;
+  const autresTaxes =
+    invoice.customTaxes?.reduce((sum, ct) => sum + (invoice.subtotalHt * ct.amount) / 100, 0) ?? 0;
 
   return (
     <div className="print-only">
-      <div style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '11px', color: '#222', padding: '0', lineHeight: 1.5 }}>
+      <div
+        style={{
+          fontFamily: 'Arial, Helvetica, sans-serif',
+          fontSize: '11px',
+          color: '#222',
+          padding: '0',
+          lineHeight: 1.5,
+        }}
+      >
         {/* ══ HEADER ══ */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px', marginBottom: '20px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '24px',
+            marginBottom: '20px',
+          }}
+        >
           {/* LEFT COLUMN */}
           <div style={{ flex: '1 1 55%' }}>
             {/* Company box */}
             <div style={{ border: '1px solid #ccc', padding: '10px 12px', marginBottom: '12px' }}>
               <div style={{ fontSize: '14px', fontWeight: 700 }}>{companyName}</div>
               {ncc && <div>NCC : {ncc}</div>}
-              {fneSetting?.regimeImposition && <div>Régime d'imposition : {fneSetting.regimeImposition}</div>}
+              {fneSetting?.regimeImposition && (
+                <div>Régime d'imposition : {fneSetting.regimeImposition}</div>
+              )}
               {fneSetting?.centreImpots && <div>Centre des impôts : {fneSetting.centreImpots}</div>}
             </div>
 
@@ -78,7 +103,9 @@ export default function FneInvoicePrintView({ invoice, company, fneSetting, prep
               {!invoice.clientSellerName && <div>Nom du vendeur :</div>}
               <div>Nom de PDV : {invoice.pointOfSale}</div>
               <div>Date et heure : {fmtDateTime(invoice.createdAt)}</div>
-              <div>Mode de paiement : {PAYMENT_LABELS[invoice.paymentMethod] || invoice.paymentMethod}</div>
+              <div>
+                Mode de paiement : {PAYMENT_LABELS[invoice.paymentMethod] || invoice.paymentMethod}
+              </div>
             </div>
           </div>
 
@@ -91,7 +118,15 @@ export default function FneInvoicePrintView({ invoice, company, fneSetting, prep
 
             {/* QR Code + Company Logo */}
             {invoice.fneToken && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  marginBottom: '16px',
+                }}
+              >
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(invoice.fneToken)}`}
                   alt="QR Code FNE"
@@ -127,7 +162,14 @@ export default function FneInvoicePrintView({ invoice, company, fneSetting, prep
         </div>
 
         {/* ══ ITEMS TABLE ══ */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px', fontSize: '11px' }}>
+        <table
+          style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            marginBottom: '4px',
+            fontSize: '11px',
+          }}
+        >
           <thead>
             <tr>
               <th style={thStyle}>Réf</th>
@@ -148,9 +190,7 @@ export default function FneInvoicePrintView({ invoice, company, fneSetting, prep
                 <td style={{ ...tdStyle, textAlign: 'right' }}>{fmt(item.amount)}</td>
                 <td style={{ ...tdStyle, textAlign: 'center' }}>{item.quantity}</td>
                 <td style={{ ...tdStyle, textAlign: 'center' }}>{item.measurementUnit || ''}</td>
-                <td style={{ ...tdStyle, textAlign: 'center' }}>
-                  {item.taxes?.join(', ') || ''}
-                </td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>{item.taxes?.join(', ') || ''}</td>
                 <td style={{ ...tdStyle, textAlign: 'center' }}>{item.discount || 0}</td>
                 <td style={{ ...tdStyle, textAlign: 'right' }}>{fmt(item.lineTotalHt)}</td>
               </tr>
@@ -159,7 +199,14 @@ export default function FneInvoicePrintView({ invoice, company, fneSetting, prep
         </table>
 
         {/* ── TOTALS ── */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '11px' }}>
+        <table
+          style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            marginBottom: '16px',
+            fontSize: '11px',
+          }}
+        >
           <tbody>
             <TotalRow label="TOTAL HT" value={fmt(invoice.subtotalHt)} />
             <TotalRow label="TVA" value={fmt(invoice.totalVat)} />
@@ -170,7 +217,15 @@ export default function FneInvoicePrintView({ invoice, company, fneSetting, prep
         </table>
 
         {/* ══ TAX SUMMARY ══ */}
-        <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '4px', borderBottom: '1px solid #999', paddingBottom: '4px' }}>
+        <div
+          style={{
+            fontSize: '12px',
+            fontWeight: 700,
+            marginBottom: '4px',
+            borderBottom: '1px solid #999',
+            paddingBottom: '4px',
+          }}
+        >
           RESUME DE LA FACTURE
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
@@ -193,7 +248,9 @@ export default function FneInvoicePrintView({ invoice, company, fneSetting, prep
             ))}
             {taxSummary.length === 0 && (
               <tr>
-                <td style={tdStyle} colSpan={4}>Aucune taxe</td>
+                <td style={tdStyle} colSpan={4}>
+                  Aucune taxe
+                </td>
               </tr>
             )}
           </tbody>
@@ -224,10 +281,25 @@ function TotalRow({ label, value, bold }: { label: string; value: string; bold?:
   return (
     <tr>
       <td colSpan={6} />
-      <td style={{ borderBottom: '1px solid #ddd', padding: '5px 8px', textAlign: 'right', fontWeight: bold ? 700 : 600, fontSize: bold ? '12px' : '11px' }}>
+      <td
+        style={{
+          borderBottom: '1px solid #ddd',
+          padding: '5px 8px',
+          textAlign: 'right',
+          fontWeight: bold ? 700 : 600,
+          fontSize: bold ? '12px' : '11px',
+        }}
+      >
         {label}
       </td>
-      <td style={{ borderBottom: '1px solid #ddd', padding: '5px 8px', textAlign: 'right', fontWeight: bold ? 700 : 400 }}>
+      <td
+        style={{
+          borderBottom: '1px solid #ddd',
+          padding: '5px 8px',
+          textAlign: 'right',
+          fontWeight: bold ? 700 : 400,
+        }}
+      >
         {value}
       </td>
     </tr>
@@ -244,7 +316,10 @@ interface TaxSummaryRow {
 
 function buildTaxSummary(invoice: FneInvoice): TaxSummaryRow[] {
   // Group items by their tax codes to build the summary
-  const groups: Record<string, { subtotal: number; vatAmount: number; rate: number; label: string }> = {};
+  const groups: Record<
+    string,
+    { subtotal: number; vatAmount: number; rate: number; label: string }
+  > = {};
 
   for (const item of invoice.items) {
     const taxKey = item.taxes?.join('+') || 'NONE';

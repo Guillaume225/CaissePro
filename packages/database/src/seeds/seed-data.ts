@@ -5,4 +5,3 @@
 export async function seedAll(_ds: DataSource): Promise<void> {
   // No-op
 }
-

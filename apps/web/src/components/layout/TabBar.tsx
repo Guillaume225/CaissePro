@@ -8,9 +8,10 @@ import { useState, useRef } from 'react';
 export function TabBar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { tabs, activeTabId, setActiveTab, closeTab, closeOtherTabs, closeAllTabs } =
-    useTabStore();
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
+  const { tabs, activeTabId, setActiveTab, closeTab, closeOtherTabs, closeAllTabs } = useTabStore();
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; tabId: string } | null>(
+    null,
+  );
   const barRef = useRef<HTMLDivElement>(null);
 
   const handleClick = (tab: Tab) => {

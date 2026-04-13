@@ -42,18 +42,17 @@ export class NotificationsService {
   }
 
   async markAsRead(id: string, userId: string) {
-    await this.ds.query(
-      'UPDATE notifications SET is_read = 1 WHERE id = @0 AND user_id = @1',
-      [id, userId],
-    );
+    await this.ds.query('UPDATE notifications SET is_read = 1 WHERE id = @0 AND user_id = @1', [
+      id,
+      userId,
+    ]);
     return this.wrap(null);
   }
 
   async markAllAsRead(userId: string) {
-    await this.ds.query(
-      'UPDATE notifications SET is_read = 1 WHERE user_id = @0 AND is_read = 0',
-      [userId],
-    );
+    await this.ds.query('UPDATE notifications SET is_read = 1 WHERE user_id = @0 AND is_read = 0', [
+      userId,
+    ]);
     return this.wrap(null);
   }
 }

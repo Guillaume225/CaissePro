@@ -26,10 +26,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, Stat, Badge } from '@/components/ui';
-import {
-  useDashboardKpis,
-  useAiAlerts,
-} from '@/hooks/useDashboard';
+import { useDashboardKpis, useAiAlerts } from '@/hooks/useDashboard';
 import { useFneInvoices } from '@/hooks/useFneInvoices';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useSocket } from '@/hooks/useSocket';
@@ -39,12 +36,29 @@ import { useState, useMemo } from 'react';
 import type { AlertSeverity } from '@/types/dashboard';
 
 type Period = 'day' | 'week' | 'month' | 'year';
-const PERIOD_LABELS: Record<Period, string> = { day: 'Jour', week: 'Semaine', month: 'Mois', year: 'Année' };
+const PERIOD_LABELS: Record<Period, string> = {
+  day: 'Jour',
+  week: 'Semaine',
+  month: 'Mois',
+  year: 'Année',
+};
 const PERIODS: Period[] = ['day', 'week', 'month', 'year'];
 
-const PIE_COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#D4A843', '#6366F1'];
+const PIE_COLORS = [
+  '#8B5CF6',
+  '#3B82F6',
+  '#10B981',
+  '#F59E0B',
+  '#EF4444',
+  '#EC4899',
+  '#D4A843',
+  '#6366F1',
+];
 
-const SEVERITY_CONFIG: Record<AlertSeverity, { variant: 'success' | 'warning' | 'destructive'; label: string }> = {
+const SEVERITY_CONFIG: Record<
+  AlertSeverity,
+  { variant: 'success' | 'warning' | 'destructive'; label: string }
+> = {
   LOW: { variant: 'success', label: 'Faible' },
   MEDIUM: { variant: 'warning', label: 'Moyen' },
   HIGH: { variant: 'destructive', label: 'Élevé' },
@@ -61,11 +75,19 @@ function getWeek(d: Date): number {
   const tmp = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
   const week1 = new Date(tmp.getFullYear(), 0, 4);
-  return 1 + Math.round(((tmp.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+  return (
+    1 +
+    Math.round(((tmp.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7)
+  );
 }
 
 /** Group items by period, returning sorted {label, amount} array */
-function groupByPeriod<T>(items: T[], dateAccessor: (item: T) => string, amountAccessor: (item: T) => number, period: Period): { month: string; amount: number }[] {
+function groupByPeriod<T>(
+  items: T[],
+  dateAccessor: (item: T) => string,
+  amountAccessor: (item: T) => number,
+  period: Period,
+): { month: string; amount: number }[] {
   const map = new Map<string, number>();
   for (const item of items) {
     const raw = dateAccessor(item);
@@ -95,7 +117,7 @@ function groupByPeriod<T>(items: T[], dateAccessor: (item: T) => string, amountA
   }
   // Rebuild with labels — we need labels, so re-derive them
   const result: { month: string; amount: number }[] = [];
-  const sortedKeys = [...map.keys()].filter(k => !k.startsWith('__lbl__')).sort();
+  const sortedKeys = [...map.keys()].filter((k) => !k.startsWith('__lbl__')).sort();
   for (const key of sortedKeys) {
     // Re-derive label from key
     let label = key;
@@ -151,14 +173,20 @@ export default function DecisionDashboard() {
   const pendingCount = pendingData?.meta?.total ?? 0;
 
   // All expenses for chart grouping
-  const { data: allExpensesData } = useExpenses({ perPage: 500, sortBy: 'date', sortOrder: 'DESC' });
+  const { data: allExpensesData } = useExpenses({
+    perPage: 500,
+    sortBy: 'date',
+    sortOrder: 'DESC',
+  });
   const allExpenses = allExpensesData?.data ?? [];
 
   // FNE data
   const { data: fneInvoicesData } = useFneInvoices({ status: 'CERTIFIED', perPage: 500 });
   const certifiedInvoices = fneInvoicesData?.data ?? [];
   const { data: allFneData } = useFneInvoices({ perPage: 500 });
-  const devisCount = (allFneData?.data ?? []).filter((inv) => inv.invoiceType === 'estimate').length;
+  const devisCount = (allFneData?.data ?? []).filter(
+    (inv) => inv.invoiceType === 'estimate',
+  ).length;
 
   // FNE stats
   const fneTotalTtc = certifiedInvoices.reduce((sum, inv) => sum + (Number(inv.totalTtc) || 0), 0);
@@ -169,13 +197,25 @@ export default function DecisionDashboard() {
 
   // FNE CA trend (grouped by selected period)
   const fneChartData = useMemo(
-    () => groupByPeriod(certifiedInvoices, (inv) => inv.createdAt, (inv) => Number(inv.totalTtc) || 0, fnePeriod),
+    () =>
+      groupByPeriod(
+        certifiedInvoices,
+        (inv) => inv.createdAt,
+        (inv) => Number(inv.totalTtc) || 0,
+        fnePeriod,
+      ),
     [certifiedInvoices, fnePeriod],
   );
 
   // Expense trend (grouped by selected period)
   const expChartData = useMemo(
-    () => groupByPeriod(allExpenses, (e) => e.date, (e) => e.amount, expPeriod),
+    () =>
+      groupByPeriod(
+        allExpenses,
+        (e) => e.date,
+        (e) => e.amount,
+        expPeriod,
+      ),
     [allExpenses, expPeriod],
   );
 
@@ -205,7 +245,9 @@ export default function DecisionDashboard() {
       {/* ── Header ──────────────────────────── */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{t('dashboards.decision.title')}</h1>
-        <p className="mt-1 text-sm text-gray-500">Vue exécutive — Caisse dépenses &amp; Facturation FNE</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Vue exécutive — Caisse dépenses &amp; Facturation FNE
+        </p>
       </div>
 
       {/* ═══ KPI Cards ══════════════════════════ */}
@@ -239,58 +281,116 @@ export default function DecisionDashboard() {
       {/* ═══ Charts Section — 2 columns ═════════ */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ── Area: Évolution du CA FNE ─────── */}
-        <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate('/fne/invoices')}>
+        <Card
+          className="cursor-pointer transition-shadow hover:shadow-md"
+          onClick={() => navigate('/fne/invoices')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>Évolution du CA (FNE certifiées)</CardTitle>
             <PeriodSelector value={fnePeriod} onChange={setFnePeriod} />
           </CardHeader>
           <CardContent>
             {fneChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={288}>
-                  <AreaChart data={fneChartData}>
-                    <defs>
-                      <linearGradient id="fneCAGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10B981" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#10B981" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
-                    <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={false}
-                      tickFormatter={(v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : `${(v / 1_000).toFixed(0)}K`} />
-                    <Tooltip formatter={(value) => formatCFA(Number(value))} contentStyle={TOOLTIP_STYLE} />
-                    <Area type="monotone" dataKey="amount" name="CA FNE TTC" stroke="#10B981" strokeWidth={2.5}
-                      fill="url(#fneCAGrad)" dot={{ r: 3, fill: '#10B981', strokeWidth: 0 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-            ) : <EmptyChart t={t} />}
+              <ResponsiveContainer width="100%" height={288}>
+                <AreaChart data={fneChartData}>
+                  <defs>
+                    <linearGradient id="fneCAGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10B981" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#10B981" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v: number) =>
+                      v >= 1_000_000
+                        ? `${(v / 1_000_000).toFixed(1)}M`
+                        : `${(v / 1_000).toFixed(0)}K`
+                    }
+                  />
+                  <Tooltip
+                    formatter={(value) => formatCFA(Number(value))}
+                    contentStyle={TOOLTIP_STYLE}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="amount"
+                    name="CA FNE TTC"
+                    stroke="#10B981"
+                    strokeWidth={2.5}
+                    fill="url(#fneCAGrad)"
+                    dot={{ r: 3, fill: '#10B981', strokeWidth: 0 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart t={t} />
+            )}
           </CardContent>
         </Card>
 
         {/* ── Bar: Dépenses ─────────────────── */}
-        <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate('/month-expenses')}>
+        <Card
+          className="cursor-pointer transition-shadow hover:shadow-md"
+          onClick={() => navigate('/month-expenses')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>Évolution des dépenses</CardTitle>
             <PeriodSelector value={expPeriod} onChange={setExpPeriod} />
           </CardHeader>
           <CardContent>
             {expChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={288}>
-                  <BarChart data={expChartData} barGap={4}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
-                    <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={false}
-                      tickFormatter={(v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : `${(v / 1_000).toFixed(0)}K`} />
-                    <Tooltip formatter={(value) => formatCFA(Number(value))} contentStyle={TOOLTIP_STYLE} />
-                    <Bar dataKey="amount" name={t('dashboard.expenses')} fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                  </BarChart>
-                </ResponsiveContainer>
-            ) : <EmptyChart t={t} />}
+              <ResponsiveContainer width="100%" height={288}>
+                <BarChart data={expChartData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v: number) =>
+                      v >= 1_000_000
+                        ? `${(v / 1_000_000).toFixed(1)}M`
+                        : `${(v / 1_000).toFixed(0)}K`
+                    }
+                  />
+                  <Tooltip
+                    formatter={(value) => formatCFA(Number(value))}
+                    contentStyle={TOOLTIP_STYLE}
+                  />
+                  <Bar
+                    dataKey="amount"
+                    name={t('dashboard.expenses')}
+                    fill="#EF4444"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={32}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart t={t} />
+            )}
           </CardContent>
         </Card>
 
         {/* ── FNE Summary ─────────────────── */}
-        <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate('/devis')}>
+        <Card
+          className="cursor-pointer transition-shadow hover:shadow-md"
+          onClick={() => navigate('/devis')}
+        >
           <CardHeader>
             <CardTitle>Résumé Facturation FNE</CardTitle>
           </CardHeader>
@@ -328,23 +428,47 @@ export default function DecisionDashboard() {
         </Card>
 
         {/* ── Pie: Expense categories ─────── */}
-        <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate('/month-expenses')}>
+        <Card
+          className="cursor-pointer transition-shadow hover:shadow-md"
+          onClick={() => navigate('/month-expenses')}
+        >
           <CardHeader>
             <CardTitle>{t('dashboard.expensesByCategory')}</CardTitle>
           </CardHeader>
           <CardContent>
             {categories.length > 0 ? (
-                <ResponsiveContainer width="100%" height={288}>
-                  <PieChart>
-                    <Pie data={categories} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value">
-                      {categories.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip formatter={(value) => formatCFA(Number(value))} contentStyle={TOOLTIP_STYLE} />
-                    <Legend verticalAlign="bottom" iconType="circle" iconSize={8}
-                      formatter={(value: string) => <span className="text-xs text-gray-600">{value}</span>} />
-                  </PieChart>
-                </ResponsiveContainer>
-            ) : <EmptyChart t={t} />}
+              <ResponsiveContainer width="100%" height={288}>
+                <PieChart>
+                  <Pie
+                    data={categories}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {categories.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => formatCFA(Number(value))}
+                    contentStyle={TOOLTIP_STYLE}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(value: string) => (
+                      <span className="text-xs text-gray-600">{value}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart t={t} />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -365,19 +489,30 @@ export default function DecisionDashboard() {
                 {alerts.map((alert) => {
                   const sev = SEVERITY_CONFIG[alert.severity];
                   return (
-                    <button key={alert.id} onClick={() => navigate(alert.entityRoute)}
+                    <button
+                      key={alert.id}
+                      onClick={() => navigate(alert.entityRoute)}
                       className={cn(
                         'flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-gray-50',
-                        alert.isRead ? 'border-gray-100 bg-white' : 'border-purple-200 bg-purple-50/50',
-                      )}>
+                        alert.isRead
+                          ? 'border-gray-100 bg-white'
+                          : 'border-purple-200 bg-purple-50/50',
+                      )}
+                    >
                       <AlertIcon type={alert.type} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900 truncate">{alert.title}</span>
-                          <Badge variant={sev.variant} className="text-[10px] shrink-0">{sev.label}</Badge>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {alert.title}
+                          </span>
+                          <Badge variant={sev.variant} className="text-[10px] shrink-0">
+                            {sev.label}
+                          </Badge>
                         </div>
                         <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{alert.message}</p>
-                        <span className="mt-1 text-[10px] text-gray-400">{timeAgo(alert.createdAt)}</span>
+                        <span className="mt-1 text-[10px] text-gray-400">
+                          {timeAgo(alert.createdAt)}
+                        </span>
                       </div>
                     </button>
                   );
@@ -400,16 +535,25 @@ export default function DecisionDashboard() {
 function AlertIcon({ type }: { type: string }) {
   const iconClass = 'h-4 w-4 mt-0.5 shrink-0';
   switch (type) {
-    case 'ANOMALY': return <ShieldAlert className={cn(iconClass, 'text-red-500')} />;
-    case 'BUDGET': return <Wallet className={cn(iconClass, 'text-amber-500')} />;
-    case 'RECEIVABLE': return <Clock className={cn(iconClass, 'text-orange-500')} />;
-    case 'FORECAST': return <Sparkles className={cn(iconClass, 'text-purple-500')} />;
-    default: return <AlertTriangle className={cn(iconClass, 'text-gray-400')} />;
+    case 'ANOMALY':
+      return <ShieldAlert className={cn(iconClass, 'text-red-500')} />;
+    case 'BUDGET':
+      return <Wallet className={cn(iconClass, 'text-amber-500')} />;
+    case 'RECEIVABLE':
+      return <Clock className={cn(iconClass, 'text-orange-500')} />;
+    case 'FORECAST':
+      return <Sparkles className={cn(iconClass, 'text-purple-500')} />;
+    default:
+      return <AlertTriangle className={cn(iconClass, 'text-gray-400')} />;
   }
 }
 
 function EmptyChart({ t }: { t: (key: string) => string }) {
-  return <p className="flex h-48 items-center justify-center text-sm text-gray-400">{t('common.noData')}</p>;
+  return (
+    <p className="flex h-48 items-center justify-center text-sm text-gray-400">
+      {t('common.noData')}
+    </p>
+  );
 }
 
 function timeAgo(iso: string): string {

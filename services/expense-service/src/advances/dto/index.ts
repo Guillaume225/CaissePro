@@ -1,11 +1,4 @@
-import {
-  IsNumber,
-  IsString,
-  IsDateString,
-  IsOptional,
-  IsEnum,
-  Min,
-} from 'class-validator';
+import { IsNumber, IsString, IsDateString, IsOptional, IsEnum, Min } from 'class-validator';
 import { IsUUID } from '../../is-uuid-loose';
 import { Type } from 'class-transformer';
 import { AdvanceStatus } from '../../entities/enums';

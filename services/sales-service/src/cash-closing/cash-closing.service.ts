@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
@@ -281,7 +276,9 @@ export class CashClosingService {
     });
     if (!openClosing) return;
 
-    this.logger.warn(`Caisse non clôturée à ${reminderHour}h — envoi rappel (${openClosing.reference})`);
+    this.logger.warn(
+      `Caisse non clôturée à ${reminderHour}h — envoi rappel (${openClosing.reference})`,
+    );
 
     await this.eventsService.publish(SalesEvent.CASH_CLOSING_REMINDER, {
       closingId: openClosing.id,
@@ -296,12 +293,14 @@ export class CashClosingService {
     const closed = await this.isYesterdayClosed();
     if (!closed) {
       throw new BadRequestException(
-        'La clôture de la veille n\'a pas été effectuée. Veuillez d\'abord clôturer la caisse précédente.',
+        "La clôture de la veille n'a pas été effectuée. Veuillez d'abord clôturer la caisse précédente.",
       );
     }
   }
 
-  private async calculateTotals(since: Date): Promise<{ totalEntries: number; totalExits: number }> {
+  private async calculateTotals(
+    since: Date,
+  ): Promise<{ totalEntries: number; totalExits: number }> {
     // Entries = sum of CASH payments received since register opened
     const entryResult = await this.paymentRepo
       .createQueryBuilder('p')

@@ -53,20 +53,14 @@ export class SalesController {
 
   @Post(':id/confirm')
   @Permissions(SALE_PERMISSIONS.CONFIRM)
-  confirm(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: SalesUser,
-  ) {
+  confirm(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: SalesUser) {
     return this.salesService.confirm(id, user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Permissions(SALE_PERMISSIONS.DELETE)
-  remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.salesService.remove(id, userId);
   }
 }

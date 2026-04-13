@@ -12,12 +12,7 @@ import {
   Min,
   MaxLength,
 } from 'class-validator';
-import {
-  AuditAction,
-  CashClosingStatus,
-  Module,
-  NotificationType,
-} from '../enums/index.js';
+import { AuditAction, CashClosingStatus, Module, NotificationType } from '../enums/index.js';
 
 /* ─── Notification ─── */
 

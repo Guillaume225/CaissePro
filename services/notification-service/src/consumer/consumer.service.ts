@@ -50,11 +50,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.log(`Connected to RabbitMQ — consuming from queue "${QUEUE_NAME}"`);
 
-      await channel.consume(
-        QUEUE_NAME,
-        (msg) => this.handleMessage(msg),
-        { noAck: false },
-      );
+      await channel.consume(QUEUE_NAME, (msg) => this.handleMessage(msg), { noAck: false });
 
       connection.on('error', (err) => {
         this.logger.error('RabbitMQ connection error', err);
@@ -72,8 +68,14 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
 
   async disconnect(): Promise<void> {
     try {
-      if (this.channel) { await this.channel.close(); this.channel = null; }
-      if (this.connection) { await this.connection.close(); this.connection = null; }
+      if (this.channel) {
+        await this.channel.close();
+        this.channel = null;
+      }
+      if (this.connection) {
+        await this.connection.close();
+        this.connection = null;
+      }
     } catch {
       // Ignore close errors
     }

@@ -1,8 +1,4 @@
-import {
-  normalizePagination,
-  buildPaginationMeta,
-  paginateArray,
-} from './pagination.js';
+import { normalizePagination, buildPaginationMeta, paginateArray } from './pagination.js';
 
 describe('pagination', () => {
   describe('normalizePagination', () => {

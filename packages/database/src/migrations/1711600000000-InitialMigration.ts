@@ -462,20 +462,39 @@ export class InitialMigration1711600000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop triggers
-    await queryRunner.query(`IF OBJECT_ID('trg_sale_reference', 'TR') IS NOT NULL DROP TRIGGER [trg_sale_reference];`);
-    await queryRunner.query(`IF OBJECT_ID('trg_expense_reference', 'TR') IS NOT NULL DROP TRIGGER [trg_expense_reference];`);
+    await queryRunner.query(
+      `IF OBJECT_ID('trg_sale_reference', 'TR') IS NOT NULL DROP TRIGGER [trg_sale_reference];`,
+    );
+    await queryRunner.query(
+      `IF OBJECT_ID('trg_expense_reference', 'TR') IS NOT NULL DROP TRIGGER [trg_expense_reference];`,
+    );
 
     // Drop FK constraints, then tables in reverse dependency order
     const tables = [
-      'receivables', 'payments', 'sale_items', 'sales', 'products', 'clients',
-      'budgets', 'advances', 'expense_attachments', 'expense_approvals',
-      'expenses', 'expense_categories', 'ai_predictions', 'notifications',
-      'cash_closings', 'audit_logs', 'users', 'departments', 'roles',
+      'receivables',
+      'payments',
+      'sale_items',
+      'sales',
+      'products',
+      'clients',
+      'budgets',
+      'advances',
+      'expense_attachments',
+      'expense_approvals',
+      'expenses',
+      'expense_categories',
+      'ai_predictions',
+      'notifications',
+      'cash_closings',
+      'audit_logs',
+      'users',
+      'departments',
+      'roles',
     ];
 
     for (const table of tables) {
       const fks = await queryRunner.query(
-        `SELECT name FROM sys.foreign_keys WHERE OBJECT_NAME(parent_object_id) = '${table}'`
+        `SELECT name FROM sys.foreign_keys WHERE OBJECT_NAME(parent_object_id) = '${table}'`,
       );
       for (const fk of fks) {
         await queryRunner.query(`ALTER TABLE [${table}] DROP CONSTRAINT [${fk.name}];`);
@@ -487,7 +506,11 @@ export class InitialMigration1711600000000 implements MigrationInterface {
     }
 
     // Drop sequences
-    await queryRunner.query(`IF OBJECT_ID('sale_ref_seq', 'SO') IS NOT NULL DROP SEQUENCE [sale_ref_seq];`);
-    await queryRunner.query(`IF OBJECT_ID('expense_ref_seq', 'SO') IS NOT NULL DROP SEQUENCE [expense_ref_seq];`);
+    await queryRunner.query(
+      `IF OBJECT_ID('sale_ref_seq', 'SO') IS NOT NULL DROP SEQUENCE [sale_ref_seq];`,
+    );
+    await queryRunner.query(
+      `IF OBJECT_ID('expense_ref_seq', 'SO') IS NOT NULL DROP SEQUENCE [expense_ref_seq];`,
+    );
   }
 }

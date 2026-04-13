@@ -56,7 +56,8 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'expense.submitted': {
     type: NotificationType.EXPENSE_TO_VALIDATE,
     title: 'Nouvelle dépense à valider',
-    message: 'La dépense #{{reference}} de {{amount}} FCFA soumise par {{submitterName}} nécessite votre validation.',
+    message:
+      'La dépense #{{reference}} de {{amount}} FCFA soumise par {{submitterName}} nécessite votre validation.',
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
     getRecipients: recipientFromArrayField('approverIds'),
     entityType: 'expense',
@@ -66,7 +67,8 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'expense.approved': {
     type: NotificationType.EXPENSE_APPROVED,
     title: 'Dépense approuvée',
-    message: 'Votre dépense #{{reference}} de {{amount}} FCFA a été approuvée par {{approverName}}.',
+    message:
+      'Votre dépense #{{reference}} de {{amount}} FCFA a été approuvée par {{approverName}}.',
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
     getRecipients: recipientFromField('submitterId'),
     entityType: 'expense',
@@ -89,7 +91,8 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'budget.alert': {
     type: NotificationType.BUDGET_ALERT,
     title: 'Alerte budget — {{percentage}}% consommé',
-    message: 'Le budget «{{budgetName}}» a atteint {{percentage}}% de consommation ({{consumed}}/{{total}} FCFA).',
+    message:
+      'Le budget «{{budgetName}}» a atteint {{percentage}}% de consommation ({{consumed}}/{{total}} FCFA).',
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL, NotificationChannel.SMS],
     getRecipients: recipientFromArrayField('recipientIds'),
     entityType: 'budget',
@@ -102,7 +105,8 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'advance.unjustified': {
     type: NotificationType.ADVANCE_UNJUSTIFIED,
     title: 'Rappel : avance non justifiée',
-    message: "L'avance #{{reference}} de {{amount}} FCFA n'a pas encore été justifiée. Échéance : {{deadline}}.",
+    message:
+      "L'avance #{{reference}} de {{amount}} FCFA n'a pas encore été justifiée. Échéance : {{deadline}}.",
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
     getRecipients: recipientFromField('userId'),
     entityType: 'advance',
@@ -115,7 +119,8 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'receivable.overdue': {
     type: NotificationType.RECEIVABLE_OVERDUE,
     title: 'Créance échue',
-    message: 'La créance #{{reference}} de {{amount}} FCFA (client : {{clientName}}) est échue depuis le {{dueDate}}.',
+    message:
+      'La créance #{{reference}} de {{amount}} FCFA (client : {{clientName}}) est échue depuis le {{dueDate}}.',
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
     getRecipients: recipientFromArrayField('recipientIds'),
     entityType: 'receivable',
@@ -128,7 +133,8 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'cashregister.close.required': {
     type: NotificationType.CASH_REGISTER_CLOSE_REQUIRED,
     title: 'Clôture de caisse requise',
-    message: 'La caisse «{{registerName}}» doit être clôturée. Dernière opération : {{lastOperation}}.',
+    message:
+      'La caisse «{{registerName}}» doit être clôturée. Dernière opération : {{lastOperation}}.',
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
     getRecipients: recipientFromArrayField('recipientIds'),
     entityType: 'cash_register',
@@ -140,8 +146,9 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   /* ------------------------------------------------------------------ */
   'ai.anomaly.detected': {
     type: NotificationType.AI_ANOMALY_DETECTED,
-    title: 'Anomalie détectée par l\'IA',
-    message: 'Une anomalie «{{anomalyType}}» a été détectée : {{description}}. Score de confiance : {{confidence}}%.',
+    title: "Anomalie détectée par l'IA",
+    message:
+      'Une anomalie «{{anomalyType}}» a été détectée : {{description}}. Score de confiance : {{confidence}}%.',
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL, NotificationChannel.SMS],
     getRecipients: recipientFromArrayField('recipientIds'),
     entityType: 'anomaly',

@@ -210,9 +210,7 @@ describe('ExpensesService', () => {
   describe('update', () => {
     it('should update DRAFT expense', async () => {
       const exp = makeExpense({ status: ExpenseStatus.DRAFT });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp)
-        .mockResolvedValueOnce({ ...exp, amount: 200 });
+      expenseRepo.findOne.mockResolvedValueOnce(exp).mockResolvedValueOnce({ ...exp, amount: 200 });
 
       await service.update('exp-1', { amount: 200 }, 'user-1');
       expect(expenseRepo.save).toHaveBeenCalled();
@@ -220,7 +218,9 @@ describe('ExpensesService', () => {
 
     it('should reject update on non-DRAFT', async () => {
       expenseRepo.findOne.mockResolvedValue(makeExpense({ status: ExpenseStatus.PENDING }));
-      await expect(service.update('exp-1', { amount: 200 }, 'user-1')).rejects.toThrow(BadRequestException);
+      await expect(service.update('exp-1', { amount: 200 }, 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -250,7 +250,9 @@ describe('ExpensesService', () => {
 
       await service.submit('exp-1', 'user-1');
       expect(expenseRepo.save).toHaveBeenCalled();
-      expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: AuditAction.SUBMIT }));
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: AuditAction.SUBMIT }),
+      );
       expect(events.publish).toHaveBeenCalledWith(ExpenseEvent.SUBMITTED, expect.any(Object));
     });
 
@@ -260,7 +262,9 @@ describe('ExpensesService', () => {
     });
 
     it('should reject if submitter is not the creator', async () => {
-      expenseRepo.findOne.mockResolvedValue(makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'other-user' }));
+      expenseRepo.findOne.mockResolvedValue(
+        makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'other-user' }),
+      );
       await expect(service.submit('exp-1', 'user-1')).rejects.toThrow(ForbiddenException);
     });
   });
@@ -362,8 +366,6 @@ describe('ExpensesService', () => {
       await expect(service.approve('exp-1', {}, user)).rejects.toThrow(ForbiddenException);
     });
 
-
-
     it('should reject self-approval at L2', async () => {
       const exp = makeExpense({ status: ExpenseStatus.APPROVED_L1, createdById: 'daf-1' });
       expenseRepo.findOne.mockResolvedValue(exp);
@@ -376,16 +378,14 @@ describe('ExpensesService', () => {
 
     it('should reject approval on invalid status', async () => {
       expenseRepo.findOne.mockResolvedValue(makeExpense({ status: ExpenseStatus.PAID }));
-      await expect(
-        service.approve('exp-1', {}, makeUser({ id: 'approver-1' })),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.approve('exp-1', {}, makeUser({ id: 'approver-1' }))).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw NotFoundException for unknown expense', async () => {
       expenseRepo.findOne.mockResolvedValue(null);
-      await expect(
-        service.approve('exp-999', {}, makeUser()),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.approve('exp-999', {}, makeUser())).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -402,9 +402,15 @@ describe('ExpensesService', () => {
       await service.reject('exp-1', { comment: 'Missing receipt' }, user);
 
       expect(approvalRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ level: 1, status: ApprovalStatus.REJECTED, comment: 'Missing receipt' }),
+        expect.objectContaining({
+          level: 1,
+          status: ApprovalStatus.REJECTED,
+          comment: 'Missing receipt',
+        }),
       );
-      expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: AuditAction.REJECT }));
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: AuditAction.REJECT }),
+      );
       expect(events.publish).toHaveBeenCalledWith(
         ExpenseEvent.REJECTED,
         expect.objectContaining({ level: 1 }),
@@ -430,7 +436,9 @@ describe('ExpensesService', () => {
       expenseRepo.findOne.mockResolvedValue(exp);
 
       const user = makeUser({ id: 'user-1' });
-      await expect(service.reject('exp-1', { comment: 'x' }, user)).rejects.toThrow(ForbiddenException);
+      await expect(service.reject('exp-1', { comment: 'x' }, user)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should forbid L1 rejection from wrong department', async () => {
@@ -438,7 +446,9 @@ describe('ExpensesService', () => {
       expenseRepo.findOne.mockResolvedValue(exp);
 
       const user = makeUser({ id: 'approver-1', departmentId: 'dept-OTHER' });
-      await expect(service.reject('exp-1', { comment: 'x' }, user)).rejects.toThrow(ForbiddenException);
+      await expect(service.reject('exp-1', { comment: 'x' }, user)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should forbid L2 rejection without correct role', async () => {
@@ -446,7 +456,9 @@ describe('ExpensesService', () => {
       expenseRepo.findOne.mockResolvedValue(exp);
 
       const user = makeUser({ id: 'random-1', roleName: 'CHEF_SERVICE' });
-      await expect(service.reject('exp-1', { comment: 'x' }, user)).rejects.toThrow(ForbiddenException);
+      await expect(service.reject('exp-1', { comment: 'x' }, user)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should reject if status is not PENDING or APPROVED_L1', async () => {
@@ -499,7 +511,9 @@ describe('ExpensesService', () => {
 
       await service.cancel('exp-1', { reason: 'Duplicate payment' }, 'user-1');
 
-      expect(expenseRepo.save).toHaveBeenCalledWith(expect.objectContaining({ status: ExpenseStatus.CANCELLED }));
+      expect(expenseRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ status: ExpenseStatus.CANCELLED }),
+      );
       expect(audit.log).toHaveBeenCalledWith(
         expect.objectContaining({
           action: AuditAction.CANCEL,
@@ -514,16 +528,16 @@ describe('ExpensesService', () => {
 
     it('should reject cancel if not PAID', async () => {
       expenseRepo.findOne.mockResolvedValue(makeExpense({ status: ExpenseStatus.APPROVED_L2 }));
-      await expect(
-        service.cancel('exp-1', { reason: 'test' }, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.cancel('exp-1', { reason: 'test' }, 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw NotFoundException for unknown expense', async () => {
       expenseRepo.findOne.mockResolvedValue(null);
-      await expect(
-        service.cancel('exp-999', { reason: 'test' }, 'user-1'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.cancel('exp-999', { reason: 'test' }, 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -532,15 +546,25 @@ describe('ExpensesService', () => {
   describe('full workflow — high-amount path (L1 → L2 → PAID)', () => {
     it('should follow DRAFT → PENDING → APPROVED_L1 → APPROVED_L2 → PAID', async () => {
       // 1. Submit
-      const draft = makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'creator-1', amount: 800000 });
+      const draft = makeExpense({
+        status: ExpenseStatus.DRAFT,
+        createdById: 'creator-1',
+        amount: 800000,
+      });
       expenseRepo.findOne
         .mockResolvedValueOnce(draft)
         .mockResolvedValueOnce({ ...draft, status: ExpenseStatus.PENDING });
       await service.submit('exp-1', 'creator-1');
-      expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: AuditAction.SUBMIT }));
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: AuditAction.SUBMIT }),
+      );
 
       // 2. Approve L1
-      const pending = makeExpense({ status: ExpenseStatus.PENDING, amount: 800000, departmentId: 'dept-1' });
+      const pending = makeExpense({
+        status: ExpenseStatus.PENDING,
+        amount: 800000,
+        departmentId: 'dept-1',
+      });
       expenseRepo.findOne
         .mockResolvedValueOnce(pending)
         .mockResolvedValueOnce({ ...pending, status: ExpenseStatus.APPROVED_L1 });
@@ -569,14 +593,22 @@ describe('ExpensesService', () => {
   describe('full workflow — low-amount path (auto-L2)', () => {
     it('should follow DRAFT → PENDING → APPROVED_L2 (auto) → PAID', async () => {
       // 1. Submit
-      const draft = makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'creator-1', amount: 200000 });
+      const draft = makeExpense({
+        status: ExpenseStatus.DRAFT,
+        createdById: 'creator-1',
+        amount: 200000,
+      });
       expenseRepo.findOne
         .mockResolvedValueOnce(draft)
         .mockResolvedValueOnce({ ...draft, status: ExpenseStatus.PENDING });
       await service.submit('exp-1', 'creator-1');
 
       // 2. Approve L1 (auto-skip L2)
-      const pending = makeExpense({ status: ExpenseStatus.PENDING, amount: 200000, departmentId: 'dept-1' });
+      const pending = makeExpense({
+        status: ExpenseStatus.PENDING,
+        amount: 200000,
+        departmentId: 'dept-1',
+      });
       expenseRepo.findOne
         .mockResolvedValueOnce(pending)
         .mockResolvedValueOnce({ ...pending, status: ExpenseStatus.APPROVED_L2 });

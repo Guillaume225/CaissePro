@@ -106,9 +106,7 @@ const modules: ModuleDef[] = [
     sections: [
       {
         titleKey: 'modules.fne.overview',
-        items: [
-          { to: '/fne', labelKey: 'modules.fne.dashboard', icon: LayoutDashboard },
-        ],
+        items: [{ to: '/fne', labelKey: 'modules.fne.dashboard', icon: LayoutDashboard }],
       },
       {
         titleKey: 'modules.fne.operations',
@@ -122,9 +120,7 @@ const modules: ModuleDef[] = [
       },
       {
         titleKey: 'modules.fne.tracking',
-        items: [
-          { to: '/notifications', labelKey: 'nav.notifications', icon: Bell },
-        ],
+        items: [{ to: '/notifications', labelKey: 'nav.notifications', icon: Bell }],
       },
     ],
   },
@@ -137,9 +133,7 @@ const modules: ModuleDef[] = [
     sections: [
       {
         titleKey: 'modules.admin.overview',
-        items: [
-          { to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-        ],
+        items: [{ to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard }],
       },
       {
         titleKey: 'modules.admin.users_section',
@@ -155,7 +149,11 @@ const modules: ModuleDef[] = [
         items: [
           { to: '/admin/companies', labelKey: 'modules.admin.companies', icon: Building2 },
           { to: '/admin/fne-config', labelKey: 'modules.admin.fneConfig', icon: Store },
-          { to: '/admin/approval-circuits', labelKey: 'modules.admin.approvalCircuits', icon: GitBranch },
+          {
+            to: '/admin/approval-circuits',
+            labelKey: 'modules.admin.approvalCircuits',
+            icon: GitBranch,
+          },
         ],
       },
       {
@@ -178,29 +176,57 @@ const modules: ModuleDef[] = [
       {
         titleKey: 'modules.manager-caisse.overview',
         items: [
-          { to: '/manager-caisse/dashboard', labelKey: 'modules.manager-caisse.dashboard', icon: LayoutDashboard },
+          {
+            to: '/manager-caisse/dashboard',
+            labelKey: 'modules.manager-caisse.dashboard',
+            icon: LayoutDashboard,
+          },
         ],
       },
       {
         titleKey: 'modules.manager-caisse.config_section',
         items: [
-          { to: '/manager-caisse/categories', labelKey: 'modules.manager-caisse.categories', icon: FolderTree },
-          { to: '/manager-caisse/accounting', labelKey: 'modules.manager-caisse.accounting', icon: BookOpen },
-          { to: '/manager-caisse/settings', labelKey: 'modules.manager-caisse.settings', icon: BadgeDollarSign },
+          {
+            to: '/manager-caisse/categories',
+            labelKey: 'modules.manager-caisse.categories',
+            icon: FolderTree,
+          },
+          {
+            to: '/manager-caisse/accounting',
+            labelKey: 'modules.manager-caisse.accounting',
+            icon: BookOpen,
+          },
+          {
+            to: '/manager-caisse/settings',
+            labelKey: 'modules.manager-caisse.settings',
+            icon: BadgeDollarSign,
+          },
         ],
       },
       {
         titleKey: 'modules.manager-caisse.operations_section',
         items: [
           { to: '/manager-caisse/closing', labelKey: 'modules.manager-caisse.closing', icon: Lock },
-          { to: '/manager-caisse/closing-history', labelKey: 'modules.manager-caisse.closingHistory', icon: History },
+          {
+            to: '/manager-caisse/closing-history',
+            labelKey: 'modules.manager-caisse.closingHistory',
+            icon: History,
+          },
         ],
       },
       {
         titleKey: 'modules.manager-caisse.tracking_section',
         items: [
-          { to: '/manager-caisse/accounting-entries', labelKey: 'modules.manager-caisse.accountingEntries', icon: BookOpen },
-          { to: '/manager-caisse/period-reports', labelKey: 'modules.manager-caisse.periodReports', icon: BarChart3 },
+          {
+            to: '/manager-caisse/accounting-entries',
+            labelKey: 'modules.manager-caisse.accountingEntries',
+            icon: BookOpen,
+          },
+          {
+            to: '/manager-caisse/period-reports',
+            labelKey: 'modules.manager-caisse.periodReports',
+            icon: BarChart3,
+          },
         ],
       },
     ],
@@ -302,68 +328,67 @@ export function Sidebar({ pendingExpenses = 0 }: { pendingExpenses?: number }) {
           CF
         </div>
         {!collapsed && (
-          <span className="text-lg font-semibold tracking-tight text-white">
-            {t('app.name')}
-          </span>
+          <span className="text-lg font-semibold tracking-tight text-white">{t('app.name')}</span>
         )}
       </div>
 
       {/* ── Navigation ────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 scrollbar-thin">
-        {hasAccess && cashDayOpen && effectiveModule.sections.map((section, sIdx) => (
-          <div key={sIdx} className={cn(sIdx > 0 && 'mt-4')}>
-            {!collapsed && (
-              <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
-                {t(section.titleKey)}
-              </p>
-            )}
-            {collapsed && sIdx > 0 && (
-              <div className="mx-auto my-2 h-px w-6 bg-sidebar-border" />
-            )}
+        {hasAccess &&
+          cashDayOpen &&
+          effectiveModule.sections.map((section, sIdx) => (
+            <div key={sIdx} className={cn(sIdx > 0 && 'mt-4')}>
+              {!collapsed && (
+                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+                  {t(section.titleKey)}
+                </p>
+              )}
+              {collapsed && sIdx > 0 && <div className="mx-auto my-2 h-px w-6 bg-sidebar-border" />}
 
-            <div className="space-y-0.5">
-              {section.items.map((item) => {
-                const badge = getBadge(item.to);
-                const isActive =
-                  item.to === '/'
-                    ? location.pathname === '/'
-                    : location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const badge = getBadge(item.to);
+                  const isActive =
+                    item.to === '/'
+                      ? location.pathname === '/'
+                      : location.pathname === item.to ||
+                        location.pathname.startsWith(item.to + '/');
 
-                return (
-                  <button
-                    key={item.to}
-                    onClick={() => handleNavClick(item)}
-                    className={cn(
-                      'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? `bg-sidebar-accent ${effectiveModule.color}`
-                        : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-white',
-                      collapsed && 'justify-center px-0',
-                    )}
-                    title={collapsed ? t(item.labelKey) : undefined}
-                  >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && (
-                      <>
-                        <span className="flex-1 text-left truncate">{t(item.labelKey)}</span>
-                        {badge !== undefined && (
-                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-gold px-1.5 text-xs font-semibold text-white">
-                            {badge > 99 ? '99+' : badge}
-                          </span>
-                        )}
-                      </>
-                    )}
-                    {collapsed && badge !== undefined && (
-                      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-gold px-1 text-[10px] font-bold text-white">
-                        {badge > 99 ? '99+' : badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={item.to}
+                      onClick={() => handleNavClick(item)}
+                      className={cn(
+                        'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                        isActive
+                          ? `bg-sidebar-accent ${effectiveModule.color}`
+                          : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-white',
+                        collapsed && 'justify-center px-0',
+                      )}
+                      title={collapsed ? t(item.labelKey) : undefined}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1 text-left truncate">{t(item.labelKey)}</span>
+                          {badge !== undefined && (
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-gold px-1.5 text-xs font-semibold text-white">
+                              {badge > 99 ? '99+' : badge}
+                            </span>
+                          )}
+                        </>
+                      )}
+                      {collapsed && badge !== undefined && (
+                        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-gold px-1 text-[10px] font-bold text-white">
+                          {badge > 99 ? '99+' : badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </nav>
 
       {/* ── User profile ──────────────────────────── */}
@@ -385,9 +410,7 @@ export function Sidebar({ pendingExpenses = 0 }: { pendingExpenses?: number }) {
                 <p className="truncate text-sm font-medium text-white">
                   {user?.firstName} {user?.lastName}
                 </p>
-                <p className="truncate text-xs text-sidebar-foreground/40">
-                  {user?.role}
-                </p>
+                <p className="truncate text-xs text-sidebar-foreground/40">{user?.role}</p>
               </div>
               <ChevronsUpDown className="h-4 w-4 text-sidebar-foreground/40" />
             </>
@@ -432,11 +455,7 @@ export function Sidebar({ pendingExpenses = 0 }: { pendingExpenses?: number }) {
         className="flex h-9 items-center justify-center border-t border-sidebar-border text-sidebar-foreground/40 transition-colors hover:text-white"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
-        {collapsed ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
+        {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
       </button>
     </aside>
   );

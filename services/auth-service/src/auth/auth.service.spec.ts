@@ -160,8 +160,8 @@ describe('AuthService', () => {
   describe('refresh', () => {
     it('should return new tokens for valid refresh token', async () => {
       redis.get
-        .mockResolvedValueOnce('user-uuid')  // refresh token lookup
-        .mockResolvedValueOnce(null);        // blacklist check
+        .mockResolvedValueOnce('user-uuid') // refresh token lookup
+        .mockResolvedValueOnce(null); // blacklist check
       userRepo.findOne.mockResolvedValue(mockUser);
 
       const result = await service.refresh('valid-refresh', '127.0.0.1', 'ua');
@@ -173,9 +173,9 @@ describe('AuthService', () => {
     it('should throw for invalid refresh token', async () => {
       redis.get.mockResolvedValue(null);
 
-      await expect(
-        service.refresh('invalid', '127.0.0.1', 'ua'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.refresh('invalid', '127.0.0.1', 'ua')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -198,9 +198,7 @@ describe('AuthService', () => {
     it('should not throw for non-existent email (anti-enumeration)', async () => {
       userRepo.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.forgotPassword('nobody@test.com', '127.0.0.1'),
-      ).resolves.toBeUndefined();
+      await expect(service.forgotPassword('nobody@test.com', '127.0.0.1')).resolves.toBeUndefined();
     });
 
     it('should store reset token in Redis for existing user', async () => {
@@ -223,9 +221,12 @@ describe('AuthService', () => {
 
       await service.resetPassword('valid-token', 'NewPassword1!', '127.0.0.1');
 
-      expect(userRepo.update).toHaveBeenCalledWith('user-uuid', expect.objectContaining({
-        passwordHash: expect.any(String),
-      }));
+      expect(userRepo.update).toHaveBeenCalledWith(
+        'user-uuid',
+        expect.objectContaining({
+          passwordHash: expect.any(String),
+        }),
+      );
       expect(redis.del).toHaveBeenCalled();
     });
 

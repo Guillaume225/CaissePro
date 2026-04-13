@@ -50,10 +50,18 @@ export class AddFneInvoiceTables1712400000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`CREATE INDEX [IDX_fne_invoices_status] ON [fne_invoices]([status]);`);
-    await queryRunner.query(`CREATE INDEX [IDX_fne_invoices_reference] ON [fne_invoices]([reference]);`);
-    await queryRunner.query(`CREATE INDEX [IDX_fne_invoices_fne_reference] ON [fne_invoices]([fne_reference]);`);
-    await queryRunner.query(`CREATE INDEX [IDX_fne_invoices_created_at] ON [fne_invoices]([created_at]);`);
-    await queryRunner.query(`CREATE INDEX [IDX_fne_invoices_client_phone] ON [fne_invoices]([client_phone]);`);
+    await queryRunner.query(
+      `CREATE INDEX [IDX_fne_invoices_reference] ON [fne_invoices]([reference]);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX [IDX_fne_invoices_fne_reference] ON [fne_invoices]([fne_reference]);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX [IDX_fne_invoices_created_at] ON [fne_invoices]([created_at]);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX [IDX_fne_invoices_client_phone] ON [fne_invoices]([client_phone]);`,
+    );
 
     // ── Create fne_invoice_items table ─────────────────────
     await queryRunner.query(`
@@ -78,7 +86,9 @@ export class AddFneInvoiceTables1712400000000 implements MigrationInterface {
       );
     `);
 
-    await queryRunner.query(`CREATE INDEX [IDX_fne_invoice_items_invoice_id] ON [fne_invoice_items]([invoice_id]);`);
+    await queryRunner.query(
+      `CREATE INDEX [IDX_fne_invoice_items_invoice_id] ON [fne_invoice_items]([invoice_id]);`,
+    );
 
     // ── Create fne_api_logs table ──────────────────────────
     await queryRunner.query(`
@@ -98,8 +108,12 @@ export class AddFneInvoiceTables1712400000000 implements MigrationInterface {
       );
     `);
 
-    await queryRunner.query(`CREATE INDEX [IDX_fne_api_logs_invoice_id] ON [fne_api_logs]([invoice_id]);`);
-    await queryRunner.query(`CREATE INDEX [IDX_fne_api_logs_created_at] ON [fne_api_logs]([created_at]);`);
+    await queryRunner.query(
+      `CREATE INDEX [IDX_fne_api_logs_invoice_id] ON [fne_api_logs]([invoice_id]);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX [IDX_fne_api_logs_created_at] ON [fne_api_logs]([created_at]);`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

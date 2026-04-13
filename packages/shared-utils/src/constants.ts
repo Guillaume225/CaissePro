@@ -55,11 +55,11 @@ export const CI_RCCM_REGEX = /^CI-[A-Z]{3}-\d{4}-[A-Z]-\d{5}$/;
 
 /** Jours fériés fixes en Côte d'Ivoire (mois/jour) */
 export const CI_FIXED_HOLIDAYS: ReadonlyArray<[number, number]> = [
-  [1, 1],   // Jour de l'An
-  [5, 1],   // Fête du Travail
-  [8, 7],   // Fête de l'Indépendance
-  [8, 15],  // Assomption
-  [11, 1],  // Toussaint
+  [1, 1], // Jour de l'An
+  [5, 1], // Fête du Travail
+  [8, 7], // Fête de l'Indépendance
+  [8, 15], // Assomption
+  [11, 1], // Toussaint
   [11, 15], // Journée nationale de la Paix
   [12, 25], // Noël
 ];

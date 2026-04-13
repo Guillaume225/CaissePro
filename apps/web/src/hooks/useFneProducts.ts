@@ -19,7 +19,9 @@ export function useFneProducts(params: { search?: string; page?: number; perPage
   return useQuery({
     queryKey: FNE_PRODUCT_KEYS.list(params),
     queryFn: async () => {
-      const { data } = await api.get<FnePaginatedResponse<FneProductRecord>>('/fne-products', { params });
+      const { data } = await api.get<FnePaginatedResponse<FneProductRecord>>('/fne-products', {
+        params,
+      });
       return data;
     },
   });

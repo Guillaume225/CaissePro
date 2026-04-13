@@ -18,7 +18,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
           ? {
               privateKey,
               publicKey,
-              signOptions: { algorithm: 'RS256', expiresIn: config.get<string>('jwt.accessExpiration') || '15m' },
+              signOptions: {
+                algorithm: 'RS256',
+                expiresIn: config.get<string>('jwt.accessExpiration') || '15m',
+              },
             }
           : {
               secret: 'caisseflow-dev-secret-change-me',

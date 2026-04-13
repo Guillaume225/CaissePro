@@ -46,7 +46,7 @@ export function amountInclTax(ht: number, taxRate = TVA_RATE_CI): number {
 
 /** Calcule le montant de taxe. */
 export function taxAmount(ht: number, taxRate = TVA_RATE_CI): number {
-  return roundCurrency(ht * taxRate / 100);
+  return roundCurrency((ht * taxRate) / 100);
 }
 
 /** Parse un montant depuis une string (gère les séparateurs FR). */

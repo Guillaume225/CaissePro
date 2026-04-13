@@ -29,7 +29,10 @@ export class FneEstablishmentsService {
     private readonly repo: Repository<FneEstablishment>,
   ) {}
 
-  async create(dto: CreateFneEstablishmentDto, fallbackCompanyId: string): Promise<FneEstablishment> {
+  async create(
+    dto: CreateFneEstablishmentDto,
+    fallbackCompanyId: string,
+  ): Promise<FneEstablishment> {
     const entity = this.repo.create({
       companyId: dto.companyId || fallbackCompanyId,
       name: dto.name,
@@ -57,7 +60,8 @@ export class FneEstablishmentsService {
     const skip = (page - 1) * perPage;
 
     const effectiveCompanyId = query.companyId || companyId;
-    const qb = this.repo.createQueryBuilder('e')
+    const qb = this.repo
+      .createQueryBuilder('e')
       .where('e.companyId = :effectiveCompanyId', { effectiveCompanyId })
       .andWhere('e.isActive = 1');
 

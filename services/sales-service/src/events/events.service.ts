@@ -58,7 +58,9 @@ export class EventsService implements OnModuleInit, OnModuleDestroy {
       const publishPromise = this.channel.publish(
         SALES_EXCHANGE,
         routingKey,
-        Buffer.from(JSON.stringify({ event: routingKey, data: payload, timestamp: new Date().toISOString() })),
+        Buffer.from(
+          JSON.stringify({ event: routingKey, data: payload, timestamp: new Date().toISOString() }),
+        ),
         { deliveryMode: 2, contentType: 'application/json' },
       );
       const timeout = new Promise<void>((_, reject) =>

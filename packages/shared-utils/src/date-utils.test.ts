@@ -18,10 +18,10 @@ import {
 describe('date-utils', () => {
   describe('getFiscalQuarter', () => {
     test.each([
-      [new Date(2024, 0, 15), 1],  // Janvier → T1
-      [new Date(2024, 2, 31), 1],  // Mars → T1
-      [new Date(2024, 3, 1), 2],   // Avril → T2
-      [new Date(2024, 6, 15), 3],  // Juillet → T3
+      [new Date(2024, 0, 15), 1], // Janvier → T1
+      [new Date(2024, 2, 31), 1], // Mars → T1
+      [new Date(2024, 3, 1), 2], // Avril → T2
+      [new Date(2024, 6, 15), 3], // Juillet → T3
       [new Date(2024, 11, 31), 4], // Décembre → T4
     ])('retourne le bon trimestre pour %s', (date, expected) => {
       expect(getFiscalQuarter(date)).toBe(expected);
@@ -57,7 +57,7 @@ describe('date-utils', () => {
       const end = endOfQuarter(date);
       expect(start.getMonth()).toBe(3); // Avril
       expect(start.getDate()).toBe(1);
-      expect(end.getMonth()).toBe(5);   // Juin
+      expect(end.getMonth()).toBe(5); // Juin
       expect(end.getDate()).toBe(30);
     });
   });
@@ -71,7 +71,7 @@ describe('date-utils', () => {
       expect(isFixedHoliday(new Date(2024, 7, 7))).toBe(true);
     });
 
-    test('2 janvier n\'est pas férié', () => {
+    test("2 janvier n'est pas férié", () => {
       expect(isFixedHoliday(new Date(2024, 0, 2))).toBe(false);
     });
   });
@@ -82,16 +82,16 @@ describe('date-utils', () => {
       expect(isBusinessDay(new Date(2024, 0, 8))).toBe(true);
     });
 
-    test('un samedi n\'est pas ouvré', () => {
+    test("un samedi n'est pas ouvré", () => {
       // 2024-01-06 = samedi
       expect(isBusinessDay(new Date(2024, 0, 6))).toBe(false);
     });
 
-    test('un dimanche n\'est pas ouvré', () => {
+    test("un dimanche n'est pas ouvré", () => {
       expect(isBusinessDay(new Date(2024, 0, 7))).toBe(false);
     });
 
-    test('un jour férié en semaine n\'est pas ouvré', () => {
+    test("un jour férié en semaine n'est pas ouvré", () => {
       // 1er mai 2024 = mercredi
       expect(isBusinessDay(new Date(2024, 4, 1))).toBe(false);
     });
@@ -115,10 +115,7 @@ describe('date-utils', () => {
   describe('countBusinessDays', () => {
     test('compte les jours ouvrés dans une semaine complète', () => {
       // Lun 8 jan → Ven 12 jan 2024 = 5 jours ouvrés
-      const count = countBusinessDays(
-        new Date(2024, 0, 8),
-        new Date(2024, 0, 12),
-      );
+      const count = countBusinessDays(new Date(2024, 0, 8), new Date(2024, 0, 12));
       expect(count).toBe(5);
     });
   });

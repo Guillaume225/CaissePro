@@ -1,21 +1,11 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Advance } from '../entities/advance.entity';
 import { AdvanceStatus } from '../entities/enums';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
-import {
-  CreateAdvanceDto,
-  UpdateAdvanceDto,
-  JustifyAdvanceDto,
-  ListAdvancesQueryDto,
-} from './dto';
+import { CreateAdvanceDto, UpdateAdvanceDto, JustifyAdvanceDto, ListAdvancesQueryDto } from './dto';
 
 @Injectable()
 export class AdvancesService {
@@ -177,7 +167,9 @@ export class AdvancesService {
       .createQueryBuilder('a')
       .update()
       .set({ status: AdvanceStatus.OVERDUE })
-      .where('status IN (:...statuses)', { statuses: [AdvanceStatus.PENDING, AdvanceStatus.PARTIAL] })
+      .where('status IN (:...statuses)', {
+        statuses: [AdvanceStatus.PENDING, AdvanceStatus.PARTIAL],
+      })
       .andWhere('justification_deadline < :now', { now })
       .execute();
 

@@ -37,7 +37,9 @@ export default function NotificationsPage() {
   const navigate = useNavigate();
   const [typeFilter, setTypeFilter] = useState<NotificationType | undefined>(undefined);
 
-  const { data: notifications = [] } = useNotifications(typeFilter ? { type: typeFilter } : undefined);
+  const { data: notifications = [] } = useNotifications(
+    typeFilter ? { type: typeFilter } : undefined,
+  );
   const { data: unreadCount = 0 } = useUnreadCount();
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
@@ -51,7 +53,8 @@ export default function NotificationsPage() {
 
   for (const n of notifications) {
     const d = new Date(n.createdAt).toDateString();
-    const label = d === today ? t('notifications.today') : d === yesterday ? t('notifications.yesterday') : d;
+    const label =
+      d === today ? t('notifications.today') : d === yesterday ? t('notifications.yesterday') : d;
     if (!buckets[label]) {
       buckets[label] = [];
       grouped.push({ label, items: buckets[label] });
@@ -92,7 +95,9 @@ export default function NotificationsPage() {
           onClick={() => setTypeFilter(undefined)}
           className={cn(
             'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-            !typeFilter ? 'border-brand-gold bg-brand-gold/10 text-brand-gold' : 'border-gray-200 text-gray-500 hover:border-gray-300',
+            !typeFilter
+              ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+              : 'border-gray-200 text-gray-500 hover:border-gray-300',
           )}
         >
           {t('common.all')}
@@ -103,7 +108,9 @@ export default function NotificationsPage() {
             onClick={() => setTypeFilter(typeFilter === type ? undefined : type)}
             className={cn(
               'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              typeFilter === type ? 'border-brand-gold bg-brand-gold/10 text-brand-gold' : 'border-gray-200 text-gray-500 hover:border-gray-300',
+              typeFilter === type
+                ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300',
             )}
           >
             {NOTIF_TYPE_ICONS[type]}
@@ -127,10 +134,14 @@ export default function NotificationsPage() {
                     role="button"
                     tabIndex={0}
                     onClick={() => handleClick(notif)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(notif); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') handleClick(notif);
+                    }}
                     className={cn(
                       'flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-gray-50 cursor-pointer',
-                      notif.isRead ? 'border-gray-100 bg-white' : 'border-brand-gold/20 bg-brand-gold/5',
+                      notif.isRead
+                        ? 'border-gray-100 bg-white'
+                        : 'border-brand-gold/20 bg-brand-gold/5',
                     )}
                   >
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50">
@@ -138,19 +149,36 @@ export default function NotificationsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={cn('text-sm truncate', notif.isRead ? 'font-normal text-gray-700' : 'font-semibold text-gray-900')}>
+                        <span
+                          className={cn(
+                            'text-sm truncate',
+                            notif.isRead
+                              ? 'font-normal text-gray-700'
+                              : 'font-semibold text-gray-900',
+                          )}
+                        >
                           {notif.title}
                         </span>
-                        {!notif.isRead && <Badge variant="default" className="text-[10px] shrink-0">New</Badge>}
+                        {!notif.isRead && (
+                          <Badge variant="default" className="text-[10px] shrink-0">
+                            New
+                          </Badge>
+                        )}
                       </div>
                       <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{notif.message}</p>
                       <span className="mt-1 block text-[10px] text-gray-400">
-                        {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(notif.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </span>
                     </div>
                     {!notif.isRead && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); markAsRead.mutate(notif.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead.mutate(notif.id);
+                        }}
                         className="mt-1 shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                         title={t('notifications.markRead')}
                       >

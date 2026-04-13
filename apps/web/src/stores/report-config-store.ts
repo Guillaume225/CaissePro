@@ -13,12 +13,12 @@ export type SectionType = 'header' | 'kpis' | 'table' | 'summary' | 'footer';
 
 /* ── Element‑level style ── */
 export interface ElementStyle {
-  fontSize: number;          // px, 8–24
+  fontSize: number; // px, 8–24
   fontFamily: 'serif' | 'sans-serif' | 'monospace';
   fontWeight: FontWeight;
   fontStyle: FontStyle;
   textAlign: TextAlign;
-  color: string;             // hex
+  color: string; // hex
   backgroundColor?: string;
 }
 
@@ -39,7 +39,7 @@ export interface ReportFieldConfig {
   customLabel?: string;
   visible: boolean;
   order: number;
-  width?: number;            // percentage (0–100); undefined = auto
+  width?: number; // percentage (0–100); undefined = auto
   style: ElementStyle;
 }
 
@@ -56,8 +56,8 @@ export interface ReportKpiConfig {
 export interface SectionConfig {
   type: SectionType;
   visible: boolean;
-  order: number;             // display ordering
-  height?: number;           // for spacing control
+  order: number; // display ordering
+  height?: number; // for spacing control
   style: ElementStyle;
 }
 
@@ -209,7 +209,12 @@ export const DATA_SOURCE_FIELDS: DataSourceField[] = [
   // ── Catégorie de dépense ──
   { key: 'cat_name', label: 'Nom catégorie', group: 'expense_category', type: 'text' },
   { key: 'cat_code', label: 'Code catégorie', group: 'expense_category', type: 'text' },
-  { key: 'cat_budgetLimit', label: 'Limite budgétaire', group: 'expense_category', type: 'currency' },
+  {
+    key: 'cat_budgetLimit',
+    label: 'Limite budgétaire',
+    group: 'expense_category',
+    type: 'currency',
+  },
   { key: 'cat_debitAccount', label: 'Compte débit', group: 'expense_category', type: 'text' },
   { key: 'cat_creditAccount', label: 'Compte crédit', group: 'expense_category', type: 'text' },
   { key: 'cat_parentName', label: 'Catégorie parente', group: 'expense_category', type: 'text' },
@@ -259,7 +264,12 @@ export const DATA_SOURCE_FIELDS: DataSourceField[] = [
   { key: 'adv_justifiedAmount', label: 'Montant justifié', group: 'advance', type: 'currency' },
   { key: 'adv_status', label: 'Statut avance', group: 'advance', type: 'enum' },
   { key: 'adv_dueDate', label: 'Échéance avance', group: 'advance', type: 'date' },
-  { key: 'adv_justificationDeadline', label: 'Délai justification', group: 'advance', type: 'date' },
+  {
+    key: 'adv_justificationDeadline',
+    label: 'Délai justification',
+    group: 'advance',
+    type: 'date',
+  },
 
   // ── Demande de décaissement ──
   { key: 'dis_reference', label: 'Référence décaissement', group: 'disbursement', type: 'text' },
@@ -322,11 +332,26 @@ const defaultPage = (): PageConfig => ({
 });
 
 const defaultSections = (): SectionConfig[] => [
-  { type: 'header', visible: true, order: 0, style: defaultStyle({ textAlign: 'center', fontSize: 12 }) },
+  {
+    type: 'header',
+    visible: true,
+    order: 0,
+    style: defaultStyle({ textAlign: 'center', fontSize: 12 }),
+  },
   { type: 'kpis', visible: true, order: 1, style: defaultStyle({ fontSize: 10 }) },
   { type: 'table', visible: true, order: 2, style: defaultStyle({ fontSize: 11 }) },
-  { type: 'summary', visible: false, order: 3, style: defaultStyle({ fontSize: 11, fontWeight: 'bold' }) },
-  { type: 'footer', visible: true, order: 4, style: defaultStyle({ fontSize: 9, color: '#6b7280' }) },
+  {
+    type: 'summary',
+    visible: false,
+    order: 3,
+    style: defaultStyle({ fontSize: 11, fontWeight: 'bold' }),
+  },
+  {
+    type: 'footer',
+    visible: true,
+    order: 4,
+    style: defaultStyle({ fontSize: 9, color: '#6b7280' }),
+  },
 ];
 
 const defaultHeader = (): ReportHeaderConfig => ({
@@ -335,9 +360,19 @@ const defaultHeader = (): ReportHeaderConfig => ({
   showCompanyPhone: true,
   showCompanyTaxId: true,
   showLogo: true,
-  titleStyle: defaultStyle({ fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: '#111827' }),
+  titleStyle: defaultStyle({
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#111827',
+  }),
   subtitleStyle: defaultStyle({ fontSize: 10, textAlign: 'center', color: '#6b7280' }),
-  companyStyle: defaultStyle({ fontSize: 12, fontWeight: 'bold', textAlign: 'center', color: '#111827' }),
+  companyStyle: defaultStyle({
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#111827',
+  }),
 });
 
 const defaultFooter = (): ReportFooterConfig => ({
@@ -357,15 +392,20 @@ const defaultTable = (): TableConfig => ({
   totalsLabel: 'TOTAUX',
 });
 
-function mkFields(defs: [string, string][], overrides?: Partial<ElementStyle>): ReportFieldConfig[] {
+function mkFields(
+  defs: [string, string][],
+  overrides?: Partial<ElementStyle>,
+): ReportFieldConfig[] {
   return defs.map(([key, label], i) => ({
     key,
     label,
     visible: true,
     order: i,
     style: defaultStyle({
-      textAlign: /amount|debit|credit|balance|entry|exit|total|cash|subtotal|variation|variance/i.test(key)
-        ? 'right' : 'left',
+      textAlign:
+        /amount|debit|credit|balance|entry|exit|total|cash|subtotal|variation|variance/i.test(key)
+          ? 'right'
+          : 'left',
       ...overrides,
     }),
   }));
@@ -376,7 +416,12 @@ function mkKpis(defs: [string, string][]): ReportKpiConfig[] {
     key,
     label,
     visible: true,
-    style: defaultStyle({ fontSize: 10, fontWeight: 'bold', textAlign: 'center', color: '#1e40af' }),
+    style: defaultStyle({
+      fontSize: 10,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      color: '#1e40af',
+    }),
   }));
 }
 
@@ -702,7 +747,11 @@ interface ReportConfigState {
   updateFooter: (reportId: string, partial: Partial<ReportFooterConfig>) => void;
   updateTable: (reportId: string, partial: Partial<TableConfig>) => void;
   updatePage: (reportId: string, partial: Partial<PageConfig>) => void;
-  updateSection: (reportId: string, sectionType: SectionType, partial: Partial<SectionConfig>) => void;
+  updateSection: (
+    reportId: string,
+    sectionType: SectionType,
+    partial: Partial<SectionConfig>,
+  ) => void;
   reorderSections: (reportId: string, sectionTypes: SectionType[]) => void;
   reorderKpis: (reportId: string, kpiKeys: string[]) => void;
   addField: (reportId: string, field: ReportFieldConfig) => void;
@@ -735,7 +784,10 @@ export const useReportConfigStore = create<ReportConfigState>()(
         set((s) => ({
           configs: s.configs.map((c) =>
             c.id === reportId
-              ? { ...c, fields: c.fields.map((f) => (f.key === fieldKey ? { ...f, ...partial } : f)) }
+              ? {
+                  ...c,
+                  fields: c.fields.map((f) => (f.key === fieldKey ? { ...f, ...partial } : f)),
+                }
               : c,
           ),
         })),
@@ -904,8 +956,7 @@ export const useReportConfigStore = create<ReportConfigState>()(
           };
         }),
 
-      resetAll: () =>
-        set({ configs: DEFAULT_REPORTS.map((r) => JSON.parse(JSON.stringify(r))) }),
+      resetAll: () => set({ configs: DEFAULT_REPORTS.map((r) => JSON.parse(JSON.stringify(r))) }),
 
       /* ── Server sync ── */
 
@@ -919,7 +970,11 @@ export const useReportConfigStore = create<ReportConfigState>()(
               const merged = s.configs.map((local) => {
                 const remote = serverConfigs.find((r) => r.reportId === local.id);
                 if (remote) {
-                  try { return JSON.parse(remote.configJson) as ReportConfig; } catch { return local; }
+                  try {
+                    return JSON.parse(remote.configJson) as ReportConfig;
+                  } catch {
+                    return local;
+                  }
                 }
                 return local;
               });
@@ -929,7 +984,10 @@ export const useReportConfigStore = create<ReportConfigState>()(
             set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
           }
         } catch (e: unknown) {
-          set({ isSyncing: false, syncError: e instanceof Error ? e.message : 'Erreur de synchronisation' });
+          set({
+            isSyncing: false,
+            syncError: e instanceof Error ? e.message : 'Erreur de synchronisation',
+          });
         }
       },
 
@@ -945,7 +1003,10 @@ export const useReportConfigStore = create<ReportConfigState>()(
           });
           set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
         } catch (e: unknown) {
-          set({ isSyncing: false, syncError: e instanceof Error ? e.message : 'Erreur de sauvegarde' });
+          set({
+            isSyncing: false,
+            syncError: e instanceof Error ? e.message : 'Erreur de sauvegarde',
+          });
         }
       },
 
@@ -962,7 +1023,10 @@ export const useReportConfigStore = create<ReportConfigState>()(
           });
           set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
         } catch (e: unknown) {
-          set({ isSyncing: false, syncError: e instanceof Error ? e.message : 'Erreur de sauvegarde' });
+          set({
+            isSyncing: false,
+            syncError: e instanceof Error ? e.message : 'Erreur de sauvegarde',
+          });
         }
       },
     }),

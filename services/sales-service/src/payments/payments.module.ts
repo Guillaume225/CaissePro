@@ -9,11 +9,7 @@ import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Payment, Sale, Receivable]),
-    AuditModule,
-    CashClosingModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Payment, Sale, Receivable]), AuditModule, CashClosingModule],
   controllers: [PaymentsController],
   providers: [PaymentsService],
   exports: [PaymentsService],

@@ -17,7 +17,8 @@ export class DashboardService {
     const lastMonth = thisMonth === 1 ? 12 : thisMonth - 1;
     const lastYear = thisMonth === 1 ? thisYear - 1 : thisYear;
 
-    const [row] = await this.dataSource.query(`
+    const [row] = await this.dataSource.query(
+      `
       SELECT
         COALESCE((SELECT SUM(total_ttc) FROM sales WHERE CAST(created_at AS DATE) = @0 AND status != 'CANCELLED'), 0) AS todayRevenue,
         COALESCE((SELECT SUM(total_ttc) FROM sales WHERE MONTH(created_at)=@1 AND YEAR(created_at)=@2 AND status != 'CANCELLED'), 0) AS monthRevenue,
@@ -29,7 +30,9 @@ export class DashboardService {
         ), 100) AS collectionRate,
         COALESCE((SELECT SUM(total_ttc) FROM sales WHERE MONTH(created_at)=@3 AND YEAR(created_at)=@4 AND status != 'CANCELLED'), 0) AS prevMonthRevenue,
         COALESCE((SELECT COUNT(*) FROM sales WHERE CAST(created_at AS DATE) = DATEADD(DAY, -1, @0) AND status != 'CANCELLED'), 0) AS yesterdaySalesCount
-    `, [today, thisMonth, thisYear, lastMonth, lastYear]);
+    `,
+      [today, thisMonth, thisYear, lastMonth, lastYear],
+    );
 
     const trend = (cur: number, prev: number) =>
       prev === 0 ? 0 : Math.round(((cur - prev) / prev) * 100);
@@ -56,7 +59,9 @@ export class DashboardService {
       GROUP BY FORMAT(created_at, 'yyyy-MM')
       ORDER BY month
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({ month: r.month, amount: Number(r.amount) })),
+    );
   }
 
   /* ══════════════════════════════════════════════════════════
@@ -69,7 +74,8 @@ export class DashboardService {
     const lastMonth = thisMonth === 1 ? 12 : thisMonth - 1;
     const lastYear = thisMonth === 1 ? thisYear - 1 : thisYear;
 
-    const [row] = await this.dataSource.query(`
+    const [row] = await this.dataSource.query(
+      `
       SELECT
         /* ── This month ── */
         COALESCE((SELECT COUNT(*) FROM fne_invoices WHERE MONTH(created_at)=@0 AND YEAR(created_at)=@1), 0) AS monthInvoices,
@@ -84,7 +90,9 @@ export class DashboardService {
         /* ── All time ── */
         COALESCE((SELECT COUNT(*) FROM fne_invoices), 0) AS totalInvoices,
         COALESCE((SELECT SUM(total_ttc) FROM fne_invoices WHERE status IN ('CERTIFIED','CREDIT_NOTE')), 0) AS totalRevenue
-    `, [thisMonth, thisYear, lastMonth, lastYear]);
+    `,
+      [thisMonth, thisYear, lastMonth, lastYear],
+    );
 
     const trend = (cur: number, prev: number) =>
       prev === 0 ? 0 : Math.round(((cur - prev) / prev) * 100);
@@ -114,11 +122,13 @@ export class DashboardService {
       GROUP BY FORMAT(created_at, 'yyyy-MM')
       ORDER BY month
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({
-      month: r.month,
-      revenue: Number(r.revenue),
-      count: Number(r.count),
-    })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({
+        month: r.month,
+        revenue: Number(r.revenue),
+        count: Number(r.count),
+      })),
+    );
   }
 
   async getFneTopClients() {
@@ -133,12 +143,14 @@ export class DashboardService {
       GROUP BY client_company_name, client_phone
       ORDER BY revenue DESC
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({
-      clientName: r.clientName,
-      clientPhone: r.clientPhone,
-      invoiceCount: Number(r.invoiceCount),
-      revenue: Number(r.revenue),
-    })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({
+        clientName: r.clientName,
+        clientPhone: r.clientPhone,
+        invoiceCount: Number(r.invoiceCount),
+        revenue: Number(r.revenue),
+      })),
+    );
   }
 
   async getFneStatusBreakdown() {
@@ -147,9 +159,11 @@ export class DashboardService {
       FROM fne_invoices
       GROUP BY status
     `);
-    return this.wrap(rows.map((r: Record<string, unknown>) => ({
-      status: r.status as string,
-      count: Number(r.count),
-    })));
+    return this.wrap(
+      rows.map((r: Record<string, unknown>) => ({
+        status: r.status as string,
+        count: Number(r.count),
+      })),
+    );
   }
 }

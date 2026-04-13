@@ -31,11 +31,7 @@ export class RolesService {
     return this.toResponseDto(role);
   }
 
-  async create(
-    dto: CreateRoleDto,
-    actorId: string,
-    ip?: string,
-  ): Promise<RoleResponseDto> {
+  async create(dto: CreateRoleDto, actorId: string, ip?: string): Promise<RoleResponseDto> {
     const existing = await this.roleRepo.findOne({ where: { name: dto.name } });
     if (existing) throw new ConflictException('Role name already exists');
 
@@ -92,7 +88,9 @@ export class RolesService {
     }
 
     if (dto.permissions !== undefined) {
-      const invalid = dto.permissions.filter((p) => !(ALL_PERMISSIONS as readonly string[]).includes(p));
+      const invalid = dto.permissions.filter(
+        (p) => !(ALL_PERMISSIONS as readonly string[]).includes(p),
+      );
       if (invalid.length > 0) {
         throw new ConflictException(`Invalid permissions: ${invalid.join(', ')}`);
       }

@@ -7,7 +7,10 @@ import { useExpenses } from '@/hooks/useExpenses';
 import { formatCFA, formatDate } from '@/lib/format';
 import type { ExpenseFilters } from '@/types/expense';
 
-const STATUS_CONFIG: Record<string, { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }
+> = {
   DRAFT: { label: 'Brouillon', variant: 'outline' },
   PENDING: { label: 'En attente', variant: 'warning' },
   APPROVED_L1: { label: 'Approuvée N1', variant: 'info' },
@@ -28,13 +31,16 @@ export default function MonthExpensesPage() {
 
   const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
-  const filters: ExpenseFilters = useMemo(() => ({
-    perPage: 200,
-    sortBy: 'date',
-    sortOrder: 'DESC',
-    dateFrom,
-    dateTo,
-  }), [dateFrom, dateTo]);
+  const filters: ExpenseFilters = useMemo(
+    () => ({
+      perPage: 200,
+      sortBy: 'date',
+      sortOrder: 'DESC',
+      dateFrom,
+      dateTo,
+    }),
+    [dateFrom, dateTo],
+  );
 
   const { data, isLoading, isError } = useExpenses(filters);
   const expenses = data?.data ?? [];
@@ -48,7 +54,9 @@ export default function MonthExpensesPage() {
           <p className="mt-1 text-sm text-gray-500">Mois en cours — {monthLabel}</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-500">{expenses.length} pièce{expenses.length > 1 ? 's' : ''}</p>
+          <p className="text-sm text-gray-500">
+            {expenses.length} pièce{expenses.length > 1 ? 's' : ''}
+          </p>
           <p className="text-lg font-bold text-gray-900">{formatCFA(total)}</p>
         </div>
       </div>
@@ -71,13 +79,27 @@ export default function MonthExpensesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Référence</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Catégorie</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Bénéficiaire</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Montant</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Statut</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Référence
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Catégorie
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Bénéficiaire
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Montant
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Statut
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -90,7 +112,10 @@ export default function MonthExpensesPage() {
                   </tr>
                 ) : (
                   expenses.map((exp) => {
-                    const st = STATUS_CONFIG[exp.status] ?? { label: exp.status, variant: 'outline' as const };
+                    const st = STATUS_CONFIG[exp.status] ?? {
+                      label: exp.status,
+                      variant: 'outline' as const,
+                    };
                     return (
                       <tr
                         key={exp.id}
@@ -101,13 +126,18 @@ export default function MonthExpensesPage() {
                         <td className="px-4 py-3 text-gray-600">{formatDate(exp.date)}</td>
                         <td className="px-4 py-3 text-gray-700">{exp.categoryName}</td>
                         <td className="px-4 py-3 text-gray-700">{exp.beneficiary || '—'}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatCFA(exp.amount)}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                          {formatCFA(exp.amount)}
+                        </td>
                         <td className="px-4 py-3">
                           <Badge variant={st.variant}>{st.label}</Badge>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
-                            onClick={(e) => { e.stopPropagation(); navigate(`/expenses/${exp.id}`); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/expenses/${exp.id}`);
+                            }}
                             className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                             title="Voir"
                           >

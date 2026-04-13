@@ -33,17 +33,11 @@ export class AuditLogsController {
    * GET /api/v1/audit/logs/export — CSV/JSON export
    */
   @Get('logs/export')
-  async exportLogs(
-    @Query() query: ExportAuditLogsQueryDto,
-    @Res() res: Response,
-  ) {
+  async exportLogs(@Query() query: ExportAuditLogsQueryDto, @Res() res: Response) {
     const result = await this.auditLogsService.exportLogs(query);
 
     res.setHeader('Content-Type', result.contentType);
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${result.filename}"`,
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     res.send(result.data);
   }
 
@@ -52,10 +46,7 @@ export class AuditLogsController {
    */
   @Get('entity/:type/:id')
   @HttpCode(HttpStatus.OK)
-  async entityHistory(
-    @Param('type') entityType: string,
-    @Param('id') entityId: string,
-  ) {
+  async entityHistory(@Param('type') entityType: string, @Param('id') entityId: string) {
     return this.auditLogsService.findByEntity(entityType, entityId);
   }
 }

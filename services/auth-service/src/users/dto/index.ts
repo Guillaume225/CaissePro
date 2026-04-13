@@ -21,7 +21,9 @@ export class CreateUserDto {
   @IsString()
   @MinLength(8)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])/, {
-    message: 'Password must contain at least 1 uppercase, 1 lowercase, 1 digit, and 1 special character' })
+    message:
+      'Password must contain at least 1 uppercase, 1 lowercase, 1 digit, and 1 special character',
+  })
   password!: string;
 
   @IsString()
@@ -45,7 +47,10 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsArray()
-  @Matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, { each: true, message: 'each value in companyIds must be a valid UUID' })
+  @Matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, {
+    each: true,
+    message: 'each value in companyIds must be a valid UUID',
+  })
   companyIds?: string[];
 
   @IsOptional()
@@ -80,7 +85,10 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsArray()
-  @Matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, { each: true, message: 'each value in companyIds must be a valid UUID' })
+  @Matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, {
+    each: true,
+    message: 'each value in companyIds must be a valid UUID',
+  })
   companyIds?: string[];
 
   @IsOptional()

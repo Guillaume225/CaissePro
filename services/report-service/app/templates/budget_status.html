@@ -1,12 +1,10 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="report-header">
   <div class="company-info">
     <div class="company-name">{{ company_name }}</div>
     <div class="company-details">
-      {% if company_address %}{{ company_address }}<br>{% endif %}
-      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
-      {% if company_email %} — {{ company_email }}{% endif %}
+      {% if company_address %}{{ company_address }}<br />{% endif %} {% if company_phone %}Tél: {{
+      company_phone }}{% endif %} {% if company_email %} — {{ company_email }}{% endif %}
     </div>
   </div>
   <div class="report-meta">
@@ -30,7 +28,9 @@
     <div class="summary-label">Reste Disponible</div>
     <div class="summary-value">{{ total_remaining }}</div>
   </div>
-  <div class="summary-box {% if global_percentage > 90 %}danger{% elif global_percentage > 75 %}warning{% else %}primary{% endif %}">
+  <div
+    class="summary-box {% if global_percentage > 90 %}danger{% elif global_percentage > 75 %}warning{% else %}primary{% endif %}"
+  >
     <div class="summary-label">Taux Consommation</div>
     <div class="summary-value">{{ global_percentage }}%</div>
   </div>
@@ -47,7 +47,7 @@
         <th class="text-right">Budget Alloué</th>
         <th class="text-right">Consommé</th>
         <th class="text-right">Reste</th>
-        <th class="text-center" style="width:120px">Taux</th>
+        <th class="text-center" style="width: 120px">Taux</th>
         <th class="text-center">Alerte</th>
       </tr>
     </thead>
@@ -60,21 +60,23 @@
         <td class="text-right">{{ item.consumed }}</td>
         <td class="text-right">{{ item.remaining }}</td>
         <td>
-          <div style="display:flex;align-items:center;gap:6px">
+          <div style="display: flex; align-items: center; gap: 6px">
             <div class="progress-bar">
-              <div class="progress-fill {% if item.percentage > 90 %}progress-danger{% elif item.percentage > 75 %}progress-warn{% else %}progress-ok{% endif %}"
-                   style="width:{{ item.percentage }}%"></div>
+              <div
+                class="progress-fill {% if item.percentage > 90 %}progress-danger{% elif item.percentage > 75 %}progress-warn{% else %}progress-ok{% endif %}"
+                style="width:{{ item.percentage }}%"
+              ></div>
             </div>
-            <span style="font-size:9px;font-weight:600">{{ item.percentage }}%</span>
+            <span style="font-size: 9px; font-weight: 600">{{ item.percentage }}%</span>
           </div>
         </td>
         <td class="text-center">
           {% if item.percentage > 90 %}
-            <span class="badge badge-danger">CRITIQUE</span>
+          <span class="badge badge-danger">CRITIQUE</span>
           {% elif item.percentage > 75 %}
-            <span class="badge badge-warning">ATTENTION</span>
+          <span class="badge badge-warning">ATTENTION</span>
           {% else %}
-            <span class="badge badge-success">OK</span>
+          <span class="badge badge-success">OK</span>
           {% endif %}
         </td>
       </tr>

@@ -46,7 +46,12 @@ export class Receivable {
   @Column({ type: 'simple-enum', enum: ReceivableStatus, default: ReceivableStatus.OPEN })
   status!: ReceivableStatus;
 
-  @Column({ type: 'simple-enum', enum: AgingBucket, name: 'aging_bucket', default: AgingBucket.CURRENT })
+  @Column({
+    type: 'simple-enum',
+    enum: AgingBucket,
+    name: 'aging_bucket',
+    default: AgingBucket.CURRENT,
+  })
   agingBucket!: AgingBucket;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })

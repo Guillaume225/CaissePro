@@ -41,7 +41,9 @@ describe('UsersService', () => {
       findOne: jest.fn(),
       findOneOrFail: jest.fn().mockResolvedValue(mockUser),
       create: jest.fn((dto: Record<string, unknown>) => ({ ...dto, id: 'new-uuid' })),
-      save: jest.fn((entity: Record<string, unknown>) => Promise.resolve({ ...mockUser, ...entity })),
+      save: jest.fn((entity: Record<string, unknown>) =>
+        Promise.resolve({ ...mockUser, ...entity }),
+      ),
       softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
       createQueryBuilder: jest.fn().mockReturnValue({
         leftJoinAndSelect: jest.fn().mockReturnThis(),
@@ -140,7 +142,13 @@ describe('UsersService', () => {
 
       await expect(
         service.create(
-          { email: 'user@test.com', password: 'P1!aaaa', firstName: 'A', lastName: 'B', roleId: 'x' },
+          {
+            email: 'user@test.com',
+            password: 'P1!aaaa',
+            firstName: 'A',
+            lastName: 'B',
+            roleId: 'x',
+          },
           'admin-uuid',
         ),
       ).rejects.toThrow(ConflictException);
@@ -152,7 +160,13 @@ describe('UsersService', () => {
 
       await expect(
         service.create(
-          { email: 'new@test.com', password: 'P1!aaaa', firstName: 'A', lastName: 'B', roleId: 'bad' },
+          {
+            email: 'new@test.com',
+            password: 'P1!aaaa',
+            firstName: 'A',
+            lastName: 'B',
+            roleId: 'bad',
+          },
           'admin-uuid',
         ),
       ).rejects.toThrow(NotFoundException);

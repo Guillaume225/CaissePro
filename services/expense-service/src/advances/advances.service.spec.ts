@@ -100,10 +100,7 @@ describe('AdvancesService', () => {
         updatedAt: new Date(),
       });
 
-      await service.create(
-        { employeeId: 'emp-1', amount: 5000, reason: 'Mission' },
-        'user-1',
-      );
+      await service.create({ employeeId: 'emp-1', amount: 5000, reason: 'Mission' }, 'user-1');
 
       expect(repo.create).toHaveBeenCalled();
       expect(repo.save).toHaveBeenCalled();
@@ -119,16 +116,14 @@ describe('AdvancesService', () => {
         justifiedAmount: 0,
         status: AdvanceStatus.PENDING,
       };
-      repo.findOne
-        .mockResolvedValueOnce(adv)
-        .mockResolvedValueOnce({
-          ...adv,
-          justifiedAmount: 2000,
-          status: AdvanceStatus.PARTIAL,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          employeeId: 'emp-1',
-        });
+      repo.findOne.mockResolvedValueOnce(adv).mockResolvedValueOnce({
+        ...adv,
+        justifiedAmount: 2000,
+        status: AdvanceStatus.PARTIAL,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        employeeId: 'emp-1',
+      });
 
       await service.justify('adv-1', { justifiedAmount: 2000 }, 'user-1');
       expect(repo.save).toHaveBeenCalled();
@@ -141,16 +136,14 @@ describe('AdvancesService', () => {
         justifiedAmount: 3000,
         status: AdvanceStatus.PARTIAL,
       };
-      repo.findOne
-        .mockResolvedValueOnce(adv)
-        .mockResolvedValueOnce({
-          ...adv,
-          justifiedAmount: 5000,
-          status: AdvanceStatus.JUSTIFIED,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          employeeId: 'emp-1',
-        });
+      repo.findOne.mockResolvedValueOnce(adv).mockResolvedValueOnce({
+        ...adv,
+        justifiedAmount: 5000,
+        status: AdvanceStatus.JUSTIFIED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        employeeId: 'emp-1',
+      });
 
       await service.justify('adv-1', { justifiedAmount: 2000 }, 'user-1');
       expect(adv.status).toBe(AdvanceStatus.JUSTIFIED);
@@ -164,9 +157,9 @@ describe('AdvancesService', () => {
         status: AdvanceStatus.PARTIAL,
       });
 
-      await expect(
-        service.justify('adv-1', { justifiedAmount: 2000 }, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.justify('adv-1', { justifiedAmount: 2000 }, 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should reject if already justified', async () => {
@@ -177,9 +170,9 @@ describe('AdvancesService', () => {
         status: AdvanceStatus.JUSTIFIED,
       });
 
-      await expect(
-        service.justify('adv-1', { justifiedAmount: 100 }, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.justify('adv-1', { justifiedAmount: 100 }, 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

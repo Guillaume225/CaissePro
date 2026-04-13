@@ -1,20 +1,46 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Users, Plus, Pencil, Trash2, Search, UserCheck, UserX,
-  Briefcase, Mail, Phone, Hash, Building2, Copy, CheckCircle2,
+  Users,
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  UserCheck,
+  UserX,
+  Briefcase,
+  Mail,
+  Phone,
+  Hash,
+  Building2,
+  Copy,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button, Input, Select, Modal, Badge, DataTable } from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
-import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee } from '@/hooks/useAdmin';
+import {
+  useEmployees,
+  useCreateEmployee,
+  useUpdateEmployee,
+  useDeleteEmployee,
+} from '@/hooks/useAdmin';
 import type { EmployeeAccount, CreateEmployeeDto, UpdateEmployeeDto } from '@/types/admin';
 
 type AnyRow = Record<string, unknown>;
 
 const SERVICE_OPTIONS = [
-  'Comptabilité', 'Logistique', 'Marketing', 'Ressources Humaines',
-  'Direction Générale', 'Informatique', 'Commercial', 'Production',
-  'Finance', 'Juridique', 'Achats', 'Qualité',
+  'Comptabilité',
+  'Logistique',
+  'Marketing',
+  'Ressources Humaines',
+  'Direction Générale',
+  'Informatique',
+  'Commercial',
+  'Production',
+  'Finance',
+  'Juridique',
+  'Achats',
+  'Qualité',
 ];
 
 export default function EmployeeManagementPage() {
@@ -33,13 +59,19 @@ export default function EmployeeManagementPage() {
 
   // Form state
   const [form, setForm] = useState<CreateEmployeeDto>({
-    matricule: '', firstName: '', lastName: '', email: '',
-    service: '', position: '', phone: '',
+    matricule: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    service: '',
+    position: '',
+    phone: '',
   });
 
   const filtered = employees.filter((emp) => {
     const q = search.toLowerCase();
-    const matchSearch = !q ||
+    const matchSearch =
+      !q ||
       emp.matricule.toLowerCase().includes(q) ||
       emp.email.toLowerCase().includes(q) ||
       `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(q) ||
@@ -52,13 +84,18 @@ export default function EmployeeManagementPage() {
 
   const openCreate = () => {
     setEditEmp(null);
-    const nextNum = employees.length > 0
-      ? Math.max(...employees.map((e) => parseInt(e.matricule.replace(/\D/g, '') || '0', 10))) + 1
-      : 1;
+    const nextNum =
+      employees.length > 0
+        ? Math.max(...employees.map((e) => parseInt(e.matricule.replace(/\D/g, '') || '0', 10))) + 1
+        : 1;
     setForm({
       matricule: `MAT-${String(nextNum).padStart(3, '0')}`,
-      firstName: '', lastName: '', email: '',
-      service: '', position: '', phone: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      service: '',
+      position: '',
+      phone: '',
     });
     setShowModal(true);
   };
@@ -133,7 +170,9 @@ export default function EmployeeManagementPage() {
       sortable: true,
       render: (row) => (
         <div>
-          <div className="font-medium text-gray-200">{row.firstName as string} {row.lastName as string}</div>
+          <div className="font-medium text-gray-200">
+            {row.firstName as string} {row.lastName as string}
+          </div>
           <div className="text-[10px] text-gray-500">{row.email as string}</div>
         </div>
       ),
@@ -172,24 +211,48 @@ export default function EmployeeManagementPage() {
         const emp = row as unknown as EmployeeAccount;
         return (
           <div className="flex items-center gap-1">
-            <button onClick={(e) => { e.stopPropagation(); copyCredentials(emp); }}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                copyCredentials(emp);
+              }}
               className="p-1.5 rounded hover:bg-white/10 text-gray-500 hover:text-brand-gold transition-colors"
-              title="Copier les identifiants">
-              {copied === emp.id ? <CheckCircle2 size={14} className="text-green-400" /> : <Copy size={14} />}
+              title="Copier les identifiants"
+            >
+              {copied === emp.id ? (
+                <CheckCircle2 size={14} className="text-green-400" />
+              ) : (
+                <Copy size={14} />
+              )}
             </button>
-            <button onClick={(e) => { e.stopPropagation(); handleToggleActive(emp); }}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleActive(emp);
+              }}
               className={`p-1.5 rounded hover:bg-white/10 transition-colors ${emp.isActive ? 'text-gray-500 hover:text-red-400' : 'text-gray-500 hover:text-green-400'}`}
-              title={emp.isActive ? 'Désactiver' : 'Activer'}>
+              title={emp.isActive ? 'Désactiver' : 'Activer'}
+            >
               {emp.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
             </button>
-            <button onClick={(e) => { e.stopPropagation(); openEdit(emp); }}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                openEdit(emp);
+              }}
               className="p-1.5 rounded hover:bg-white/10 text-gray-500 hover:text-blue-400 transition-colors"
-              title="Modifier">
+              title="Modifier"
+            >
               <Pencil size={14} />
             </button>
-            <button onClick={(e) => { e.stopPropagation(); setConfirmDelete(emp); }}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmDelete(emp);
+              }}
               className="p-1.5 rounded hover:bg-white/10 text-gray-500 hover:text-red-400 transition-colors"
-              title="Supprimer">
+              title="Supprimer"
+            >
               <Trash2 size={14} />
             </button>
           </div>
@@ -198,7 +261,13 @@ export default function EmployeeManagementPage() {
     },
   ];
 
-  const isFormValid = form.matricule && form.firstName && form.lastName && form.email && form.service && form.position;
+  const isFormValid =
+    form.matricule &&
+    form.firstName &&
+    form.lastName &&
+    form.email &&
+    form.service &&
+    form.position;
 
   return (
     <div className="space-y-6">
@@ -210,11 +279,15 @@ export default function EmployeeManagementPage() {
             {t('admin.employees.title', 'Gestion des salariés')}
           </h1>
           <p className="text-sm text-gray-400 mt-1">
-            {t('admin.employees.subtitle', 'Créez et gérez les comptes salariés pour la connexion aux demandes de décaissement')}
+            {t(
+              'admin.employees.subtitle',
+              'Créez et gérez les comptes salariés pour la connexion aux demandes de décaissement',
+            )}
           </p>
         </div>
         <Button onClick={openCreate} className="bg-brand-gold hover:bg-brand-gold-dark text-white">
-          <Plus size={16} className="mr-2" />{t('admin.employees.create', 'Nouveau salarié')}
+          <Plus size={16} className="mr-2" />
+          {t('admin.employees.create', 'Nouveau salarié')}
         </Button>
       </div>
 
@@ -222,10 +295,18 @@ export default function EmployeeManagementPage() {
       <div className="rounded-xl border border-brand-gold/20 bg-brand-gold/5 p-4">
         <p className="text-sm text-brand-gold font-medium">Portail salarié</p>
         <p className="text-xs text-gray-400 mt-1">
-          Les salariés se connectent sur <a href="http://localhost:5173/demande/login" target="_blank" rel="noreferrer"
-            className="text-brand-gold underline hover:text-brand-gold-dark">http://localhost:5173/demande/login</a> avec
-          leur <strong>matricule</strong> et <strong>email</strong> pour soumettre des demandes de décaissement.
-          Utilisez le bouton <Copy size={10} className="inline" /> pour copier les identifiants.
+          Les salariés se connectent sur{' '}
+          <a
+            href="http://localhost:5173/demande/login"
+            target="_blank"
+            rel="noreferrer"
+            className="text-brand-gold underline hover:text-brand-gold-dark"
+          >
+            http://localhost:5173/demande/login
+          </a>{' '}
+          avec leur <strong>matricule</strong> et <strong>email</strong> pour soumettre des demandes
+          de décaissement. Utilisez le bouton <Copy size={10} className="inline" /> pour copier les
+          identifiants.
         </p>
       </div>
 
@@ -236,11 +317,15 @@ export default function EmployeeManagementPage() {
           <div className="text-xs text-gray-500">Total salariés</div>
         </div>
         <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-          <div className="text-2xl font-bold text-green-400">{employees.filter((e) => e.isActive).length}</div>
+          <div className="text-2xl font-bold text-green-400">
+            {employees.filter((e) => e.isActive).length}
+          </div>
           <div className="text-xs text-gray-500">Actifs</div>
         </div>
         <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-          <div className="text-2xl font-bold text-red-400">{employees.filter((e) => !e.isActive).length}</div>
+          <div className="text-2xl font-bold text-red-400">
+            {employees.filter((e) => !e.isActive).length}
+          </div>
           <div className="text-xs text-gray-500">Désactivés</div>
         </div>
         <div className="rounded-xl bg-white/5 border border-white/10 p-4">
@@ -265,7 +350,10 @@ export default function EmployeeManagementPage() {
           onChange={(e) => setServiceFilter(e.target.value)}
           className="w-48 bg-white/5 border-white/10"
           placeholder="Tous les services"
-          options={[{ value: '', label: 'Tous les services' }, ...services.map((s) => ({ value: s, label: s }))]}
+          options={[
+            { value: '', label: 'Tous les services' },
+            ...services.map((s) => ({ value: s, label: s })),
+          ]}
         />
       </div>
 
@@ -278,13 +366,17 @@ export default function EmployeeManagementPage() {
       />
 
       {/* Create / Edit Modal */}
-      <Modal open={showModal} onClose={() => setShowModal(false)}
-        title={editEmp ? 'Modifier le salarié' : 'Créer un compte salarié'}>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editEmp ? 'Modifier le salarié' : 'Créer un compte salarié'}
+      >
         <div className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
-                <Hash size={12} className="inline mr-1" />Matricule
+                <Hash size={12} className="inline mr-1" />
+                Matricule
               </label>
               <Input
                 value={form.matricule}
@@ -296,7 +388,8 @@ export default function EmployeeManagementPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
-                <Mail size={12} className="inline mr-1" />Email
+                <Mail size={12} className="inline mr-1" />
+                Email
               </label>
               <Input
                 type="email"
@@ -332,7 +425,8 @@ export default function EmployeeManagementPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
-                <Building2 size={12} className="inline mr-1" />Service
+                <Building2 size={12} className="inline mr-1" />
+                Service
               </label>
               <Select
                 value={form.service}
@@ -344,7 +438,8 @@ export default function EmployeeManagementPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
-                <Briefcase size={12} className="inline mr-1" />Poste
+                <Briefcase size={12} className="inline mr-1" />
+                Poste
               </label>
               <Input
                 value={form.position}
@@ -357,7 +452,8 @@ export default function EmployeeManagementPage() {
 
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1">
-              <Phone size={12} className="inline mr-1" />Téléphone
+              <Phone size={12} className="inline mr-1" />
+              Téléphone
             </label>
             <Input
               value={form.phone}
@@ -370,7 +466,8 @@ export default function EmployeeManagementPage() {
           {!editEmp && (
             <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
               <p className="text-xs text-amber-400">
-                Le salarié pourra se connecter immédiatement sur le portail de demande avec son <strong>matricule</strong> ({form.matricule || '…'}) et son <strong>email</strong>.
+                Le salarié pourra se connecter immédiatement sur le portail de demande avec son{' '}
+                <strong>matricule</strong> ({form.matricule || '…'}) et son <strong>email</strong>.
               </p>
             </div>
           )}
@@ -385,21 +482,37 @@ export default function EmployeeManagementPage() {
             disabled={!isFormValid || createEmployee.isPending || updateEmployee.isPending}
             className="bg-brand-gold hover:bg-brand-gold-dark text-white"
           >
-            {(createEmployee.isPending || updateEmployee.isPending) ? 'Enregistrement…' : editEmp ? 'Mettre à jour' : 'Créer le compte'}
+            {createEmployee.isPending || updateEmployee.isPending
+              ? 'Enregistrement…'
+              : editEmp
+                ? 'Mettre à jour'
+                : 'Créer le compte'}
           </Button>
         </div>
       </Modal>
 
       {/* Delete confirm modal */}
-      <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmer la suppression">
+      <Modal
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title="Confirmer la suppression"
+      >
         <p className="text-sm text-gray-300 py-4">
-          Supprimer définitivement le compte de <strong>{confirmDelete?.firstName} {confirmDelete?.lastName}</strong> ({confirmDelete?.matricule}) ?
-          Cette action est irréversible.
+          Supprimer définitivement le compte de{' '}
+          <strong>
+            {confirmDelete?.firstName} {confirmDelete?.lastName}
+          </strong>{' '}
+          ({confirmDelete?.matricule}) ? Cette action est irréversible.
         </p>
         <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
-          <Button variant="outline" onClick={() => setConfirmDelete(null)}>Annuler</Button>
-          <Button onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white"
-            disabled={deleteEmployee.isPending}>
+          <Button variant="outline" onClick={() => setConfirmDelete(null)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleDelete}
+            className="bg-red-600 hover:bg-red-700 text-white"
+            disabled={deleteEmployee.isPending}
+          >
             {deleteEmployee.isPending ? 'Suppression…' : 'Supprimer'}
           </Button>
         </div>

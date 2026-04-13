@@ -33,7 +33,14 @@ import { cn } from '@/lib/utils';
 import type { ExpenseStatus, ExpenseApproval } from '@/types/expense';
 
 // ── Status config ────────────────────────────────────────
-const STATUS_CONFIG: Record<string, { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive'; icon: typeof Clock }> = {
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive';
+    icon: typeof Clock;
+  }
+> = {
   DRAFT: { label: 'Brouillon', variant: 'outline', icon: Clock },
   PENDING: { label: 'En attente', variant: 'warning', icon: Clock },
   APPROVED: { label: 'Approuvée', variant: 'info', icon: CheckCircle2 },
@@ -82,7 +89,12 @@ export default function ExpenseDetailPage() {
     if (!id || !rejectComment.trim()) return;
     rejectMutation.mutate(
       { id, comment: rejectComment.trim() },
-      { onSuccess: () => { setRejectModalOpen(false); setRejectComment(''); } },
+      {
+        onSuccess: () => {
+          setRejectModalOpen(false);
+          setRejectComment('');
+        },
+      },
     );
   };
 
@@ -144,7 +156,8 @@ export default function ExpenseDetailPage() {
               )}
             </div>
             <p className="mt-0.5 text-sm text-gray-500">
-              {t('expenses.createdBy')} {expense.createdByName} · {formatDateTime(expense.createdAt)}
+              {t('expenses.createdBy')} {expense.createdByName} ·{' '}
+              {formatDateTime(expense.createdAt)}
             </p>
           </div>
         </div>
@@ -152,7 +165,11 @@ export default function ExpenseDetailPage() {
         {/* Action buttons */}
         <div className="flex items-center gap-2">
           {canSubmit && (
-            <Button onClick={handleSubmit} loading={submitMutation.isPending} className="bg-green-600 hover:bg-green-700">
+            <Button
+              onClick={handleSubmit}
+              loading={submitMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
               <Send className="h-4 w-4" />
               {t('expenses.submit')}
             </Button>
@@ -192,11 +209,27 @@ export default function ExpenseDetailPage() {
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
-                <DetailItem icon={Calendar} label={t('common.date')} value={formatDate(expense.date)} />
-                <DetailItem icon={CreditCard} label={t('common.amount')} value={formatCFA(expense.amount)} highlight />
+                <DetailItem
+                  icon={Calendar}
+                  label={t('common.date')}
+                  value={formatDate(expense.date)}
+                />
+                <DetailItem
+                  icon={CreditCard}
+                  label={t('common.amount')}
+                  value={formatCFA(expense.amount)}
+                  highlight
+                />
                 <DetailItem label={t('expenses.category')} value={expense.categoryName} />
-                <DetailItem label={t('expenses.paymentMethod')} value={PAYMENT_LABELS[expense.paymentMethod] ?? expense.paymentMethod} />
-                <DetailItem icon={User} label={t('expenses.beneficiary')} value={expense.beneficiary || '—'} />
+                <DetailItem
+                  label={t('expenses.paymentMethod')}
+                  value={PAYMENT_LABELS[expense.paymentMethod] ?? expense.paymentMethod}
+                />
+                <DetailItem
+                  icon={User}
+                  label={t('expenses.beneficiary')}
+                  value={expense.beneficiary || '—'}
+                />
                 <DetailItem label={t('expenses.reference')} value={expense.reference} />
               </dl>
 
@@ -333,7 +366,10 @@ export default function ExpenseDetailPage() {
             } else if (expense.status === 'PENDING' && expense.approvals.length === 0) {
               nextName = 'Responsable département';
               nextLevel = 1;
-            } else if (expense.status === 'APPROVED_L1' && !expense.approvals.find((a) => a.status === 'PENDING')) {
+            } else if (
+              expense.status === 'APPROVED_L1' &&
+              !expense.approvals.find((a) => a.status === 'PENDING')
+            ) {
               nextName = 'Directeur financier';
               nextLevel = 2;
             }
@@ -345,10 +381,14 @@ export default function ExpenseDetailPage() {
                       <User className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-amber-600">{t('expenses.nextValidator')}</p>
+                      <p className="text-xs font-medium text-amber-600">
+                        {t('expenses.nextValidator')}
+                      </p>
                       <p className="text-sm font-semibold text-amber-800">
                         {nextName}
-                        <span className="ml-1.5 text-xs font-normal text-amber-500">Niveau {nextLevel}</span>
+                        <span className="ml-1.5 text-xs font-normal text-amber-500">
+                          Niveau {nextLevel}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -370,7 +410,9 @@ export default function ExpenseDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="py-4 text-center text-sm text-gray-400">Aucune validation pour le moment</p>
+                <p className="py-4 text-center text-sm text-gray-400">
+                  Aucune validation pour le moment
+                </p>
               )}
             </CardContent>
           </Card>
@@ -443,14 +485,25 @@ function DetailItem({
         {Icon && <Icon className="h-3.5 w-3.5" />}
         {label}
       </dt>
-      <dd className={cn('mt-1 text-sm', highlight ? 'text-lg font-bold text-gray-900' : 'font-medium text-gray-700')}>
+      <dd
+        className={cn(
+          'mt-1 text-sm',
+          highlight ? 'text-lg font-bold text-gray-900' : 'font-medium text-gray-700',
+        )}
+      >
         {value}
       </dd>
     </div>
   );
 }
 
-function WorkflowTimeline({ expense, approvals = [] }: { expense: { status: ExpenseStatus; createdAt: string; updatedAt: string }; approvals?: ExpenseApproval[] }) {
+function WorkflowTimeline({
+  expense,
+  approvals = [],
+}: {
+  expense: { status: ExpenseStatus; createdAt: string; updatedAt: string };
+  approvals?: ExpenseApproval[];
+}) {
   const { t } = useTranslation();
   const nextApproval = approvals.find((a) => a.status === 'PENDING');
   const steps: { label: string; status: ExpenseStatus; date?: string }[] = [
@@ -510,7 +563,8 @@ function WorkflowTimeline({ expense, approvals = [] }: { expense: { status: Expe
                 <div className="mt-1 flex items-center gap-1.5">
                   <User className="h-3 w-3 text-brand-gold" />
                   <p className="text-xs text-gray-500">
-                    {t('expenses.nextValidator')}: <span className="font-medium text-gray-700">{nextApproval.approverName}</span>
+                    {t('expenses.nextValidator')}:{' '}
+                    <span className="font-medium text-gray-700">{nextApproval.approverName}</span>
                     <span className="ml-1 text-gray-400">N{nextApproval.level}</span>
                   </p>
                 </div>
@@ -575,7 +629,10 @@ function ApprovalItem({ approval }: { approval: ExpenseApproval }) {
 
 // ── Disbursement Request Modal ─────────────────────────
 
-const DR_STATUS_CONFIG: Record<string, { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }> = {
+const DR_STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }
+> = {
   PENDING: { label: 'En attente', variant: 'warning' },
   APPROVED: { label: 'Approuvée', variant: 'info' },
   REJECTED: { label: 'Rejetée', variant: 'destructive' },
@@ -594,7 +651,9 @@ function DisbursementRequestModal({
   useTranslation();
   const { data: dr, isLoading } = useDisbursementRequest(open ? requestId : null);
 
-  const statusCfg = dr ? DR_STATUS_CONFIG[dr.status] ?? DR_STATUS_CONFIG.PENDING : DR_STATUS_CONFIG.PENDING;
+  const statusCfg = dr
+    ? (DR_STATUS_CONFIG[dr.status] ?? DR_STATUS_CONFIG.PENDING)
+    : DR_STATUS_CONFIG.PENDING;
 
   return (
     <Modal open={open} onClose={onClose} title="Demande de décaissement" size="lg">

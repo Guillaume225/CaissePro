@@ -17,12 +17,18 @@ export default function AccountingConfigPage() {
   const updateAccounting = useUpdateCategoryAccounting();
 
   const [editing, setEditing] = useState<EditingState | null>(null);
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(categories.filter(c => !c.parentId).map(c => c.id)));
+  const [expanded, setExpanded] = useState<Set<string>>(
+    () => new Set(categories.filter((c) => !c.parentId).map((c) => c.id)),
+  );
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
@@ -116,7 +122,8 @@ export default function AccountingConfigPage() {
             const isEditing = editing?.id === cat.id;
             const children = categories.filter((c) => c.parentId === cat.id);
             const hasChildren = children.length > 0;
-            const missingAccount = cat.isActive && (!cat.accountingDebitAccount || !cat.accountingCreditAccount);
+            const missingAccount =
+              cat.isActive && (!cat.accountingDebitAccount || !cat.accountingCreditAccount);
 
             return (
               <div
@@ -126,22 +133,39 @@ export default function AccountingConfigPage() {
                 } ${isEditing ? 'bg-blue-50/30' : ''}`}
               >
                 {/* Category name */}
-                <div className="col-span-4 flex items-center gap-1.5" style={{ paddingLeft: `${depth * 20}px` }}>
+                <div
+                  className="col-span-4 flex items-center gap-1.5"
+                  style={{ paddingLeft: `${depth * 20}px` }}
+                >
                   {hasChildren ? (
-                    <button onClick={() => toggleExpand(cat.id)} className="text-gray-400 hover:text-gray-600">
-                      {expanded.has(cat.id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    <button
+                      onClick={() => toggleExpand(cat.id)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      {expanded.has(cat.id) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
                     </button>
                   ) : (
                     <span className="w-4" />
                   )}
-                  <span className={`text-sm ${depth === 0 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                  <span
+                    className={`text-sm ${depth === 0 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}
+                  >
                     {cat.name}
                   </span>
                   {!cat.isActive && (
-                    <Badge variant="outline" className="ml-1 text-[10px]">{t('admin.categories.inactive')}</Badge>
+                    <Badge variant="outline" className="ml-1 text-[10px]">
+                      {t('admin.categories.inactive')}
+                    </Badge>
                   )}
                   {missingAccount && !isEditing && (
-                    <span className="ml-1 h-2 w-2 rounded-full bg-amber-400" title={t('admin.accounting.notConfigured')} />
+                    <span
+                      className="ml-1 h-2 w-2 rounded-full bg-amber-400"
+                      title={t('admin.accounting.notConfigured')}
+                    />
                   )}
                 </div>
 
@@ -162,7 +186,9 @@ export default function AccountingConfigPage() {
                       className={`text-center font-mono text-sm ${!isValidAccount(editing.debit) ? 'border-red-300' : ''}`}
                     />
                   ) : (
-                    <span className={`font-mono text-sm ${cat.accountingDebitAccount ? 'text-gray-800' : 'text-gray-300'}`}>
+                    <span
+                      className={`font-mono text-sm ${cat.accountingDebitAccount ? 'text-gray-800' : 'text-gray-300'}`}
+                    >
                       {cat.accountingDebitAccount || '—'}
                     </span>
                   )}
@@ -178,7 +204,9 @@ export default function AccountingConfigPage() {
                       className={`text-center font-mono text-sm ${!isValidAccount(editing.credit) ? 'border-red-300' : ''}`}
                     />
                   ) : (
-                    <span className={`font-mono text-sm ${cat.accountingCreditAccount ? 'text-gray-800' : 'text-gray-300'}`}>
+                    <span
+                      className={`font-mono text-sm ${cat.accountingCreditAccount ? 'text-gray-800' : 'text-gray-300'}`}
+                    >
                       {cat.accountingCreditAccount || '—'}
                     </span>
                   )}
@@ -190,12 +218,19 @@ export default function AccountingConfigPage() {
                     <>
                       <button
                         onClick={saveEdit}
-                        disabled={!isValidAccount(editing.debit) || !isValidAccount(editing.credit) || updateAccounting.isPending}
+                        disabled={
+                          !isValidAccount(editing.debit) ||
+                          !isValidAccount(editing.credit) ||
+                          updateAccounting.isPending
+                        }
                         className="rounded p-1 text-emerald-600 hover:bg-emerald-50 disabled:opacity-40"
                       >
                         <Check className="h-4 w-4" />
                       </button>
-                      <button onClick={cancelEdit} className="rounded p-1 text-gray-400 hover:bg-gray-100">
+                      <button
+                        onClick={cancelEdit}
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100"
+                      >
                         <X className="h-4 w-4" />
                       </button>
                     </>

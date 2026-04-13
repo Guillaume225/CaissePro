@@ -106,10 +106,7 @@ export function DataTable<T extends Record<string, unknown>>({
           <tbody>
             {paginated.length === 0 ? (
               <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-4 py-12 text-center text-gray-400"
-                >
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-400">
                   {emptyMessage}
                 </td>
               </tr>
@@ -125,9 +122,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 >
                   {columns.map((col) => (
                     <td key={col.key} className={cn('px-4 py-3 text-gray-700', col.className)}>
-                      {col.render
-                        ? col.render(row)
-                        : (row[col.key] as ReactNode)}
+                      {col.render ? col.render(row) : (row[col.key] as ReactNode)}
                     </td>
                   ))}
                 </tr>

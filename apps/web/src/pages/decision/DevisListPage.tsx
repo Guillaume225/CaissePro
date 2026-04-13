@@ -6,7 +6,10 @@ import { useFneInvoices, useUpdateDecisionComment } from '@/hooks/useFneInvoices
 import { formatCFA, formatDate } from '@/lib/format';
 import type { FneInvoice, FneInvoiceStatus } from '@/types/fne';
 
-const STATUS_CONFIG: Record<FneInvoiceStatus, { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }> = {
+const STATUS_CONFIG: Record<
+  FneInvoiceStatus,
+  { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }
+> = {
   DRAFT: { label: 'Brouillon', variant: 'outline' },
   CERTIFIED: { label: 'Certifiée', variant: 'success' },
   CREDIT_NOTE: { label: 'Avoir', variant: 'info' },
@@ -78,12 +81,24 @@ export default function DevisListPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Référence</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Client</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Montant TTC</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Statut</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Commentaire décisionnaire</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Référence
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Client
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Montant TTC
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Statut
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Commentaire décisionnaire
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -100,11 +115,16 @@ export default function DevisListPage() {
                     const isEditing = editingId === inv.id;
 
                     return (
-                      <tr key={inv.id} className="border-b border-gray-50 transition-colors hover:bg-gray-50">
+                      <tr
+                        key={inv.id}
+                        className="border-b border-gray-50 transition-colors hover:bg-gray-50"
+                      >
                         <td className="px-4 py-3 font-medium text-brand-gold">{inv.reference}</td>
                         <td className="px-4 py-3 text-gray-600">{formatDate(inv.createdAt)}</td>
                         <td className="px-4 py-3 text-gray-700">{inv.clientCompanyName || '—'}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatCFA(inv.totalTtc)}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                          {formatCFA(inv.totalTtc)}
+                        </td>
                         <td className="px-4 py-3">
                           <Badge variant={st.variant}>{st.label}</Badge>
                         </td>
@@ -148,7 +168,9 @@ export default function DevisListPage() {
                               {inv.decisionComment ? (
                                 <span className="text-gray-700">{inv.decisionComment}</span>
                               ) : (
-                                <span className="text-gray-400 italic">Ajouter un commentaire…</span>
+                                <span className="text-gray-400 italic">
+                                  Ajouter un commentaire…
+                                </span>
                               )}
                               <MessageSquare className="h-3.5 w-3.5 shrink-0 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>

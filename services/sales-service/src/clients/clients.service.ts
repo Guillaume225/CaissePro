@@ -1,18 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from '../entities/client.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
-import {
-  CreateClientDto,
-  UpdateClientDto,
-  ListClientsQueryDto,
-} from './dto';
+import { CreateClientDto, UpdateClientDto, ListClientsQueryDto } from './dto';
 
 @Injectable()
 export class ClientsService {
@@ -32,10 +24,9 @@ export class ClientsService {
     const qb = this.clientRepo.createQueryBuilder('c');
 
     if (query.search) {
-      qb.andWhere(
-        '(c.name ILIKE :s OR c.email ILIKE :s OR c.phone ILIKE :s)',
-        { s: `%${query.search}%` },
-      );
+      qb.andWhere('(c.name ILIKE :s OR c.email ILIKE :s OR c.phone ILIKE :s)', {
+        s: `%${query.search}%`,
+      });
     }
     if (query.isActive !== undefined) {
       qb.andWhere('c.isActive = :isActive', { isActive: query.isActive });

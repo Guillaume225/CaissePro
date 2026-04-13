@@ -1,28 +1,52 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="report-header">
   <div class="company-info">
     <div class="company-name">{{ company_name }}</div>
     <div class="company-details">
-      {% if company_address %}{{ company_address }}<br>{% endif %}
-      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
-      {% if company_email %} — {{ company_email }}{% endif %}
+      {% if company_address %}{{ company_address }}<br />{% endif %} {% if company_phone %}Tél: {{
+      company_phone }}{% endif %} {% if company_email %} — {{ company_email }}{% endif %}
     </div>
   </div>
   <div class="report-meta">
     <div class="report-title">Relevé Client</div>
     <div class="report-subtitle">{{ client_name }}</div>
-    <div class="report-date">Période: {{ period_start }} — {{ period_end }}<br>Généré le {{ generated_at }}</div>
+    <div class="report-date">
+      Période: {{ period_start }} — {{ period_end }}<br />Généré le {{ generated_at }}
+    </div>
   </div>
 </div>
 
 <!-- Client Info -->
-<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px 16px;margin-bottom:20px">
-  <table style="border:none;margin:0">
-    <tr style="background:none"><td style="border:none;font-weight:600;width:150px">Client</td><td style="border:none">{{ client_name }}</td></tr>
-    {% if client_phone %}<tr style="background:none"><td style="border:none;font-weight:600">Téléphone</td><td style="border:none">{{ client_phone }}</td></tr>{% endif %}
-    {% if client_email %}<tr style="background:none"><td style="border:none;font-weight:600">Email</td><td style="border:none">{{ client_email }}</td></tr>{% endif %}
-    {% if client_address %}<tr style="background:none"><td style="border:none;font-weight:600">Adresse</td><td style="border:none">{{ client_address }}</td></tr>{% endif %}
+<div
+  style="
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  "
+>
+  <table style="border: none; margin: 0">
+    <tr style="background: none">
+      <td style="border: none; font-weight: 600; width: 150px">Client</td>
+      <td style="border: none">{{ client_name }}</td>
+    </tr>
+    {% if client_phone %}
+    <tr style="background: none">
+      <td style="border: none; font-weight: 600">Téléphone</td>
+      <td style="border: none">{{ client_phone }}</td>
+    </tr>
+    {% endif %} {% if client_email %}
+    <tr style="background: none">
+      <td style="border: none; font-weight: 600">Email</td>
+      <td style="border: none">{{ client_email }}</td>
+    </tr>
+    {% endif %} {% if client_address %}
+    <tr style="background: none">
+      <td style="border: none; font-weight: 600">Adresse</td>
+      <td style="border: none">{{ client_address }}</td>
+    </tr>
+    {% endif %}
   </table>
 </div>
 

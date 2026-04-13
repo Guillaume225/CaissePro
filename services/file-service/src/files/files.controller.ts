@@ -33,12 +33,7 @@ export class FilesController {
     @Body() dto: UploadFileDto,
     @CurrentUser('id') userId: string,
   ): Promise<{ success: true; data: FileResponseDto }> {
-    const data = await this.filesService.upload(
-      file,
-      userId,
-      dto.module,
-      dto.entityId,
-    );
+    const data = await this.filesService.upload(file, userId, dto.module, dto.entityId);
     return { success: true, data };
   }
 

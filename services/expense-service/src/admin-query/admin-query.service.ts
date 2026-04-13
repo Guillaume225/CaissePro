@@ -39,21 +39,20 @@ export class AdminQueryService {
 
   private getRepo(entity: EntityType): Repository<unknown> {
     switch (entity) {
-      case 'expense': return this.expenseRepo;
-      case 'cashDay': return this.cashDayRepo;
-      case 'advance': return this.advanceRepo;
-      case 'disbursementRequest': return this.disbursementRepo;
-      default: throw new BadRequestException(`Unknown entity type: ${entity}`);
+      case 'expense':
+        return this.expenseRepo;
+      case 'cashDay':
+        return this.cashDayRepo;
+      case 'advance':
+        return this.advanceRepo;
+      case 'disbursementRequest':
+        return this.disbursementRepo;
+      default:
+        throw new BadRequestException(`Unknown entity type: ${entity}`);
     }
   }
 
-  async search(
-    entity: EntityType,
-    search?: string,
-    status?: string,
-    page = 1,
-    perPage = 50,
-  ) {
+  async search(entity: EntityType, search?: string, status?: string, page = 1, perPage = 50) {
     const repo = this.getRepo(entity);
     const where: Record<string, unknown> = {};
 

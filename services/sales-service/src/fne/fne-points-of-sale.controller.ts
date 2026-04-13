@@ -9,7 +9,12 @@ import {
   Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { FnePointsOfSaleService, CreateFnePointOfSaleDto, UpdateFnePointOfSaleDto, ListFnePointsOfSaleQuery } from './fne-points-of-sale.service';
+import {
+  FnePointsOfSaleService,
+  CreateFnePointOfSaleDto,
+  UpdateFnePointOfSaleDto,
+  ListFnePointsOfSaleQuery,
+} from './fne-points-of-sale.service';
 import { Permissions } from '../common/decorators';
 import { FNE_PERMISSIONS } from '../common/permissions';
 

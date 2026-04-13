@@ -33,10 +33,7 @@ export class CompaniesController {
 
   @Get(':id')
   @Permissions(PERMISSIONS.COMPANY_READ)
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('tenantId') tenantId: string) {
     const data = await this.companiesService.findById(id, tenantId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
@@ -71,17 +68,23 @@ export class CompaniesController {
 
   @Post(':id/logo')
   @Permissions(PERMISSIONS.COMPANY_UPDATE)
-  @UseInterceptors(FileInterceptor('logo', {
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB max
-    fileFilter: (_req: Request, file: Express.Multer.File, cb: (err: Error | null, accept: boolean) => void) => {
-      const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
-      if (!allowed.includes(file.mimetype)) {
-        cb(new BadRequestException('Format autorisé : PNG, JPEG, WebP ou SVG'), false);
-        return;
-      }
-      cb(null, true);
-    },
-  }))
+  @UseInterceptors(
+    FileInterceptor('logo', {
+      limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB max
+      fileFilter: (
+        _req: Request,
+        file: Express.Multer.File,
+        cb: (err: Error | null, accept: boolean) => void,
+      ) => {
+        const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+        if (!allowed.includes(file.mimetype)) {
+          cb(new BadRequestException('Format autorisé : PNG, JPEG, WebP ou SVG'), false);
+          return;
+        }
+        cb(null, true);
+      },
+    }),
+  )
   @HttpCode(HttpStatus.OK)
   async uploadLogo(
     @Param('id', ParseUUIDPipe) id: string,

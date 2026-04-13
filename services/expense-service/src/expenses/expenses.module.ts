@@ -16,7 +16,15 @@ import { ExpensesController } from './expenses.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Expense, ExpenseApproval, ExpenseAttachment, ExpenseCategory, CashDay, User, DisbursementRequest]),
+    TypeOrmModule.forFeature([
+      Expense,
+      ExpenseApproval,
+      ExpenseAttachment,
+      ExpenseCategory,
+      CashDay,
+      User,
+      DisbursementRequest,
+    ]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (cfg: ConfigService) => ({

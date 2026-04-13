@@ -1,9 +1,30 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Shield, ShieldCheck, Pencil, Trash2, Wallet, ShoppingCart, Cog, TrendingUp, Building2, Landmark, FileCheck2 } from 'lucide-react';
+import {
+  Plus,
+  Shield,
+  ShieldCheck,
+  Pencil,
+  Trash2,
+  Wallet,
+  ShoppingCart,
+  Cog,
+  TrendingUp,
+  Building2,
+  Landmark,
+  FileCheck2,
+} from 'lucide-react';
 import { Button, Input, Select, Modal, Badge, DataTable } from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
-import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useToggleMfa, useCompanies, useRoles } from '@/hooks/useAdmin';
+import {
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  useToggleMfa,
+  useCompanies,
+  useRoles,
+} from '@/hooks/useAdmin';
 import type { AdminUser, CreateUserDto, UpdateUserDto } from '@/types/admin';
 import type { ModuleId } from '@/stores/module-store';
 
@@ -27,7 +48,12 @@ const ALL_MODULES: { id: ModuleId; labelKey: string; icon: typeof Wallet; color:
   { id: 'expense', labelKey: 'modules.expense.name', icon: Wallet, color: 'text-orange-500' },
   { id: 'sales', labelKey: 'modules.sales.name', icon: ShoppingCart, color: 'text-blue-500' },
   { id: 'fne', labelKey: 'modules.fne.name', icon: FileCheck2, color: 'text-teal-500' },
-  { id: 'manager-caisse', labelKey: 'modules.manager-caisse.name', icon: Landmark, color: 'text-amber-500' },
+  {
+    id: 'manager-caisse',
+    labelKey: 'modules.manager-caisse.name',
+    icon: Landmark,
+    color: 'text-amber-500',
+  },
   { id: 'admin', labelKey: 'modules.admin.name', icon: Cog, color: 'text-emerald-500' },
   { id: 'decision', labelKey: 'modules.decision.name', icon: TrendingUp, color: 'text-purple-500' },
 ];
@@ -48,9 +74,22 @@ export default function UserManagementPage() {
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
 
   // Form state
-  const [form, setForm] = useState<CreateUserDto & { id?: string; allowedModules: ModuleId[]; companyIds: string[]; roleId: string }>(
-    { email: '', firstName: '', lastName: '', password: '', allowedModules: ['expense'], companyIds: [], roleId: '' },
-  );
+  const [form, setForm] = useState<
+    CreateUserDto & {
+      id?: string;
+      allowedModules: ModuleId[];
+      companyIds: string[];
+      roleId: string;
+    }
+  >({
+    email: '',
+    firstName: '',
+    lastName: '',
+    password: '',
+    allowedModules: ['expense'],
+    companyIds: [],
+    roleId: '',
+  });
 
   const filtered = users.filter(
     (u) =>
@@ -62,13 +101,29 @@ export default function UserManagementPage() {
     setEditUser(null);
     // Default to first role if available
     const defaultRoleId = roles.length ? roles[0].id : '';
-    setForm({ email: '', firstName: '', lastName: '', password: '', allowedModules: ['expense'], companyIds: [], roleId: defaultRoleId });
+    setForm({
+      email: '',
+      firstName: '',
+      lastName: '',
+      password: '',
+      allowedModules: ['expense'],
+      companyIds: [],
+      roleId: defaultRoleId,
+    });
     setShowModal(true);
   };
 
   const openEdit = (u: AdminUser) => {
     setEditUser(u);
-    setForm({ email: u.email, firstName: u.firstName, lastName: u.lastName, password: '', allowedModules: u.allowedModules || ['expense'], companyIds: u.companyIds || [], roleId: u.roleId || '' });
+    setForm({
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      password: '',
+      allowedModules: u.allowedModules || ['expense'],
+      companyIds: u.companyIds || [],
+      roleId: u.roleId || '',
+    });
     setShowModal(true);
   };
 
@@ -81,7 +136,8 @@ export default function UserManagementPage() {
           lastName: form.lastName,
           roleId: form.roleId,
         };
-        if (form.allowedModules?.length) (dto as Record<string, unknown>).allowedModules = form.allowedModules;
+        if (form.allowedModules?.length)
+          (dto as Record<string, unknown>).allowedModules = form.allowedModules;
         if (form.companyIds?.length) (dto as Record<string, unknown>).companyIds = form.companyIds;
         await updateUser.mutateAsync(dto);
       } else {
@@ -92,13 +148,16 @@ export default function UserManagementPage() {
           roleId: form.roleId,
           password: form.password,
         };
-        if (form.allowedModules?.length) (dto as Record<string, unknown>).allowedModules = form.allowedModules;
+        if (form.allowedModules?.length)
+          (dto as Record<string, unknown>).allowedModules = form.allowedModules;
         if (form.companyIds?.length) (dto as Record<string, unknown>).companyIds = form.companyIds;
         await createUser.mutateAsync(dto);
       }
       setShowModal(false);
     } catch (err: unknown) {
-      const axErr = err as { response?: { data?: { error?: { details?: unknown; message?: string } } } };
+      const axErr = err as {
+        response?: { data?: { error?: { details?: unknown; message?: string } } };
+      };
       const details = axErr.response?.data?.error?.details;
       const msg = axErr.response?.data?.error?.message;
       console.error('Submit error details:', details ?? msg ?? err);
@@ -119,9 +178,16 @@ export default function UserManagementPage() {
 
   const roleBadge = (role: string) => {
     const map: Record<string, 'default' | 'success' | 'warning' | 'info'> = {
-      admin: 'default', manager: 'info', cashier: 'success', viewer: 'warning',
+      admin: 'default',
+      manager: 'info',
+      cashier: 'success',
+      viewer: 'warning',
     };
-    return <Badge variant={map[role] || 'info'}>{ROLE_LABELS[role] || ROLE_LABELS[role.toUpperCase()] || role}</Badge>;
+    return (
+      <Badge variant={map[role] || 'info'}>
+        {ROLE_LABELS[role] || ROLE_LABELS[role.toUpperCase()] || role}
+      </Badge>
+    );
   };
 
   const columns: Column<AnyRow>[] = [
@@ -134,17 +200,28 @@ export default function UserManagementPage() {
         return (
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gold/10 text-xs font-bold text-brand-gold">
-              {u.firstName[0]}{u.lastName[0]}
+              {u.firstName[0]}
+              {u.lastName[0]}
             </div>
             <div>
-              <p className="font-medium text-gray-900">{u.firstName} {u.lastName}</p>
+              <p className="font-medium text-gray-900">
+                {u.firstName} {u.lastName}
+              </p>
               <p className="text-xs text-gray-500">{u.email}</p>
             </div>
           </div>
         );
       },
     },
-    { key: 'role', header: t('admin.users.role'), sortable: true, render: (row) => { const u = row as unknown as AdminUser; return roleBadge(u.roleName || u.role); } },
+    {
+      key: 'role',
+      header: t('admin.users.role'),
+      sortable: true,
+      render: (row) => {
+        const u = row as unknown as AdminUser;
+        return roleBadge(u.roleName || u.role);
+      },
+    },
     {
       key: 'companyNames',
       header: t('admin.users.companies'),
@@ -155,7 +232,10 @@ export default function UserManagementPage() {
         return (
           <div className="flex flex-wrap gap-1">
             {names.map((name) => (
-              <span key={name} className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200">
+              <span
+                key={name}
+                className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200"
+              >
                 <Building2 className="mr-1 h-3 w-3" />
                 {name}
               </span>
@@ -167,11 +247,14 @@ export default function UserManagementPage() {
     {
       key: 'isActive',
       header: t('common.status'),
-      render: (row) => { const u = row as unknown as AdminUser; return (
-        <Badge variant={u.isActive ? 'success' : 'destructive'}>
-          {u.isActive ? t('admin.users.active') : t('admin.users.inactive')}
-        </Badge>
-      ); },
+      render: (row) => {
+        const u = row as unknown as AdminUser;
+        return (
+          <Badge variant={u.isActive ? 'success' : 'destructive'}>
+            {u.isActive ? t('admin.users.active') : t('admin.users.inactive')}
+          </Badge>
+        );
+      },
     },
     {
       key: 'mfaEnabled',
@@ -187,7 +270,9 @@ export default function UserManagementPage() {
               title={t('admin.users.mfaDisableTooltip')}
             >
               <ShieldCheck className="h-5 w-5 text-green-600 group-hover:text-red-500" />
-              <span className="text-xs font-medium text-green-700">{t('admin.users.mfaActive')}</span>
+              <span className="text-xs font-medium text-green-700">
+                {t('admin.users.mfaActive')}
+              </span>
             </button>
           );
         }
@@ -200,7 +285,9 @@ export default function UserManagementPage() {
               title={t('admin.users.mfaDisableTooltip')}
             >
               <Shield className="h-5 w-5 text-amber-500 group-hover:text-red-500" />
-              <span className="text-xs font-medium text-amber-600">{t('admin.users.mfaPending')}</span>
+              <span className="text-xs font-medium text-amber-600">
+                {t('admin.users.mfaPending')}
+              </span>
             </button>
           );
         }
@@ -221,25 +308,37 @@ export default function UserManagementPage() {
       key: 'lastLogin',
       header: t('admin.users.lastLogin'),
       sortable: true,
-      render: (row) => { const u = row as unknown as AdminUser; return (
-        <span className="text-xs text-gray-500">
-          {u.lastLogin ? new Date(u.lastLogin).toLocaleString('fr-FR') : '—'}
-        </span>
-      ); },
+      render: (row) => {
+        const u = row as unknown as AdminUser;
+        return (
+          <span className="text-xs text-gray-500">
+            {u.lastLogin ? new Date(u.lastLogin).toLocaleString('fr-FR') : '—'}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
       header: t('common.actions'),
-      render: (row) => { const u = row as unknown as AdminUser; return (
-        <div className="flex items-center gap-1">
-          <button onClick={() => openEdit(u)} className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button onClick={() => setConfirmDelete(u)} className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      ); },
+      render: (row) => {
+        const u = row as unknown as AdminUser;
+        return (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => openEdit(u)}
+              className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setConfirmDelete(u)}
+              className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -274,15 +373,39 @@ export default function UserManagementPage() {
       )}
 
       {/* Create / Edit Modal */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={editUser ? t('admin.users.editUser') : t('admin.users.addUser')} size="md">
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editUser ? t('admin.users.editUser') : t('admin.users.addUser')}
+        size="md"
+      >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input label={t('admin.users.firstName')} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
-            <Input label={t('admin.users.lastName')} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+            <Input
+              label={t('admin.users.firstName')}
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            />
+            <Input
+              label={t('admin.users.lastName')}
+              value={form.lastName}
+              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+            />
           </div>
-          <Input label={t('admin.users.email')} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={!!editUser} />
+          <Input
+            label={t('admin.users.email')}
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            disabled={!!editUser}
+          />
           {!editUser && (
-            <Input label={t('admin.users.password')} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <Input
+              label={t('admin.users.password')}
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
           )}
           <Select
             label={t('admin.users.role')}
@@ -344,24 +467,36 @@ export default function UserManagementPage() {
                 className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                 style={{ minHeight: '120px' }}
               >
-                {companies.filter((c) => c.isActive).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.code})
-                  </option>
-                ))}
+                {companies
+                  .filter((c) => c.isActive)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
               </select>
               {form.companyIds.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {form.companyIds.map((cid) => {
                     const comp = companies.find((c) => c.id === cid);
                     return comp ? (
-                      <span key={cid} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200">
+                      <span
+                        key={cid}
+                        className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200"
+                      >
                         {comp.name}
                         <button
                           type="button"
-                          onClick={() => setForm({ ...form, companyIds: form.companyIds.filter((id) => id !== cid) })}
+                          onClick={() =>
+                            setForm({
+                              ...form,
+                              companyIds: form.companyIds.filter((id) => id !== cid),
+                            })
+                          }
                           className="ml-0.5 text-emerald-400 hover:text-red-500"
-                        >×</button>
+                        >
+                          ×
+                        </button>
                       </span>
                     ) : null;
                   })}
@@ -370,7 +505,9 @@ export default function UserManagementPage() {
             </div>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
+            <Button variant="ghost" onClick={() => setShowModal(false)}>
+              {t('common.cancel')}
+            </Button>
             <Button onClick={handleSubmit} loading={createUser.isPending || updateUser.isPending}>
               {editUser ? t('common.save') : t('common.create')}
             </Button>
@@ -379,13 +516,24 @@ export default function UserManagementPage() {
       </Modal>
 
       {/* Delete Confirmation */}
-      <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title={t('admin.users.confirmDelete')} size="sm">
+      <Modal
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title={t('admin.users.confirmDelete')}
+        size="sm"
+      >
         <p className="mb-4 text-sm text-gray-600">
-          {t('admin.users.confirmDeleteMsg', { name: `${confirmDelete?.firstName} ${confirmDelete?.lastName}` })}
+          {t('admin.users.confirmDeleteMsg', {
+            name: `${confirmDelete?.firstName} ${confirmDelete?.lastName}`,
+          })}
         </p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</Button>
-          <Button variant="destructive" onClick={handleDelete} loading={deleteUser.isPending}>{t('common.delete')}</Button>
+          <Button variant="ghost" onClick={() => setConfirmDelete(null)}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} loading={deleteUser.isPending}>
+            {t('common.delete')}
+          </Button>
         </div>
       </Modal>
     </div>

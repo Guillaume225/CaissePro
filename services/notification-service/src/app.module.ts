@@ -27,7 +27,15 @@ import { ConsumerModule } from '@/consumer/consumer.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, redisConfig, jwtConfig, appConfig, rabbitmqConfig, smtpConfig, smsConfig],
+      load: [
+        databaseConfig,
+        redisConfig,
+        jwtConfig,
+        appConfig,
+        rabbitmqConfig,
+        smtpConfig,
+        smsConfig,
+      ],
     }),
 
     TypeOrmModule.forRootAsync({

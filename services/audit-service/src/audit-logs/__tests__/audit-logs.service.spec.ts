@@ -44,12 +44,24 @@ describe('AuditLogsService', () => {
 
   beforeEach(async () => {
     qb = {
-      andWhere: jest.fn().mockReturnThis() as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['andWhere'],
-      orderBy: jest.fn().mockReturnThis() as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['orderBy'],
-      skip: jest.fn().mockReturnThis() as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['skip'],
-      take: jest.fn().mockReturnThis() as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['take'],
-      getManyAndCount: jest.fn().mockResolvedValue([[], 0]) as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['getManyAndCount'],
-      getMany: jest.fn().mockResolvedValue([]) as jest.Mocked<Partial<SelectQueryBuilder<AuditLog>>>['getMany'],
+      andWhere: jest.fn().mockReturnThis() as jest.Mocked<
+        Partial<SelectQueryBuilder<AuditLog>>
+      >['andWhere'],
+      orderBy: jest.fn().mockReturnThis() as jest.Mocked<
+        Partial<SelectQueryBuilder<AuditLog>>
+      >['orderBy'],
+      skip: jest.fn().mockReturnThis() as jest.Mocked<
+        Partial<SelectQueryBuilder<AuditLog>>
+      >['skip'],
+      take: jest.fn().mockReturnThis() as jest.Mocked<
+        Partial<SelectQueryBuilder<AuditLog>>
+      >['take'],
+      getManyAndCount: jest.fn().mockResolvedValue([[], 0]) as jest.Mocked<
+        Partial<SelectQueryBuilder<AuditLog>>
+      >['getManyAndCount'],
+      getMany: jest.fn().mockResolvedValue([]) as jest.Mocked<
+        Partial<SelectQueryBuilder<AuditLog>>
+      >['getMany'],
     };
 
     repo = {
@@ -134,7 +146,9 @@ describe('AuditLogsService', () => {
 
       await service.findAll({ entityType: 'expense', entityId: 'exp-1' });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('log.entityType = :entityType', { entityType: 'expense' });
+      expect(qb.andWhere).toHaveBeenCalledWith('log.entityType = :entityType', {
+        entityType: 'expense',
+      });
       expect(qb.andWhere).toHaveBeenCalledWith('log.entityId = :entityId', { entityId: 'exp-1' });
     });
 
@@ -143,7 +157,9 @@ describe('AuditLogsService', () => {
 
       await service.findAll({ sourceService: 'expense-service' });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('log.sourceService = :sourceService', { sourceService: 'expense-service' });
+      expect(qb.andWhere).toHaveBeenCalledWith('log.sourceService = :sourceService', {
+        sourceService: 'expense-service',
+      });
     });
 
     it('should apply date range filters', async () => {
@@ -151,8 +167,12 @@ describe('AuditLogsService', () => {
 
       await service.findAll({ dateFrom: '2024-01-01', dateTo: '2024-12-31' });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('log.timestamp >= :dateFrom', { dateFrom: '2024-01-01' });
-      expect(qb.andWhere).toHaveBeenCalledWith('log.timestamp <= :dateTo', { dateTo: '2024-12-31' });
+      expect(qb.andWhere).toHaveBeenCalledWith('log.timestamp >= :dateFrom', {
+        dateFrom: '2024-01-01',
+      });
+      expect(qb.andWhere).toHaveBeenCalledWith('log.timestamp <= :dateTo', {
+        dateTo: '2024-12-31',
+      });
     });
 
     it('should apply search filter', async () => {
@@ -160,10 +180,9 @@ describe('AuditLogsService', () => {
 
       await service.findAll({ search: 'expense' });
 
-      expect(qb.andWhere).toHaveBeenCalledWith(
-        expect.stringContaining('ILIKE'),
-        { search: '%expense%' },
-      );
+      expect(qb.andWhere).toHaveBeenCalledWith(expect.stringContaining('ILIKE'), {
+        search: '%expense%',
+      });
     });
 
     it('should sanitize sortBy to allowed fields', async () => {

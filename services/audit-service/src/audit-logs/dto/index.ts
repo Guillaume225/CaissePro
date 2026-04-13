@@ -1,12 +1,4 @@
-import {
-  IsOptional,
-  IsString,
-  IsDateString,
-  IsInt,
-  Min,
-  Max,
-  IsEnum,
-} from 'class-validator';
+import { IsOptional, IsString, IsDateString, IsInt, Min, Max, IsEnum } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export class ListAuditLogsQueryDto {

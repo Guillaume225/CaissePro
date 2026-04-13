@@ -94,7 +94,10 @@ describe('ProductsService', () => {
     it('should reject duplicate code', async () => {
       mockRepo.findOne.mockResolvedValue(mockProduct);
       await expect(
-        service.create({ code: 'PROD-001', name: 'Dup', unitPrice: 1000 } as unknown as CreateProductDto, 'user1'),
+        service.create(
+          { code: 'PROD-001', name: 'Dup', unitPrice: 1000 } as unknown as CreateProductDto,
+          'user1',
+        ),
       ).rejects.toThrow(BadRequestException);
     });
   });

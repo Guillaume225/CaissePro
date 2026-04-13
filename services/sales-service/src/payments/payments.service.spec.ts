@@ -157,7 +157,12 @@ describe('PaymentsService', () => {
       mockSaleRepo.findOne.mockResolvedValue({ ...mockSale, status: SaleStatus.DRAFT });
       await expect(
         service.create(
-          { saleId: 's1', amount: 5000, paymentMethod: PaymentMethod.CASH, paymentDate: '2025-01-20' },
+          {
+            saleId: 's1',
+            amount: 5000,
+            paymentMethod: PaymentMethod.CASH,
+            paymentDate: '2025-01-20',
+          },
           'user1',
         ),
       ).rejects.toThrow(BadRequestException);
@@ -167,7 +172,12 @@ describe('PaymentsService', () => {
       mockSaleRepo.findOne.mockResolvedValue({ ...mockSale, amountPaid: 10000 });
       await expect(
         service.create(
-          { saleId: 's1', amount: 5000, paymentMethod: PaymentMethod.CASH, paymentDate: '2025-01-20' },
+          {
+            saleId: 's1',
+            amount: 5000,
+            paymentMethod: PaymentMethod.CASH,
+            paymentDate: '2025-01-20',
+          },
           'user1',
         ),
       ).rejects.toThrow(BadRequestException);

@@ -38,11 +38,17 @@ describe('NotificationsService', () => {
   beforeEach(async () => {
     qb = {
       where: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['where'],
-      andWhere: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['andWhere'],
-      orderBy: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['orderBy'],
+      andWhere: jest.fn().mockReturnThis() as jest.Mocked<
+        SelectQueryBuilder<Notification>
+      >['andWhere'],
+      orderBy: jest.fn().mockReturnThis() as jest.Mocked<
+        SelectQueryBuilder<Notification>
+      >['orderBy'],
       skip: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['skip'],
       take: jest.fn().mockReturnThis() as jest.Mocked<SelectQueryBuilder<Notification>>['take'],
-      getManyAndCount: jest.fn().mockResolvedValue([[], 0]) as jest.Mocked<SelectQueryBuilder<Notification>>['getManyAndCount'],
+      getManyAndCount: jest.fn().mockResolvedValue([[], 0]) as jest.Mocked<
+        SelectQueryBuilder<Notification>
+      >['getManyAndCount'],
     };
 
     repo = {
@@ -99,11 +105,13 @@ describe('NotificationsService', () => {
 
       const result = await service.create(input);
 
-      expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({
-        recipientId: 'user-1',
-        type: NotificationType.EXPENSE_APPROVED,
-        read: false,
-      }));
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientId: 'user-1',
+          type: NotificationType.EXPENSE_APPROVED,
+          read: false,
+        }),
+      );
       expect(repo.save).toHaveBeenCalled();
       expect(result.recipientId).toBe('user-1');
     });
@@ -120,10 +128,13 @@ describe('NotificationsService', () => {
 
       await service.pushToWebSocket('user-1', notif);
 
-      expect(gateway.sendToUser).toHaveBeenCalledWith('user-1', expect.objectContaining({
-        id: 'notif-1',
-        type: NotificationType.EXPENSE_TO_VALIDATE,
-      }));
+      expect(gateway.sendToUser).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({
+          id: 'notif-1',
+          type: NotificationType.EXPENSE_TO_VALIDATE,
+        }),
+      );
       expect(gateway.sendUnreadCount).toHaveBeenCalledWith('user-1', 5);
     });
   });
@@ -167,7 +178,9 @@ describe('NotificationsService', () => {
 
       const result = await service.findAll('user-1', {});
 
-      expect(qb.where).toHaveBeenCalledWith('n.recipientId = :recipientId', { recipientId: 'user-1' });
+      expect(qb.where).toHaveBeenCalledWith('n.recipientId = :recipientId', {
+        recipientId: 'user-1',
+      });
       expect(result.data).toEqual(notifications);
       expect(result.total).toBe(1);
       expect(result.page).toBe(1);
@@ -189,7 +202,9 @@ describe('NotificationsService', () => {
 
       await service.findAll('user-1', { type: NotificationType.BUDGET_ALERT });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('n.type = :type', { type: NotificationType.BUDGET_ALERT });
+      expect(qb.andWhere).toHaveBeenCalledWith('n.type = :type', {
+        type: NotificationType.BUDGET_ALERT,
+      });
     });
 
     it('should apply read filter', async () => {

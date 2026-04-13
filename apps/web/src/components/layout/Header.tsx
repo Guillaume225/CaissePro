@@ -1,6 +1,20 @@
 import { useTranslation } from 'react-i18next';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Bell, Search, Globe, Bot, Building2, ChevronDown, Check, Wallet, Cog, TrendingUp, Landmark, FileCheck2, type LucideIcon } from 'lucide-react';
+import {
+  Bell,
+  Search,
+  Globe,
+  Bot,
+  Building2,
+  ChevronDown,
+  Check,
+  Wallet,
+  Cog,
+  TrendingUp,
+  Landmark,
+  FileCheck2,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo } from 'react';
 import { useUnreadCount } from '@/hooks/useDashboard';
@@ -21,11 +35,51 @@ interface HeaderModule {
 }
 
 const headerModules: HeaderModule[] = [
-  { id: 'expense', labelKey: 'modules.expense.name', icon: Wallet, color: 'text-orange-500', bgColor: 'bg-orange-50', textColor: 'text-orange-700', firstRoute: { path: '/', labelKey: 'nav.dashboard' } },
-  { id: 'admin', labelKey: 'modules.admin.name', icon: Cog, color: 'text-emerald-500', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', firstRoute: { path: '/', labelKey: 'nav.dashboard' } },
-  { id: 'manager-caisse', labelKey: 'modules.manager-caisse.name', icon: Landmark, color: 'text-amber-500', bgColor: 'bg-amber-50', textColor: 'text-amber-700', firstRoute: { path: '/manager-caisse/dashboard', labelKey: 'modules.manager-caisse.dashboard' } },
-  { id: 'fne', labelKey: 'modules.fne.name', icon: FileCheck2, color: 'text-teal-500', bgColor: 'bg-teal-50', textColor: 'text-teal-700', firstRoute: { path: '/fne', labelKey: 'modules.fne.overview' } },
-  { id: 'decision', labelKey: 'modules.decision.name', icon: TrendingUp, color: 'text-purple-500', bgColor: 'bg-purple-50', textColor: 'text-purple-700', firstRoute: { path: '/', labelKey: 'nav.dashboard' } },
+  {
+    id: 'expense',
+    labelKey: 'modules.expense.name',
+    icon: Wallet,
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-50',
+    textColor: 'text-orange-700',
+    firstRoute: { path: '/', labelKey: 'nav.dashboard' },
+  },
+  {
+    id: 'admin',
+    labelKey: 'modules.admin.name',
+    icon: Cog,
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-50',
+    textColor: 'text-emerald-700',
+    firstRoute: { path: '/', labelKey: 'nav.dashboard' },
+  },
+  {
+    id: 'manager-caisse',
+    labelKey: 'modules.manager-caisse.name',
+    icon: Landmark,
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-50',
+    textColor: 'text-amber-700',
+    firstRoute: { path: '/manager-caisse/dashboard', labelKey: 'modules.manager-caisse.dashboard' },
+  },
+  {
+    id: 'fne',
+    labelKey: 'modules.fne.name',
+    icon: FileCheck2,
+    color: 'text-teal-500',
+    bgColor: 'bg-teal-50',
+    textColor: 'text-teal-700',
+    firstRoute: { path: '/fne', labelKey: 'modules.fne.overview' },
+  },
+  {
+    id: 'decision',
+    labelKey: 'modules.decision.name',
+    icon: TrendingUp,
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-50',
+    textColor: 'text-purple-700',
+    firstRoute: { path: '/', labelKey: 'nav.dashboard' },
+  },
 ];
 
 const routeLabels: Record<string, string> = {
@@ -60,11 +114,7 @@ const routeLabels: Record<string, string> = {
   '/profile': 'nav.profile',
 };
 
-export function Header({
-  onAIClick,
-}: {
-  onAIClick?: () => void;
-}) {
+export function Header({ onAIClick }: { onAIClick?: () => void }) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -89,12 +139,17 @@ export function Header({
     return [];
   }, [user]);
 
-  const currentModule = visibleModules.find((m) => m.id === activeModule) || visibleModules[0] || headerModules[0];
+  const currentModule =
+    visibleModules.find((m) => m.id === activeModule) || visibleModules[0] || headerModules[0];
 
   const handleModuleChange = (mod: HeaderModule) => {
     setActiveModule(mod.id);
     setModuleOpen(false);
-    openTab({ path: mod.firstRoute.path, labelKey: mod.firstRoute.labelKey, pinned: mod.firstRoute.path === '/' });
+    openTab({
+      path: mod.firstRoute.path,
+      labelKey: mod.firstRoute.labelKey,
+      pinned: mod.firstRoute.path === '/',
+    });
     navigate(mod.firstRoute.path);
   };
 
@@ -153,54 +208,72 @@ export function Header({
       <div className="flex items-center gap-2">
         {/* Module Switcher */}
         {visibleModules.length > 0 && (
-        <div className="relative">
-          <button
-            onClick={() => { setModuleOpen(!moduleOpen); setCompanyOpen(false); }}
-            className={cn(
-              'flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors',
-              currentModule.bgColor, currentModule.textColor, 'border-gray-200 hover:opacity-90',
+          <div className="relative">
+            <button
+              onClick={() => {
+                setModuleOpen(!moduleOpen);
+                setCompanyOpen(false);
+              }}
+              className={cn(
+                'flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors',
+                currentModule.bgColor,
+                currentModule.textColor,
+                'border-gray-200 hover:opacity-90',
+              )}
+            >
+              <currentModule.icon className={cn('h-4 w-4', currentModule.color)} />
+              <span className="max-w-[120px] truncate">{t(currentModule.labelKey)}</span>
+              <ChevronDown
+                className={cn(
+                  'h-3.5 w-3.5 opacity-60 transition-transform',
+                  moduleOpen && 'rotate-180',
+                )}
+              />
+            </button>
+            {moduleOpen && (
+              <div className="absolute left-0 top-full mt-1 w-52 rounded-lg border border-gray-200 bg-white p-1 shadow-lg z-50">
+                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                  {t('nav.modules')}
+                </p>
+                {visibleModules.map((mod) => (
+                  <button
+                    key={mod.id}
+                    onClick={() => handleModuleChange(mod)}
+                    className={cn(
+                      'flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+                      activeModule === mod.id
+                        ? `${mod.bgColor} ${mod.textColor} font-medium`
+                        : 'text-gray-600 hover:bg-gray-50',
+                    )}
+                  >
+                    <mod.icon className={cn('h-4 w-4 shrink-0', mod.color)} />
+                    <span className="flex-1 text-left truncate">{t(mod.labelKey)}</span>
+                    {activeModule === mod.id && <Check className={cn('h-4 w-4', mod.color)} />}
+                  </button>
+                ))}
+              </div>
             )}
-          >
-            <currentModule.icon className={cn('h-4 w-4', currentModule.color)} />
-            <span className="max-w-[120px] truncate">{t(currentModule.labelKey)}</span>
-            <ChevronDown className={cn('h-3.5 w-3.5 opacity-60 transition-transform', moduleOpen && 'rotate-180')} />
-          </button>
-          {moduleOpen && (
-            <div className="absolute left-0 top-full mt-1 w-52 rounded-lg border border-gray-200 bg-white p-1 shadow-lg z-50">
-              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                {t('nav.modules')}
-              </p>
-              {visibleModules.map((mod) => (
-                <button
-                  key={mod.id}
-                  onClick={() => handleModuleChange(mod)}
-                  className={cn(
-                    'flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
-                    activeModule === mod.id
-                      ? `${mod.bgColor} ${mod.textColor} font-medium`
-                      : 'text-gray-600 hover:bg-gray-50',
-                  )}
-                >
-                  <mod.icon className={cn('h-4 w-4 shrink-0', mod.color)} />
-                  <span className="flex-1 text-left truncate">{t(mod.labelKey)}</span>
-                  {activeModule === mod.id && <Check className={cn('h-4 w-4', mod.color)} />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
         )}
 
         {/* Company Switcher */}
         {userCompanies.length >= 1 && (
           <div className="relative">
             <button
-              onClick={() => { setCompanyOpen(!companyOpen); setModuleOpen(false); }}
+              onClick={() => {
+                setCompanyOpen(!companyOpen);
+                setModuleOpen(false);
+              }}
               className="flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 transition-colors hover:bg-gray-100"
             >
               <Building2 className="h-4 w-4 text-emerald-500" />
               <span className="max-w-[140px] truncate font-medium">{user?.companyName || '—'}</span>
-              <ChevronDown className={cn('h-3.5 w-3.5 text-gray-400 transition-transform', companyOpen && 'rotate-180')} />
+              <ChevronDown
+                className={cn(
+                  'h-3.5 w-3.5 text-gray-400 transition-transform',
+                  companyOpen && 'rotate-180',
+                )}
+              />
             </button>
             {companyOpen && (
               <div className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-gray-200 bg-white p-1 shadow-lg z-50">

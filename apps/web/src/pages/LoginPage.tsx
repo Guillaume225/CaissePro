@@ -40,7 +40,9 @@ export default function LoginPage() {
   // MFA Setup state (when admin enabled MFA but user hasn't configured yet)
   const [mfaSetupStep, setMfaSetupStep] = useState<'qr' | 'verify' | false>(false);
   const [setupToken, setSetupToken] = useState('');
-  const [setupQrData, setSetupQrData] = useState<{ secret: string; qrCodeDataUrl: string } | null>(null);
+  const [setupQrData, setSetupQrData] = useState<{ secret: string; qrCodeDataUrl: string } | null>(
+    null,
+  );
   const [setupCode, setSetupCode] = useState(['', '', '', '', '', '']);
   const setupInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [copied, setCopied] = useState(false);
@@ -78,9 +80,10 @@ export default function LoginPage() {
       companyIds: profile.companyIds || [],
       companyNames: profile.companyNames || [],
       permissions: profile.permissions || [],
-      allowedModules: profile.allowedModules && profile.allowedModules.length > 0
-        ? profile.allowedModules
-        : undefined,
+      allowedModules:
+        profile.allowedModules && profile.allowedModules.length > 0
+          ? profile.allowedModules
+          : undefined,
     };
 
     useTabStore.getState().closeAllTabs();
@@ -116,10 +119,12 @@ export default function LoginPage() {
 
       await completeLogin(resp.accessToken, resp.refreshToken);
     } catch (err) {
-      const e = err as { response?: { data?: { message?: string; data?: { message?: string } } }; message?: string };
-      const msg = e?.response?.data?.data?.message
-        || e?.response?.data?.message
-        || t('auth.loginError');
+      const e = err as {
+        response?: { data?: { message?: string; data?: { message?: string } } };
+        message?: string;
+      };
+      const msg =
+        e?.response?.data?.data?.message || e?.response?.data?.message || t('auth.loginError');
       setError(msg);
       useAuthStore.getState().logout();
     } finally {
@@ -135,15 +140,20 @@ export default function LoginPage() {
     try {
       const code = mfaCode.join('');
       const { data: loginRes } = await api.post('/auth/login', {
-        email, password, mfaCode: code, mfaToken,
+        email,
+        password,
+        mfaCode: code,
+        mfaToken,
       });
       const resp = loginRes.data ?? loginRes;
       await completeLogin(resp.accessToken, resp.refreshToken);
     } catch (err) {
-      const e = err as { response?: { data?: { message?: string; data?: { message?: string } } }; message?: string };
-      const msg = e?.response?.data?.data?.message
-        || e?.response?.data?.message
-        || t('auth.mfaInvalidCode');
+      const e = err as {
+        response?: { data?: { message?: string; data?: { message?: string } } };
+        message?: string;
+      };
+      const msg =
+        e?.response?.data?.data?.message || e?.response?.data?.message || t('auth.mfaInvalidCode');
       setError(msg);
       setMfaCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
@@ -203,10 +213,12 @@ export default function LoginPage() {
       const resp = loginRes.data ?? loginRes;
       await completeLogin(resp.accessToken, resp.refreshToken);
     } catch (err) {
-      const e = err as { response?: { data?: { message?: string; data?: { message?: string } } }; message?: string };
-      const msg = e?.response?.data?.data?.message
-        || e?.response?.data?.message
-        || t('auth.mfaInvalidCode');
+      const e = err as {
+        response?: { data?: { message?: string; data?: { message?: string } } };
+        message?: string;
+      };
+      const msg =
+        e?.response?.data?.data?.message || e?.response?.data?.message || t('auth.mfaInvalidCode');
       setError(msg);
       setSetupCode(['', '', '', '', '', '']);
       setupInputRefs.current[0]?.focus();
@@ -276,7 +288,9 @@ export default function LoginPage() {
 
             {/* Manual secret */}
             <div className="rounded-lg bg-gray-50 p-4">
-              <p className="mb-2 text-xs font-medium text-gray-500">{t('auth.mfaSetupManualEntry')}</p>
+              <p className="mb-2 text-xs font-medium text-gray-500">
+                {t('auth.mfaSetupManualEntry')}
+              </p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 rounded bg-white px-3 py-2 text-sm font-mono tracking-wider text-gray-900 border border-gray-200">
                   {setupQrData.secret}
@@ -286,7 +300,11 @@ export default function LoginPage() {
                   onClick={copySecret}
                   className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                 >
-                  {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  {copied ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -333,9 +351,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSetupVerify} className="space-y-5">
             {error && (
-              <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-                {error}
-              </div>
+              <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
             )}
 
             <div>
@@ -346,7 +362,9 @@ export default function LoginPage() {
                 {setupCode.map((digit, i) => (
                   <input
                     key={i}
-                    ref={(el) => { setupInputRefs.current[i] = el; }}
+                    ref={(el) => {
+                      setupInputRefs.current[i] = el;
+                    }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
@@ -396,9 +414,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleMfaSubmit} className="space-y-5">
             {error && (
-              <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-                {error}
-              </div>
+              <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
             )}
 
             <div>
@@ -409,7 +425,9 @@ export default function LoginPage() {
                 {mfaCode.map((digit, i) => (
                   <input
                     key={i}
-                    ref={(el) => { inputRefs.current[i] = el; }}
+                    ref={(el) => {
+                      inputRefs.current[i] = el;
+                    }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
@@ -458,9 +476,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-              {error}
-            </div>
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
           )}
 
           <div>

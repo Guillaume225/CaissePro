@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -11,12 +7,7 @@ import { Company } from '../entities/company.entity';
 import { AuthService } from '../auth/auth.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  ListUsersQueryDto,
-  UserResponseDto,
-} from './dto';
+import { CreateUserDto, UpdateUserDto, ListUsersQueryDto, UserResponseDto } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -88,11 +79,7 @@ export class UsersService {
     return this.toResponseDto(user);
   }
 
-  async create(
-    dto: CreateUserDto,
-    actorId: string,
-    ip?: string,
-  ): Promise<UserResponseDto> {
+  async create(dto: CreateUserDto, actorId: string, ip?: string): Promise<UserResponseDto> {
     const existing = await this.userRepo.findOne({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already in use');
 
@@ -140,7 +127,12 @@ export class UsersService {
       action: AuditAction.CREATE,
       entityType: 'user',
       entityId: saved.id,
-      newValue: { email: dto.email, firstName: dto.firstName, lastName: dto.lastName, roleId: dto.roleId },
+      newValue: {
+        email: dto.email,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        roleId: dto.roleId,
+      },
       ipAddress: ip,
     });
 
@@ -162,22 +154,40 @@ export class UsersService {
     const oldValue: Record<string, unknown> = {};
     const newValue: Record<string, unknown> = {};
 
-    if (dto.firstName !== undefined) { oldValue.firstName = user.firstName; newValue.firstName = dto.firstName; }
-    if (dto.lastName !== undefined) { oldValue.lastName = user.lastName; newValue.lastName = dto.lastName; }
+    if (dto.firstName !== undefined) {
+      oldValue.firstName = user.firstName;
+      newValue.firstName = dto.firstName;
+    }
+    if (dto.lastName !== undefined) {
+      oldValue.lastName = user.lastName;
+      newValue.lastName = dto.lastName;
+    }
     if (dto.roleId !== undefined) {
       const role = await this.roleRepo.findOne({ where: { id: dto.roleId } });
       if (!role) throw new NotFoundException('Role not found');
       oldValue.roleId = user.roleId;
       newValue.roleId = dto.roleId;
     }
-    if (dto.departmentId !== undefined) { oldValue.departmentId = user.departmentId; newValue.departmentId = dto.departmentId; }
-    if (dto.companyId !== undefined) { oldValue.companyId = user.companyId; newValue.companyId = dto.companyId; }
+    if (dto.departmentId !== undefined) {
+      oldValue.departmentId = user.departmentId;
+      newValue.departmentId = dto.departmentId;
+    }
+    if (dto.companyId !== undefined) {
+      oldValue.companyId = user.companyId;
+      newValue.companyId = dto.companyId;
+    }
     if (dto.companyIds !== undefined) {
       oldValue.companyIds = (user.companies || []).map((c) => c.id);
       newValue.companyIds = dto.companyIds;
     }
-    if (dto.isActive !== undefined) { oldValue.isActive = user.isActive; newValue.isActive = dto.isActive; }
-    if (dto.mfaEnabled !== undefined) { oldValue.mfaEnabled = user.mfaEnabled; newValue.mfaEnabled = dto.mfaEnabled; }
+    if (dto.isActive !== undefined) {
+      oldValue.isActive = user.isActive;
+      newValue.isActive = dto.isActive;
+    }
+    if (dto.mfaEnabled !== undefined) {
+      oldValue.mfaEnabled = user.mfaEnabled;
+      newValue.mfaEnabled = dto.mfaEnabled;
+    }
     if (dto.allowedModules !== undefined) {
       oldValue.allowedModules = user.allowedModules;
       newValue.allowedModules = dto.allowedModules;
@@ -197,10 +207,14 @@ export class UsersService {
 
     // Update many-to-many company assignments
     if (dto.companyIds !== undefined) {
-      const companies = dto.companyIds.length > 0
-        ? await this.companyRepo.find({ where: { id: In(dto.companyIds) } })
-        : [];
-      const userToSave = await this.userRepo.findOneOrFail({ where: { id }, relations: ['companies'] });
+      const companies =
+        dto.companyIds.length > 0
+          ? await this.companyRepo.find({ where: { id: In(dto.companyIds) } })
+          : [];
+      const userToSave = await this.userRepo.findOneOrFail({
+        where: { id },
+        relations: ['companies'],
+      });
       userToSave.companies = companies;
       // If active company is not in the new list, reset to first
       if (companies.length > 0 && !companies.find((c) => c.id === userToSave.companyId)) {

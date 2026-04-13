@@ -1,10 +1,12 @@
 /** Format a number as FCFA currency string */
 export function formatCFA(amount: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount) + ' FCFA';
+  return (
+    new Intl.NumberFormat('fr-FR', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount) + ' FCFA'
+  );
 }
 
 /** Format an ISO date to DD/MM/YYYY */

@@ -57,10 +57,16 @@ export class AddCashDayTables1712000000000 implements MigrationInterface {
       );
     `);
 
-    await queryRunner.query(`CREATE INDEX [IDX_cash_movements_tenant] ON [cash_movements]([tenant_id]);`);
-    await queryRunner.query(`CREATE INDEX [IDX_cash_movements_cash_day] ON [cash_movements]([cash_day_id]);`);
+    await queryRunner.query(
+      `CREATE INDEX [IDX_cash_movements_tenant] ON [cash_movements]([tenant_id]);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX [IDX_cash_movements_cash_day] ON [cash_movements]([cash_day_id]);`,
+    );
     await queryRunner.query(`CREATE INDEX [IDX_cash_movements_type] ON [cash_movements]([type]);`);
-    await queryRunner.query(`CREATE INDEX [IDX_cash_movements_category] ON [cash_movements]([category]);`);
+    await queryRunner.query(
+      `CREATE INDEX [IDX_cash_movements_category] ON [cash_movements]([category]);`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

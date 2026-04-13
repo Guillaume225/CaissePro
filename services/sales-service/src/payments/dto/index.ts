@@ -1,11 +1,4 @@
-import {
-  IsOptional,
-  IsDateString,
-  IsInt,
-  IsString,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsOptional, IsDateString, IsInt, IsString, Min, Max } from 'class-validator';
 import { IsUUID } from '../../is-uuid-loose';
 import { Type, Transform } from 'class-transformer';
 import { PaymentMethod } from '../../entities/enums';

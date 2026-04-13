@@ -97,9 +97,7 @@ describe('StorageService', () => {
       const buffer = Buffer.from('test data');
       await service.upload('test-key', buffer, 'application/pdf');
 
-      expect(mockSend).toHaveBeenCalledWith(
-        expect.objectContaining({ _type: 'PutObjectCommand' }),
-      );
+      expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ _type: 'PutObjectCommand' }));
     });
   });
 

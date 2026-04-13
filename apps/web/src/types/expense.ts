@@ -1,5 +1,12 @@
 // ── Enums ────────────────────────────────────────────────
-export type ExpenseStatus = 'DRAFT' | 'PENDING' | 'APPROVED_L1' | 'APPROVED_L2' | 'PAID' | 'REJECTED' | 'CANCELLED';
+export type ExpenseStatus =
+  | 'DRAFT'
+  | 'PENDING'
+  | 'APPROVED_L1'
+  | 'APPROVED_L2'
+  | 'PAID'
+  | 'REJECTED'
+  | 'CANCELLED';
 export type PaymentMethod = 'CASH' | 'CHECK' | 'TRANSFER' | 'MOBILE_MONEY';
 
 // ── Entities ─────────────────────────────────────────────

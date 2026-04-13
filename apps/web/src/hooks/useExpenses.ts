@@ -197,7 +197,9 @@ export function useAiCategorySuggestion() {
       const { data } = await api.post('/ai/expenses/categorize', payload);
       return data.data;
     },
-    onError: () => { /* AI service unavailable — non-blocking */ },
+    onError: () => {
+      /* AI service unavailable — non-blocking */
+    },
   });
 }
 
@@ -213,7 +215,9 @@ export function useAiAnomalyCheck() {
       const { data } = await api.post('/ai/expenses/anomaly-check', payload);
       return data.data;
     },
-    onError: () => { /* AI service unavailable — non-blocking */ },
+    onError: () => {
+      /* AI service unavailable — non-blocking */
+    },
   });
 }
 

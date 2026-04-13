@@ -50,20 +50,14 @@ export class ProductsController {
 
   @Patch(':id/toggle-active')
   @Permissions(PRODUCT_PERMISSIONS.UPDATE)
-  toggleActive(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  toggleActive(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.productsService.toggleActive(id, userId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Permissions(PRODUCT_PERMISSIONS.DELETE)
-  remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.productsService.remove(id, userId);
   }
 }

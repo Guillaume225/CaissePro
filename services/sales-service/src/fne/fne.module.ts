@@ -28,11 +28,46 @@ import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FneInvoice, FneInvoiceItem, FneApiLog, FneClient, FneProduct, FnePointOfSale, FneEstablishment, FneSetting, FneAccountingEntry]),
+    TypeOrmModule.forFeature([
+      FneInvoice,
+      FneInvoiceItem,
+      FneApiLog,
+      FneClient,
+      FneProduct,
+      FnePointOfSale,
+      FneEstablishment,
+      FneSetting,
+      FneAccountingEntry,
+    ]),
     AuditModule,
   ],
-  controllers: [FneInvoicesController, FneClientsController, FneProductsController, FnePointsOfSaleController, FneEstablishmentsController, FneSettingsController, FneAccountingController],
-  providers: [FneApiService, FneInvoicesService, FneClientsService, FneProductsService, FnePointsOfSaleService, FneEstablishmentsService, FneSettingsService, FneAccountingService],
-  exports: [FneInvoicesService, FneClientsService, FneProductsService, FnePointsOfSaleService, FneEstablishmentsService, FneSettingsService, FneAccountingService],
+  controllers: [
+    FneInvoicesController,
+    FneClientsController,
+    FneProductsController,
+    FnePointsOfSaleController,
+    FneEstablishmentsController,
+    FneSettingsController,
+    FneAccountingController,
+  ],
+  providers: [
+    FneApiService,
+    FneInvoicesService,
+    FneClientsService,
+    FneProductsService,
+    FnePointsOfSaleService,
+    FneEstablishmentsService,
+    FneSettingsService,
+    FneAccountingService,
+  ],
+  exports: [
+    FneInvoicesService,
+    FneClientsService,
+    FneProductsService,
+    FnePointsOfSaleService,
+    FneEstablishmentsService,
+    FneSettingsService,
+    FneAccountingService,
+  ],
 })
 export class FneModule {}

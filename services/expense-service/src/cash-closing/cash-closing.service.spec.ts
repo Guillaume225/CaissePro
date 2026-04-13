@@ -9,7 +9,13 @@ import { CashDayStatus } from '../entities/enums';
 import { AuditService } from '../audit/audit.service';
 import { EventsService } from '../events/events.service';
 
-const mockUser = { id: 'user-1', email: 'a@b.com', roleName: 'CAISSIER', permissions: [], tenantId: '00000000-0000-4000-a000-000000000001' };
+const mockUser = {
+  id: 'user-1',
+  email: 'a@b.com',
+  roleName: 'CAISSIER',
+  permissions: [],
+  tenantId: '00000000-0000-4000-a000-000000000001',
+};
 
 function makeMockClosing(overrides: Partial<CashDay> = {}): CashDay {
   return {
@@ -114,9 +120,9 @@ describe('CashClosingService (expense)', () => {
     it('should reject if a register is already open', async () => {
       closingRepo.findOne.mockResolvedValue(makeMockClosing());
 
-      await expect(
-        service.open({ openingBalance: 100000 }, mockUser),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.open({ openingBalance: 100000 }, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should reject if yesterday closing is not done', async () => {
@@ -134,9 +140,9 @@ describe('CashClosingService (expense)', () => {
       };
       closingRepo.createQueryBuilder.mockReturnValue(qb);
 
-      await expect(
-        service.open({ openingBalance: 50000 }, mockUser),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.open({ openingBalance: 50000 }, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -217,9 +223,9 @@ describe('CashClosingService (expense)', () => {
       expenseRepo.createQueryBuilder.mockReturnValue(expQb);
 
       // theoretical = 100000 - 10000 = 90000, actual = 82000, variance = -8000 > 5000 threshold
-      await expect(
-        service.close({ actualBalance: 82000 }, mockUser),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.close({ actualBalance: 82000 }, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should accept large variance with comment', async () => {
@@ -254,10 +260,7 @@ describe('CashClosingService (expense)', () => {
       };
       expenseRepo.createQueryBuilder.mockReturnValue(expQb);
 
-      await service.close(
-        { actualBalance: 82000, comment: 'Explication' },
-        mockUser,
-      );
+      await service.close({ actualBalance: 82000, comment: 'Explication' }, mockUser);
 
       // 3 publish calls: CLOSED + VARIANCE_ALERT
       expect(eventsService.publish).toHaveBeenCalledTimes(2);
@@ -265,9 +268,9 @@ describe('CashClosingService (expense)', () => {
 
     it('should throw if no register is open', async () => {
       closingRepo.findOne.mockResolvedValue(null);
-      await expect(
-        service.close({ actualBalance: 50000 }, mockUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.close({ actualBalance: 50000 }, mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

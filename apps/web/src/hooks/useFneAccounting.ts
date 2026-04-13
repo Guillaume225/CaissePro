@@ -19,7 +19,10 @@ export function useFneAccountingEntries(filters: FneAccountingFilters) {
       if (filters.dateFrom) params.dateFrom = filters.dateFrom;
       if (filters.dateTo) params.dateTo = filters.dateTo;
       if (filters.invoiceReference) params.invoiceReference = filters.invoiceReference;
-      const { data } = await api.get<FnePaginatedResponse<FneAccountingEntryRecord>>('/fne-accounting', { params });
+      const { data } = await api.get<FnePaginatedResponse<FneAccountingEntryRecord>>(
+        '/fne-accounting',
+        { params },
+      );
       return data;
     },
   });
@@ -29,7 +32,9 @@ export function useGenerateFneAccounting() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (invoiceIds: string[]) => {
-      const { data } = await api.post<GenerateEntriesResult>('/fne-accounting/generate', { invoiceIds });
+      const { data } = await api.post<GenerateEntriesResult>('/fne-accounting/generate', {
+        invoiceIds,
+      });
       return data;
     },
     onSuccess: () => {

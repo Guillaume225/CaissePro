@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { CashClosingService, CashClosingUser } from './cash-closing.service';
 import { Permissions, CurrentUser } from '../common/decorators';
 import { CASH_CLOSING_PERMISSIONS } from '../common/permissions';

@@ -6,8 +6,7 @@ export const PERMISSIONS_KEY = 'permissions';
 
 export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
-export const Permissions = (...permissions: string[]) =>
-  SetMetadata(PERMISSIONS_KEY, permissions);
+export const Permissions = (...permissions: string[]) => SetMetadata(PERMISSIONS_KEY, permissions);
 
 export const SkipCashClosingCheck = () => SetMetadata(SKIP_CASH_CLOSING_CHECK, true);
 

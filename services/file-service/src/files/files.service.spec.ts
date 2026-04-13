@@ -60,9 +60,7 @@ describe('FilesService', () => {
     storageService = {
       upload: jest.fn(() => Promise.resolve()),
       delete: jest.fn(() => Promise.resolve()),
-      getPresignedDownloadUrl: jest.fn(() =>
-        Promise.resolve('https://minio.local/presigned-url'),
-      ),
+      getPresignedDownloadUrl: jest.fn(() => Promise.resolve('https://minio.local/presigned-url')),
     };
 
     thumbnailService = {
@@ -139,12 +137,7 @@ describe('FilesService', () => {
 
     it('should use provided module and entityId', async () => {
       const file = mockFile();
-      const result = await service.upload(
-        file,
-        'user-123',
-        FileModule.EXPENSES,
-        'entity-456',
-      );
+      const result = await service.upload(file, 'user-123', FileModule.EXPENSES, 'entity-456');
 
       expect(result.module).toBe(FileModule.EXPENSES);
       expect(result.entityId).toBe('entity-456');
@@ -161,9 +154,7 @@ describe('FilesService', () => {
 
     it('should throw NotFoundException for missing file', async () => {
       repo.findOne.mockResolvedValue(null);
-      await expect(service.findOne('non-existent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('non-existent-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -181,9 +172,7 @@ describe('FilesService', () => {
 
     it('should throw NotFoundException for missing file', async () => {
       repo.findOne.mockResolvedValue(null);
-      await expect(service.getDownloadUrl('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getDownloadUrl('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -199,9 +188,9 @@ describe('FilesService', () => {
 
     it('should throw NotFoundException for missing file', async () => {
       repo.findOne.mockResolvedValue(null);
-      await expect(
-        service.softDelete('non-existent', 'user-123'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.softDelete('non-existent', 'user-123')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

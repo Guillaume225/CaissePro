@@ -2,10 +2,7 @@
  *  Utilitaires de dates — Contexte CI
  * ═══════════════════════════════════════════ */
 
-import {
-  CI_FIXED_HOLIDAYS,
-  AGING_BRACKETS,
-} from './constants.js';
+import { CI_FIXED_HOLIDAYS, AGING_BRACKETS } from './constants.js';
 
 /* ------- Trimestres / Fiscalité -------- */
 

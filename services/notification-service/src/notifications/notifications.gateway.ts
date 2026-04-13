@@ -38,7 +38,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
         return;
       }
 
-      const secret = this.configService.get<string>('jwt.secret', 'dev-secret-change-in-production');
+      const secret = this.configService.get<string>(
+        'jwt.secret',
+        'dev-secret-change-in-production',
+      );
       const payload = this.jwtService.verify(token, { secret });
       const userId = payload.sub as string;
 

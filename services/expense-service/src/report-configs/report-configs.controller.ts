@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Delete,
-  Param,
-  Body,
-} from '@nestjs/common';
+import { Controller, Get, Put, Delete, Param, Body } from '@nestjs/common';
 import { ReportConfigsService } from './report-configs.service';
 import { SaveReportConfigDto, BulkSaveReportConfigsDto } from './dto';
 import { Permissions, CurrentUser } from '../common/decorators';

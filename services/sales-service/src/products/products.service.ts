@@ -1,19 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from '../entities/product.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
-import {
-  CreateProductDto,
-  UpdateProductDto,
-  ListProductsQueryDto,
-} from './dto';
+import { CreateProductDto, UpdateProductDto, ListProductsQueryDto } from './dto';
 
 @Injectable()
 export class ProductsService {
@@ -33,10 +24,9 @@ export class ProductsService {
     const qb = this.productRepo.createQueryBuilder('p');
 
     if (query.search) {
-      qb.andWhere(
-        '(p.name ILIKE :s OR p.code ILIKE :s OR p.description ILIKE :s)',
-        { s: `%${query.search}%` },
-      );
+      qb.andWhere('(p.name ILIKE :s OR p.code ILIKE :s OR p.description ILIKE :s)', {
+        s: `%${query.search}%`,
+      });
     }
     if (query.category) {
       qb.andWhere('p.category = :cat', { cat: query.category });

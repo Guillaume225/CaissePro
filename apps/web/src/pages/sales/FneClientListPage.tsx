@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  Plus,
-  Search,
-  Edit2,
-  Trash2,
-  ArrowLeft,
-  Loader2,
-  X,
-  Check,
-  Users,
-} from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowLeft, Loader2, X, Check, Users } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import {
   useFneClients,
@@ -90,7 +80,8 @@ export default function FneClientListPage() {
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const formValid = form.companyName && form.phone && form.email;
 
-  const INPUT = 'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
+  const INPUT =
+    'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
 
   return (
     <div className="space-y-6">
@@ -104,11 +95,12 @@ export default function FneClientListPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {t('fne.clients', 'Clients FNE')}
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('fne.clients', 'Clients FNE')}</h1>
             <p className="text-sm text-gray-500">
-              {t('fne.clientsDesc', 'Gérez la liste des clients pré-enregistrés pour la facturation FNE')}
+              {t(
+                'fne.clientsDesc',
+                'Gérez la liste des clients pré-enregistrés pour la facturation FNE',
+              )}
             </p>
           </div>
         </div>
@@ -122,7 +114,10 @@ export default function FneClientListPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           placeholder={t('fne.searchClients', 'Rechercher un client...')}
           className={cn(INPUT, 'pl-10')}
         />
@@ -195,10 +190,20 @@ export default function FneClientListPage() {
             Page {meta.page} / {meta.totalPages} — {meta.total} client{meta.total > 1 ? 's' : ''}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
               Précédent
             </Button>
-            <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage((p) => p + 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= meta.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
               Suivant
             </Button>
           </div>
@@ -213,49 +218,86 @@ export default function FneClientListPage() {
               <h2 className="text-lg font-semibold text-gray-900">
                 {editingClient ? 'Modifier le client' : 'Nouveau client'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">Nom / Raison sociale *</label>
-                <input value={form.companyName} onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))} className={INPUT} />
+                <label className="block text-sm font-medium text-gray-700">
+                  Nom / Raison sociale *
+                </label>
+                <input
+                  value={form.companyName}
+                  onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+                  className={INPUT}
+                />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-gray-700">Téléphone *</label>
-                  <input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className={INPUT} />
+                  <input
+                    value={form.phone}
+                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    className={INPUT}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-gray-700">Email *</label>
-                  <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className={INPUT} />
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    className={INPUT}
+                  />
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-gray-700">NCC</label>
-                  <input value={form.ncc ?? ''} onChange={(e) => setForm((f) => ({ ...f, ncc: e.target.value }))} className={INPUT} />
+                  <input
+                    value={form.ncc ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, ncc: e.target.value }))}
+                    className={INPUT}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-gray-700">Vendeur</label>
-                  <input value={form.sellerName ?? ''} onChange={(e) => setForm((f) => ({ ...f, sellerName: e.target.value }))} className={INPUT} />
+                  <input
+                    value={form.sellerName ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, sellerName: e.target.value }))}
+                    className={INPUT}
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-gray-700">Compte comptable</label>
-                <input placeholder="ex: 411000" value={form.accountCode ?? ''} onChange={(e) => setForm((f) => ({ ...f, accountCode: e.target.value }))} className={INPUT} />
+                <input
+                  placeholder="ex: 411000"
+                  value={form.accountCode ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, accountCode: e.target.value }))}
+                  className={INPUT}
+                />
               </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-              <Button variant="ghost" onClick={() => setShowModal(false)}>Annuler</Button>
+              <Button variant="ghost" onClick={() => setShowModal(false)}>
+                Annuler
+              </Button>
               <Button onClick={handleSave} disabled={!formValid || isSaving}>
                 {isSaving ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enregistrement...</>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enregistrement...
+                  </>
                 ) : (
-                  <><Check className="mr-2 h-4 w-4" /> {editingClient ? 'Modifier' : 'Créer'}</>
+                  <>
+                    <Check className="mr-2 h-4 w-4" /> {editingClient ? 'Modifier' : 'Créer'}
+                  </>
                 )}
               </Button>
             </div>

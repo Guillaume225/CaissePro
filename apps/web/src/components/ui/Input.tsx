@@ -24,9 +24,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             'placeholder:text-gray-400',
             'focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold',
             'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
-            error
-              ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
-              : 'border-gray-300',
+            error ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-300',
             className,
           )}
           {...props}

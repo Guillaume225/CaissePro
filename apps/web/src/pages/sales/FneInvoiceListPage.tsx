@@ -18,7 +18,12 @@ import {
   Upload,
 } from 'lucide-react';
 import { Button, Badge, Card, Stat } from '@/components/ui';
-import { useFneInvoices, useStickerBalance, useBulkDeleteFneInvoices, useBulkCertifyFneInvoices } from '@/hooks/useFneInvoices';
+import {
+  useFneInvoices,
+  useStickerBalance,
+  useBulkDeleteFneInvoices,
+  useBulkCertifyFneInvoices,
+} from '@/hooks/useFneInvoices';
 import { formatCFA, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { FneInvoiceStatus, FneInvoiceFilters } from '@/types/fne';
@@ -26,7 +31,10 @@ import ImportFneInvoicesDialog from '@/components/fne/ImportFneInvoicesDialog';
 import { useModuleStore } from '@/stores/module-store';
 
 /* ── Status config ────────────────────────────────────── */
-const STATUS_CONFIG: Record<FneInvoiceStatus, { label: string; variant: 'outline' | 'success' | 'warning' | 'destructive' }> = {
+const STATUS_CONFIG: Record<
+  FneInvoiceStatus,
+  { label: string; variant: 'outline' | 'success' | 'warning' | 'destructive' }
+> = {
   DRAFT: { label: 'Brouillon', variant: 'outline' },
   CERTIFIED: { label: 'Certifiée', variant: 'success' },
   CREDIT_NOTE: { label: 'Avoir émis', variant: 'warning' },
@@ -55,7 +63,10 @@ export default function FneInvoiceListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [showBulkCertifyConfirm, setShowBulkCertifyConfirm] = useState(false);
-  const [bulkCertifyResult, setBulkCertifyResult] = useState<{ certified: number; errors: Array<{ id: string; reference?: string; error: string }> } | null>(null);
+  const [bulkCertifyResult, setBulkCertifyResult] = useState<{
+    certified: number;
+    errors: Array<{ id: string; reference?: string; error: string }>;
+  } | null>(null);
   const bulkDeleteMutation = useBulkDeleteFneInvoices();
   const bulkCertifyMutation = useBulkCertifyFneInvoices();
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -79,7 +90,13 @@ export default function FneInvoiceListPage() {
   const meta = data?.meta;
   const totalPages = meta?.totalPages ?? 1;
 
-  const resetFilters = () => { setSearch(''); setStatusFilter(''); setDateFrom(''); setDateTo(''); setPage(1); };
+  const resetFilters = () => {
+    setSearch('');
+    setStatusFilter('');
+    setDateFrom('');
+    setDateTo('');
+    setPage(1);
+  };
   const hasActiveFilters = search || statusFilter || dateFrom || dateTo;
 
   const certifiedCount = invoices.filter((i) => i.status === 'CERTIFIED').length;
@@ -87,12 +104,14 @@ export default function FneInvoiceListPage() {
 
   // Deletable = DRAFT or ERROR only
   const deletableOnPage = invoices.filter((i) => i.status === 'DRAFT' || i.status === 'ERROR');
-  const allDeletableSelected = deletableOnPage.length > 0 && deletableOnPage.every((i) => selected.has(i.id));
+  const allDeletableSelected =
+    deletableOnPage.length > 0 && deletableOnPage.every((i) => selected.has(i.id));
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -140,10 +159,26 @@ export default function FneInvoiceListPage() {
     <div className="space-y-6">
       {/* ── KPIs ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={<FileCheck2 className="h-5 w-5" />} label={t('fne.totalInvoices', 'Factures totales')} value={meta?.total ?? 0} />
-        <Stat icon={<Stamp className="h-5 w-5" />} label={t('fne.certified', 'Certifiées')} value={certifiedCount} />
-        <Stat icon={<AlertTriangle className="h-5 w-5" />} label={t('fne.errors', 'Erreurs')} value={errorCount} />
-        <Stat icon={<QrCode className="h-5 w-5" />} label={t('fne.stickerBalance', 'Solde stickers')} value={stickerBalance ?? 0} />
+        <Stat
+          icon={<FileCheck2 className="h-5 w-5" />}
+          label={t('fne.totalInvoices', 'Factures totales')}
+          value={meta?.total ?? 0}
+        />
+        <Stat
+          icon={<Stamp className="h-5 w-5" />}
+          label={t('fne.certified', 'Certifiées')}
+          value={certifiedCount}
+        />
+        <Stat
+          icon={<AlertTriangle className="h-5 w-5" />}
+          label={t('fne.errors', 'Erreurs')}
+          value={errorCount}
+        />
+        <Stat
+          icon={<QrCode className="h-5 w-5" />}
+          label={t('fne.stickerBalance', 'Solde stickers')}
+          value={stickerBalance ?? 0}
+        />
       </div>
 
       {/* ── Low sticker warning ── */}
@@ -151,7 +186,10 @@ export default function FneInvoiceListPage() {
         <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
           <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
           <p className="text-sm text-amber-800">
-            {t('fne.lowStickerWarning', `Attention : il ne vous reste que ${stickerBalance} sticker(s) FNE. Pensez à en acheter.`)}
+            {t(
+              'fne.lowStickerWarning',
+              `Attention : il ne vous reste que ${stickerBalance} sticker(s) FNE. Pensez à en acheter.`,
+            )}
           </p>
         </div>
       )}
@@ -161,9 +199,15 @@ export default function FneInvoiceListPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder={t('fne.searchPlaceholder', 'Rechercher par référence, NCC, client...')}
-              className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+              className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+            />
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => setShowFilters(!showFilters)}>
@@ -175,33 +219,57 @@ export default function FneInvoiceListPage() {
               </Button>
             )}
             {!readOnly && (
-            <>
-            <Button variant="ghost" onClick={() => setShowImportDialog(true)}>
-              <Upload className="mr-2 h-4 w-4" /> Importer
-            </Button>
-            <Button onClick={() => navigate('/fne/invoices/new')}>
-              <Plus className="mr-2 h-4 w-4" /> {t('fne.newInvoice', 'Nouvelle facture')}
-            </Button>
-            </>
+              <>
+                <Button variant="ghost" onClick={() => setShowImportDialog(true)}>
+                  <Upload className="mr-2 h-4 w-4" /> Importer
+                </Button>
+                <Button onClick={() => navigate('/fne/invoices/new')}>
+                  <Plus className="mr-2 h-4 w-4" /> {t('fne.newInvoice', 'Nouvelle facture')}
+                </Button>
+              </>
             )}
           </div>
         </div>
 
         {showFilters && (
           <div className="mt-4 grid gap-4 sm:grid-cols-3 border-t border-gray-100 pt-4">
-            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold">
-              {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-400" />
-              <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setPage(1);
+                }}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+              />
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-400" />
-              <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setPage(1);
+                }}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+              />
             </div>
           </div>
         )}
@@ -211,7 +279,8 @@ export default function FneInvoiceListPage() {
       {!readOnly && selected.size > 0 && (
         <div className="flex items-center gap-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
           <span className="text-sm font-medium text-gray-800">
-            {selected.size} facture{selected.size > 1 ? 's' : ''} sélectionnée{selected.size > 1 ? 's' : ''}
+            {selected.size} facture{selected.size > 1 ? 's' : ''} sélectionnée
+            {selected.size > 1 ? 's' : ''}
           </span>
           <Button
             variant="ghost"
@@ -229,7 +298,12 @@ export default function FneInvoiceListPage() {
           >
             <Trash2 className="mr-2 h-4 w-4" /> Supprimer la sélection
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} className="text-gray-600">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelected(new Set())}
+            className="text-gray-600"
+          >
             <X className="mr-2 h-4 w-4" /> Désélectionner
           </Button>
         </div>
@@ -242,11 +316,14 @@ export default function FneInvoiceListPage() {
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
                 {!readOnly && (
-                <th className="px-4 py-3 w-10">
-                  <input type="checkbox" checked={allDeletableSelected && deletableOnPage.length > 0}
-                    onChange={toggleSelectAll}
-                    className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold cursor-pointer" />
-                </th>
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={allDeletableSelected && deletableOnPage.length > 0}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold cursor-pointer"
+                    />
+                  </th>
                 )}
                 <th className="px-4 py-3">Référence</th>
                 <th className="px-4 py-3">NCC FNE</th>
@@ -260,43 +337,79 @@ export default function FneInvoiceListPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={readOnly ? 8 : 9} className="px-4 py-8 text-center text-gray-500">Chargement…</td></tr>
+                <tr>
+                  <td colSpan={readOnly ? 8 : 9} className="px-4 py-8 text-center text-gray-500">
+                    Chargement…
+                  </td>
+                </tr>
               ) : invoices.length === 0 ? (
-                <tr><td colSpan={readOnly ? 8 : 9} className="px-4 py-8 text-center text-gray-500">{t('fne.noInvoices', 'Aucune facture FNE')}</td></tr>
-              ) : invoices.map((inv) => {
-                const sc = STATUS_CONFIG[inv.status];
-                return (
-                  <tr key={inv.id} className={cn('border-b border-gray-100 hover:bg-gray-50 cursor-pointer', !readOnly && selected.has(inv.id) && 'bg-red-50/50')}
-                    onClick={() => navigate(`/fne/invoices/${inv.id}`)}>
-                    {!readOnly && (
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      {(inv.status === 'DRAFT' || inv.status === 'ERROR') ? (
-                        <input type="checkbox" checked={selected.has(inv.id)}
-                          onChange={() => toggleSelect(inv.id)}
-                          className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold cursor-pointer" />
-                      ) : (
-                        <span className="block h-4 w-4" />
+                <tr>
+                  <td colSpan={readOnly ? 8 : 9} className="px-4 py-8 text-center text-gray-500">
+                    {t('fne.noInvoices', 'Aucune facture FNE')}
+                  </td>
+                </tr>
+              ) : (
+                invoices.map((inv) => {
+                  const sc = STATUS_CONFIG[inv.status];
+                  return (
+                    <tr
+                      key={inv.id}
+                      className={cn(
+                        'border-b border-gray-100 hover:bg-gray-50 cursor-pointer',
+                        !readOnly && selected.has(inv.id) && 'bg-red-50/50',
                       )}
-                    </td>
-                    )}
-                    <td className="px-4 py-3 font-mono text-brand-gold">
-                      {inv.reference}
-                      {inv.invoiceType === 'credit_note' && <Badge variant="warning" className="ml-2 text-[10px]">Avoir</Badge>}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{inv.fneNcc || '—'}</td>
-                    <td className="px-4 py-3 text-gray-900">{inv.clientCompanyName}</td>
-                    <td className="px-4 py-3"><Badge variant="outline">{inv.template}</Badge></td>
-                    <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatCFA(inv.totalTtc)}</td>
-                    <td className="px-4 py-3"><Badge variant={sc.variant}>{sc.label}</Badge></td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(inv.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/fne/invoices/${inv.id}`); }}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      onClick={() => navigate(`/fne/invoices/${inv.id}`)}
+                    >
+                      {!readOnly && (
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          {inv.status === 'DRAFT' || inv.status === 'ERROR' ? (
+                            <input
+                              type="checkbox"
+                              checked={selected.has(inv.id)}
+                              onChange={() => toggleSelect(inv.id)}
+                              className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold cursor-pointer"
+                            />
+                          ) : (
+                            <span className="block h-4 w-4" />
+                          )}
+                        </td>
+                      )}
+                      <td className="px-4 py-3 font-mono text-brand-gold">
+                        {inv.reference}
+                        {inv.invoiceType === 'credit_note' && (
+                          <Badge variant="warning" className="ml-2 text-[10px]">
+                            Avoir
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{inv.fneNcc || '—'}</td>
+                      <td className="px-4 py-3 text-gray-900">{inv.clientCompanyName}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline">{inv.template}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                        {formatCFA(inv.totalTtc)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={sc.variant}>{sc.label}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">{formatDate(inv.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/fne/invoices/${inv.id}`);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -308,8 +421,22 @@ export default function FneInvoiceListPage() {
               Page {page} / {totalPages} — {meta?.total ?? 0} résultats
             </span>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Préc.</Button>
-              <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Suiv.</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Préc.
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage(page + 1)}
+              >
+                Suiv.
+              </Button>
             </div>
           </div>
         )}
@@ -321,11 +448,15 @@ export default function FneInvoiceListPage() {
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900">Confirmer la suppression</h3>
             <p className="mt-2 text-sm text-gray-600">
-              Voulez-vous vraiment supprimer <strong>{selected.size}</strong> facture{selected.size > 1 ? 's' : ''} ?
-              Cette action est irréversible.
+              Voulez-vous vraiment supprimer <strong>{selected.size}</strong> facture
+              {selected.size > 1 ? 's' : ''} ? Cette action est irréversible.
             </p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowBulkDeleteConfirm(false)} disabled={bulkDeleteMutation.isPending}>
+              <Button
+                variant="ghost"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                disabled={bulkDeleteMutation.isPending}
+              >
                 Annuler
               </Button>
               <Button
@@ -333,7 +464,11 @@ export default function FneInvoiceListPage() {
                 disabled={bulkDeleteMutation.isPending}
                 className="bg-red-600 text-white hover:bg-red-700"
               >
-                {bulkDeleteMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                {bulkDeleteMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
                 Supprimer
               </Button>
             </div>
@@ -347,11 +482,16 @@ export default function FneInvoiceListPage() {
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900">Certifier en masse</h3>
             <p className="mt-2 text-sm text-gray-600">
-              Voulez-vous certifier <strong>{selected.size}</strong> facture{selected.size > 1 ? 's' : ''} auprès de la FNE ?
-              Chaque facture certifiée consommera un sticker.
+              Voulez-vous certifier <strong>{selected.size}</strong> facture
+              {selected.size > 1 ? 's' : ''} auprès de la FNE ? Chaque facture certifiée consommera
+              un sticker.
             </p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowBulkCertifyConfirm(false)} disabled={bulkCertifyMutation.isPending}>
+              <Button
+                variant="ghost"
+                onClick={() => setShowBulkCertifyConfirm(false)}
+                disabled={bulkCertifyMutation.isPending}
+              >
                 Annuler
               </Button>
               <Button
@@ -359,7 +499,11 @@ export default function FneInvoiceListPage() {
                 disabled={bulkCertifyMutation.isPending}
                 className="bg-green-600 text-white hover:bg-green-700"
               >
-                {bulkCertifyMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                {bulkCertifyMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                )}
                 Certifier
               </Button>
             </div>
@@ -373,14 +517,21 @@ export default function FneInvoiceListPage() {
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900">Résultat de la certification</h3>
             <p className="mt-2 text-sm text-gray-600">
-              <strong>{bulkCertifyResult.certified}</strong> facture{bulkCertifyResult.certified > 1 ? 's' : ''} certifiée{bulkCertifyResult.certified > 1 ? 's' : ''} avec succès.
+              <strong>{bulkCertifyResult.certified}</strong> facture
+              {bulkCertifyResult.certified > 1 ? 's' : ''} certifiée
+              {bulkCertifyResult.certified > 1 ? 's' : ''} avec succès.
             </p>
             {bulkCertifyResult.errors.length > 0 && (
               <div className="mt-3 max-h-48 overflow-y-auto rounded-lg border border-red-200 bg-red-50 p-3">
-                <p className="text-sm font-medium text-red-800 mb-2">{bulkCertifyResult.errors.length} erreur{bulkCertifyResult.errors.length > 1 ? 's' : ''} :</p>
+                <p className="text-sm font-medium text-red-800 mb-2">
+                  {bulkCertifyResult.errors.length} erreur
+                  {bulkCertifyResult.errors.length > 1 ? 's' : ''} :
+                </p>
                 <ul className="space-y-1 text-xs text-red-700">
                   {bulkCertifyResult.errors.map((e, i) => (
-                    <li key={i}>• {e.reference ?? e.id} : {e.error}</li>
+                    <li key={i}>
+                      • {e.reference ?? e.id} : {e.error}
+                    </li>
                   ))}
                 </ul>
               </div>

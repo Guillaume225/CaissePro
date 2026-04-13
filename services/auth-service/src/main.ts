@@ -24,9 +24,7 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
 
   app.enableCors({
-    origin: config.get<string>('app.nodeEnv') === 'production'
-      ? false
-      : true,
+    origin: config.get<string>('app.nodeEnv') === 'production' ? false : true,
     credentials: true,
   });
 

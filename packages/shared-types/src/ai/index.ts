@@ -56,7 +56,7 @@ export interface SalesForecastBreakdown {
 export interface ClientScore {
   clientId: string;
   clientName: string;
-  score: number;               // 0-100
+  score: number; // 0-100
   riskClass: 'A' | 'B' | 'C' | 'D';
   paymentBehavior: PaymentBehaviorMetrics;
   recommendation: string;
@@ -65,7 +65,7 @@ export interface ClientScore {
 
 export interface PaymentBehaviorMetrics {
   averageDaysToPayment: number;
-  onTimePaymentRate: number;     // 0-1
+  onTimePaymentRate: number; // 0-1
   totalPurchases: number;
   totalOutstanding: number;
   lastPaymentDate: string | null;

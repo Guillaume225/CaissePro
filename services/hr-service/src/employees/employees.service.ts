@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Employee } from './employee.entity';
@@ -13,9 +18,7 @@ export class EmployeesService {
   ) {}
 
   async getDisbursementLimit(): Promise<number> {
-    const rows = await this.dataSource.query(
-      'SELECT TOP 1 max_disbursement_amount FROM companies',
-    );
+    const rows = await this.dataSource.query('SELECT TOP 1 max_disbursement_amount FROM companies');
     return Number(rows?.[0]?.max_disbursement_amount ?? 0);
   }
 

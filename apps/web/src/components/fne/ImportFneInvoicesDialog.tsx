@@ -1,8 +1,21 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, Download, FileSpreadsheet, X, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import {
+  Upload,
+  Download,
+  FileSpreadsheet,
+  X,
+  Loader2,
+  AlertTriangle,
+  CheckCircle2,
+} from 'lucide-react';
 import { Button, Badge } from '@/components/ui';
 import { useImportFneInvoices } from '@/hooks/useFneInvoices';
-import type { CreateFneInvoicePayload, CreateFneInvoiceItemPayload, FneTemplate, FnePaymentMethod } from '@/types/fne';
+import type {
+  CreateFneInvoicePayload,
+  CreateFneInvoiceItemPayload,
+  FneTemplate,
+  FnePaymentMethod,
+} from '@/types/fne';
 
 interface Props {
   open: boolean;
@@ -11,9 +24,22 @@ interface Props {
 
 /* ─── CSV Template ─── */
 const CSV_HEADERS = [
-  'template', 'paymentMethod', 'clientCompanyName', 'clientPhone', 'clientEmail',
-  'clientNcc', 'pointOfSale', 'establishment', 'discount',
-  'itemDescription', 'itemReference', 'itemQuantity', 'itemAmount', 'itemDiscount', 'itemTax', 'itemUnit',
+  'template',
+  'paymentMethod',
+  'clientCompanyName',
+  'clientPhone',
+  'clientEmail',
+  'clientNcc',
+  'pointOfSale',
+  'establishment',
+  'discount',
+  'itemDescription',
+  'itemReference',
+  'itemQuantity',
+  'itemAmount',
+  'itemDiscount',
+  'itemTax',
+  'itemUnit',
 ];
 
 const CSV_EXAMPLE = [
@@ -35,13 +61,23 @@ function parseCsvLine(line: string): string[] {
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (inQuotes) {
-      if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
-      else if (ch === '"') { inQuotes = false; }
-      else { current += ch; }
+      if (ch === '"' && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
     } else {
-      if (ch === '"') { inQuotes = true; }
-      else if (ch === ';' || ch === ',') { fields.push(current.trim()); current = ''; }
-      else { current += ch; }
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ';' || ch === ',') {
+        fields.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
     }
   }
   fields.push(current.trim());
@@ -56,7 +92,11 @@ interface ParsedInvoice {
 
 function parseCsvToInvoices(text: string): { invoices: ParsedInvoice[]; errors: string[] } {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return { invoices: [], errors: ['Le fichier doit contenir au moins un en-tête + une ligne de données.'] };
+  if (lines.length < 2)
+    return {
+      invoices: [],
+      errors: ['Le fichier doit contenir au moins un en-tête + une ligne de données.'],
+    };
 
   // Skip header
   const dataLines = lines.slice(1);
@@ -80,9 +120,22 @@ function parseCsvToInvoices(text: string): { invoices: ParsedInvoice[]; errors: 
     const rowNum = i + 2; // 1-based, accounting for header
 
     const [
-      template, paymentMethod, clientCompanyName, clientPhone, clientEmail,
-      clientNcc, pointOfSale, establishment, discount,
-      itemDescription, itemReference, itemQuantity, itemAmount, itemDiscount, itemTax, itemUnit,
+      template,
+      paymentMethod,
+      clientCompanyName,
+      clientPhone,
+      clientEmail,
+      clientNcc,
+      pointOfSale,
+      establishment,
+      discount,
+      itemDescription,
+      itemReference,
+      itemQuantity,
+      itemAmount,
+      itemDiscount,
+      itemTax,
+      itemUnit,
     ] = fields;
 
     // If invoice-level fields are present, start a new invoice
@@ -91,11 +144,15 @@ function parseCsvToInvoices(text: string): { invoices: ParsedInvoice[]; errors: 
       rowStart = rowNum;
 
       if (!VALID_TEMPLATES.includes(template)) {
-        errors.push(`Ligne ${rowNum}: template invalide "${template}" (attendu: ${VALID_TEMPLATES.join(', ')})`);
+        errors.push(
+          `Ligne ${rowNum}: template invalide "${template}" (attendu: ${VALID_TEMPLATES.join(', ')})`,
+        );
         continue;
       }
       if (!VALID_PAYMENTS.includes(paymentMethod)) {
-        errors.push(`Ligne ${rowNum}: méthode de paiement invalide "${paymentMethod}" (attendu: ${VALID_PAYMENTS.join(', ')})`);
+        errors.push(
+          `Ligne ${rowNum}: méthode de paiement invalide "${paymentMethod}" (attendu: ${VALID_PAYMENTS.join(', ')})`,
+        );
         continue;
       }
 
@@ -127,12 +184,20 @@ function parseCsvToInvoices(text: string): { invoices: ParsedInvoice[]; errors: 
 
     const qty = Number(itemQuantity);
     const amt = Number(itemAmount);
-    if (!qty || qty <= 0) { errors.push(`Ligne ${rowNum}: quantité invalide "${itemQuantity}".`); continue; }
-    if (!amt || amt < 0) { errors.push(`Ligne ${rowNum}: montant invalide "${itemAmount}".`); continue; }
+    if (!qty || qty <= 0) {
+      errors.push(`Ligne ${rowNum}: quantité invalide "${itemQuantity}".`);
+      continue;
+    }
+    if (!amt || amt < 0) {
+      errors.push(`Ligne ${rowNum}: montant invalide "${itemAmount}".`);
+      continue;
+    }
 
     const tax = (itemTax || 'TVA').toUpperCase();
     if (!VALID_TAXES.includes(tax)) {
-      errors.push(`Ligne ${rowNum}: taxe invalide "${itemTax}" (attendu: ${VALID_TAXES.join(', ')})`);
+      errors.push(
+        `Ligne ${rowNum}: taxe invalide "${itemTax}" (attendu: ${VALID_TAXES.join(', ')})`,
+      );
       continue;
     }
 
@@ -159,7 +224,10 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
   const [step, setStep] = useState<'upload' | 'preview' | 'result'>('upload');
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [parsed, setParsed] = useState<ParsedInvoice[]>([]);
-  const [importResult, setImportResult] = useState<{ imported: number; errors: Array<{ index: number; error: string }> } | null>(null);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    errors: Array<{ index: number; error: string }>;
+  } | null>(null);
   const [fileName, setFileName] = useState('');
   const importMutation = useImportFneInvoices();
 
@@ -172,7 +240,10 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 
-  const handleClose = () => { reset(); onClose(); };
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -230,8 +301,8 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
         {step === 'upload' && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Importez un fichier CSV pour créer plusieurs factures en brouillon.
-              Chaque groupe de lignes avec les mêmes informations client constitue une facture.
+              Importez un fichier CSV pour créer plusieurs factures en brouillon. Chaque groupe de
+              lignes avec les mêmes informations client constitue une facture.
             </p>
 
             <div className="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-brand-gold transition-colors">
@@ -252,18 +323,39 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
             </div>
 
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <p className="text-sm font-medium text-blue-800 mb-2">Format attendu (séparateur: point-virgule ;)</p>
+              <p className="text-sm font-medium text-blue-800 mb-2">
+                Format attendu (séparateur: point-virgule ;)
+              </p>
               <p className="text-xs text-blue-700 mb-2">
-                Colonnes : <code className="bg-blue-100 px-1 rounded">template;paymentMethod;clientCompanyName;clientPhone;clientEmail;clientNcc;pointOfSale;establishment;discount;itemDescription;itemReference;itemQuantity;itemAmount;itemDiscount;itemTax;itemUnit</code>
+                Colonnes :{' '}
+                <code className="bg-blue-100 px-1 rounded">
+                  template;paymentMethod;clientCompanyName;clientPhone;clientEmail;clientNcc;pointOfSale;establishment;discount;itemDescription;itemReference;itemQuantity;itemAmount;itemDiscount;itemTax;itemUnit
+                </code>
               </p>
               <ul className="text-xs text-blue-700 space-y-1 mb-3">
-                <li>• <strong>Première ligne</strong> d'une facture : remplissez tous les champs</li>
-                <li>• <strong>Lignes suivantes</strong> (articles) : laissez les champs client vides</li>
-                <li>• <strong>template</strong> : B2B, B2C, B2G ou B2F</li>
-                <li>• <strong>paymentMethod</strong> : cash, card, check, mobile-money, transfer, deferred</li>
-                <li>• <strong>itemTax</strong> : TVA (18%), TVAB (9%), TVAC (0%), TVAD (0%), TVAE</li>
+                <li>
+                  • <strong>Première ligne</strong> d'une facture : remplissez tous les champs
+                </li>
+                <li>
+                  • <strong>Lignes suivantes</strong> (articles) : laissez les champs client vides
+                </li>
+                <li>
+                  • <strong>template</strong> : B2B, B2C, B2G ou B2F
+                </li>
+                <li>
+                  • <strong>paymentMethod</strong> : cash, card, check, mobile-money, transfer,
+                  deferred
+                </li>
+                <li>
+                  • <strong>itemTax</strong> : TVA (18%), TVAB (9%), TVAC (0%), TVAD (0%), TVAE
+                </li>
               </ul>
-              <Button variant="ghost" size="sm" onClick={downloadTemplate} className="text-blue-600">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={downloadTemplate}
+                className="text-blue-600"
+              >
                 <Download className="mr-2 h-4 w-4" /> Télécharger le modèle CSV
               </Button>
             </div>
@@ -276,8 +368,9 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
             <div className="flex items-center gap-3">
               <Badge variant="outline">{fileName}</Badge>
               <span className="text-sm text-gray-600">
-                {parsed.length} facture{parsed.length > 1 ? 's' : ''} détectée{parsed.length > 1 ? 's' : ''}
-                ({parsed.reduce((s, p) => s + p.invoice.items.length, 0)} articles)
+                {parsed.length} facture{parsed.length > 1 ? 's' : ''} détectée
+                {parsed.length > 1 ? 's' : ''}(
+                {parsed.reduce((s, p) => s + p.invoice.items.length, 0)} articles)
               </span>
             </div>
 
@@ -289,7 +382,9 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
                   {parseErrors.length} avertissement{parseErrors.length > 1 ? 's' : ''} :
                 </p>
                 <ul className="text-xs text-amber-700 space-y-0.5">
-                  {parseErrors.map((e, i) => <li key={i}>• {e}</li>)}
+                  {parseErrors.map((e, i) => (
+                    <li key={i}>• {e}</li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -317,9 +412,15 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
                         <tr key={idx} className="border-b border-gray-100">
                           <td className="px-3 py-2 text-gray-500">{idx + 1}</td>
                           <td className="px-3 py-2 text-gray-900">{p.invoice.clientCompanyName}</td>
-                          <td className="px-3 py-2"><Badge variant="outline">{p.invoice.template}</Badge></td>
-                          <td className="px-3 py-2 text-gray-600">{p.invoice.items.length} article{p.invoice.items.length > 1 ? 's' : ''}</td>
-                          <td className="px-3 py-2 text-right font-medium text-gray-900">{totalHt.toLocaleString('fr-FR')} FCFA</td>
+                          <td className="px-3 py-2">
+                            <Badge variant="outline">{p.invoice.template}</Badge>
+                          </td>
+                          <td className="px-3 py-2 text-gray-600">
+                            {p.invoice.items.length} article{p.invoice.items.length > 1 ? 's' : ''}
+                          </td>
+                          <td className="px-3 py-2 text-right font-medium text-gray-900">
+                            {totalHt.toLocaleString('fr-FR')} FCFA
+                          </td>
                         </tr>
                       );
                     })}
@@ -331,18 +432,26 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
             {parsed.length === 0 && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
                 <AlertTriangle className="mx-auto h-8 w-8 text-red-400 mb-2" />
-                <p className="text-sm text-red-700">Aucune facture valide détectée dans le fichier.</p>
+                <p className="text-sm text-red-700">
+                  Aucune facture valide détectée dans le fichier.
+                </p>
               </div>
             )}
 
             <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-              <Button variant="ghost" onClick={reset}>Changer de fichier</Button>
+              <Button variant="ghost" onClick={reset}>
+                Changer de fichier
+              </Button>
               <Button
                 onClick={handleImport}
                 disabled={parsed.length === 0 || importMutation.isPending}
                 className="bg-brand-gold text-white hover:bg-brand-gold/90"
               >
-                {importMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                {importMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="mr-2 h-4 w-4" />
+                )}
                 Importer {parsed.length} facture{parsed.length > 1 ? 's' : ''}
               </Button>
             </div>
@@ -356,7 +465,8 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
               <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-green-800">
-                  {importResult.imported} facture{importResult.imported > 1 ? 's' : ''} importée{importResult.imported > 1 ? 's' : ''} en brouillon.
+                  {importResult.imported} facture{importResult.imported > 1 ? 's' : ''} importée
+                  {importResult.imported > 1 ? 's' : ''} en brouillon.
                 </p>
                 <p className="text-xs text-green-600 mt-0.5">
                   Vous pouvez les certifier individuellement ou en masse depuis la liste.
@@ -371,7 +481,9 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
                 </p>
                 <ul className="text-xs text-red-700 space-y-1">
                   {importResult.errors.map((e, i) => (
-                    <li key={i}>• Facture #{e.index} : {e.error}</li>
+                    <li key={i}>
+                      • Facture #{e.index} : {e.error}
+                    </li>
                   ))}
                 </ul>
               </div>

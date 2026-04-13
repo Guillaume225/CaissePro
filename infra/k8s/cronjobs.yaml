@@ -11,8 +11,8 @@ metadata:
     app.kubernetes.io/part-of: caisseflow
     job-type: maintenance
 spec:
-  schedule: "0 2 * * *"
-  timeZone: "Africa/Bamako"
+  schedule: '0 2 * * *'
+  timeZone: 'Africa/Bamako'
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -29,7 +29,7 @@ spec:
           containers:
             - name: aging-buckets
               image: ghcr.io/OWNER/caisseflow/sales-service:latest
-              command: ["node", "dist/jobs/update-aging-buckets.js"]
+              command: ['node', 'dist/jobs/update-aging-buckets.js']
               envFrom:
                 - configMapRef:
                     name: app-config
@@ -54,8 +54,8 @@ metadata:
     app.kubernetes.io/part-of: caisseflow
     job-type: reporting
 spec:
-  schedule: "0 6 * * *"
-  timeZone: "Africa/Bamako"
+  schedule: '0 6 * * *'
+  timeZone: 'Africa/Bamako'
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 5
   failedJobsHistoryLimit: 3
@@ -72,7 +72,7 @@ spec:
           containers:
             - name: daily-report
               image: ghcr.io/OWNER/caisseflow/report-service:latest
-              command: ["python", "-m", "app.jobs.daily_report"]
+              command: ['python', '-m', 'app.jobs.daily_report']
               envFrom:
                 - configMapRef:
                     name: app-config
@@ -82,7 +82,7 @@ spec:
                     name: app-secrets
               env:
                 - name: ENVIRONMENT
-                  value: "production"
+                  value: 'production'
               resources:
                 requests:
                   cpu: 100m
@@ -100,8 +100,8 @@ metadata:
     app.kubernetes.io/part-of: caisseflow
     job-type: ai
 spec:
-  schedule: "0 3 * * 0"
-  timeZone: "Africa/Bamako"
+  schedule: '0 3 * * 0'
+  timeZone: 'Africa/Bamako'
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -118,7 +118,7 @@ spec:
           containers:
             - name: ai-retrain
               image: ghcr.io/OWNER/caisseflow/ai-service:latest
-              command: ["python", "-m", "ml.retrain"]
+              command: ['python', '-m', 'ml.retrain']
               envFrom:
                 - configMapRef:
                     name: app-config
@@ -128,13 +128,13 @@ spec:
                     name: app-secrets
               env:
                 - name: ENVIRONMENT
-                  value: "production"
+                  value: 'production'
               resources:
                 requests:
                   cpu: 500m
                   memory: 1Gi
                 limits:
-                  cpu: "2"
+                  cpu: '2'
                   memory: 2Gi
               volumeMounts:
                 - name: ml-models
@@ -153,8 +153,8 @@ metadata:
     app.kubernetes.io/part-of: caisseflow
     job-type: maintenance
 spec:
-  schedule: "0 1 * * *"
-  timeZone: "Africa/Bamako"
+  schedule: '0 1 * * *'
+  timeZone: 'Africa/Bamako'
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 7
   failedJobsHistoryLimit: 3

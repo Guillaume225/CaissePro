@@ -1,14 +1,9 @@
+import { Controller, Get, Post, Delete, Param, Body, Query, ParseUUIDPipe } from '@nestjs/common';
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Param,
-  Body,
-  Query,
-  ParseUUIDPipe,
-} from '@nestjs/common';
-import { FneAccountingService, GenerateEntriesDto, ListFneAccountingQuery } from './fne-accounting.service';
+  FneAccountingService,
+  GenerateEntriesDto,
+  ListFneAccountingQuery,
+} from './fne-accounting.service';
 import { Permissions, CurrentUser } from '../common/decorators';
 import { FNE_PERMISSIONS } from '../common/permissions';
 
@@ -24,10 +19,7 @@ export class FneAccountingController {
 
   @Post('generate')
   @Permissions(FNE_PERMISSIONS.CREATE)
-  generate(
-    @Body() dto: GenerateEntriesDto,
-    @CurrentUser('id') userId: string,
-  ) {
+  generate(@Body() dto: GenerateEntriesDto, @CurrentUser('id') userId: string) {
     return this.fneAccountingService.generate(dto, userId);
   }
 

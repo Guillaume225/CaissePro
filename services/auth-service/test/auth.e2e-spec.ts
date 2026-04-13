@@ -25,9 +25,7 @@ describe('Auth Service (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
   });
 
@@ -37,10 +35,7 @@ describe('Auth Service (e2e)', () => {
 
   describe('/api/v1/auth/login (POST)', () => {
     it('should reject login with missing fields', () => {
-      return request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send({})
-        .expect(400);
+      return request(app.getHttpServer()).post('/api/v1/auth/login').send({}).expect(400);
     });
 
     it('should reject login with invalid email format', () => {
@@ -96,9 +91,7 @@ describe('Auth Service (e2e)', () => {
 
   describe('/api/v1/users (GET)', () => {
     it('should reject unauthenticated access', () => {
-      return request(app.getHttpServer())
-        .get('/api/v1/users')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/v1/users').expect(401);
     });
 
     it('should return paginated users when authenticated', () => {

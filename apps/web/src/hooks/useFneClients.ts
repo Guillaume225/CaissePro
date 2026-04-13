@@ -19,7 +19,9 @@ export function useFneClients(params: { search?: string; page?: number; perPage?
   return useQuery({
     queryKey: FNE_CLIENT_KEYS.list(params),
     queryFn: async () => {
-      const { data } = await api.get<FnePaginatedResponse<FneClientRecord>>('/fne-clients', { params });
+      const { data } = await api.get<FnePaginatedResponse<FneClientRecord>>('/fne-clients', {
+        params,
+      });
       return data;
     },
   });

@@ -116,7 +116,14 @@ export function usePeriodClosingHistory(dateFrom?: string, dateTo?: string) {
     queryKey: ['closing', 'period-history', dateFrom, dateTo] as const,
     queryFn: async (): Promise<CashClosingRecord[]> => {
       const { data } = await api.get('/closing/history', {
-        params: { status: 'CLOSED', dateFrom, dateTo, perPage: 500, sortBy: 'openedAt', sortOrder: 'ASC' },
+        params: {
+          status: 'CLOSED',
+          dateFrom,
+          dateTo,
+          perPage: 500,
+          sortBy: 'openedAt',
+          sortOrder: 'ASC',
+        },
       });
       return data.data;
     },
@@ -217,8 +224,11 @@ export function useCashDayOperations(id: string | undefined) {
 export function useMultiDayOperations(dayIds: string[]) {
   return useQuery({
     queryKey: ['closing', 'multi-day-operations', ...dayIds],
-    queryFn: async (): Promise<Record<string, { movements: CashDayMovement[]; expenses: CashDayExpense[] }>> => {
-      const results: Record<string, { movements: CashDayMovement[]; expenses: CashDayExpense[] }> = {};
+    queryFn: async (): Promise<
+      Record<string, { movements: CashDayMovement[]; expenses: CashDayExpense[] }>
+    > => {
+      const results: Record<string, { movements: CashDayMovement[]; expenses: CashDayExpense[] }> =
+        {};
       await Promise.all(
         dayIds.map(async (id) => {
           const { data } = await api.get(`/closing/${id}/operations`);
@@ -285,7 +295,9 @@ export function useMultiDayAccountingEntries(dayIds: string[]) {
     queryFn: async (): Promise<AccountingEntriesSummary[]> => {
       const results = await Promise.all(
         dayIds.map(async (id) => {
-          const { data } = await api.get('/closing/accounting-entries', { params: { cashDayId: id } });
+          const { data } = await api.get('/closing/accounting-entries', {
+            params: { cashDayId: id },
+          });
           return data.data as AccountingEntriesSummary;
         }),
       );

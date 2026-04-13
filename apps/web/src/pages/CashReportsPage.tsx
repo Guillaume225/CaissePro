@@ -12,7 +12,12 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
-import { useClosingHistory, useCashDayDetail, useCashDayOperations, useCashState } from '@/hooks/useClosing';
+import {
+  useClosingHistory,
+  useCashDayDetail,
+  useCashDayOperations,
+  useCashState,
+} from '@/hooks/useClosing';
 import { useSettings } from '@/hooks/useAdmin';
 import { useAuthStore } from '@/stores/auth-store';
 import { useReportDesign } from '@/hooks/useReportDesign';
@@ -23,8 +28,10 @@ import type { CashDayDetail, CashDayMovement, CashDayExpense } from '@/hooks/use
 const fmt = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(n);
 
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-const fmtTime = (d: string) => new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const fmtDate = (d: string) =>
+  new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+const fmtTime = (d: string) =>
+  new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const fmtDateTime = (d: string) => `${fmtDate(d)} à ${fmtTime(d)}`;
 
 type ReportType = 'journal' | 'brouillard' | 'situation' | 'comptage' | 'ecarts';
@@ -50,7 +57,15 @@ const DENOMINATIONS = [
 /* ═══════════════════════════════════════════════════════════
    Report header (company info) — reused in all reports
    ═══════════════════════════════════════════════════════════ */
-function ReportHeader({ companyName, companyAddress, companyPhone, companyTaxId, title, subtitle, headerConfig }: {
+function ReportHeader({
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  title,
+  subtitle,
+  headerConfig,
+}: {
   companyName: string;
   companyAddress?: string;
   companyPhone?: string;
@@ -62,15 +77,21 @@ function ReportHeader({ companyName, companyAddress, companyPhone, companyTaxId,
   const hc = headerConfig;
   return (
     <div className="mb-6 border-b-2 border-gray-800 pb-4 text-center">
-      {(!hc || hc.showCompanyName) && <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>}
-      {(!hc || hc.showCompanyAddress) && companyAddress && <p className="text-sm text-gray-600">{companyAddress}</p>}
+      {(!hc || hc.showCompanyName) && (
+        <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>
+      )}
+      {(!hc || hc.showCompanyAddress) && companyAddress && (
+        <p className="text-sm text-gray-600">{companyAddress}</p>
+      )}
       <div className="flex justify-center gap-4 text-xs text-gray-500">
         {(!hc || hc.showCompanyPhone) && companyPhone && <span>Tél: {companyPhone}</span>}
         {(!hc || hc.showCompanyTaxId) && companyTaxId && <span>NIF: {companyTaxId}</span>}
       </div>
       <div className="mt-4">
         <h2 className="text-lg font-bold uppercase">{hc?.customTitle || title}</h2>
-        {(hc?.customSubtitle || subtitle) && <p className="text-sm text-gray-600">{hc?.customSubtitle || subtitle}</p>}
+        {(hc?.customSubtitle || subtitle) && (
+          <p className="text-sm text-gray-600">{hc?.customSubtitle || subtitle}</p>
+        )}
       </div>
     </div>
   );
@@ -79,7 +100,13 @@ function ReportHeader({ companyName, companyAddress, companyPhone, companyTaxId,
 /* ═══════════════════════════════════════════════════════════
    Report footer with signatures
    ═══════════════════════════════════════════════════════════ */
-function ReportFooter({ printedBy, footerConfig }: { printedBy: string; footerConfig?: ReportFooterConfig | null }) {
+function ReportFooter({
+  printedBy,
+  footerConfig,
+}: {
+  printedBy: string;
+  footerConfig?: ReportFooterConfig | null;
+}) {
   const fc = footerConfig;
   return (
     <div className="mt-8 border-t border-gray-300 pt-4">
@@ -111,7 +138,16 @@ function ReportFooter({ printedBy, footerConfig }: { printedBy: string; footerCo
 /* ═══════════════════════════════════════════════════════════
    1. ÉTAT DE CAISSE (Journal de caisse)
    ═══════════════════════════════════════════════════════════ */
-function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function JournalDeCaisse({
+  day,
+  movements,
+  expenses,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   day: CashDayDetail;
   movements: CashDayMovement[];
   expenses: CashDayExpense[];
@@ -121,7 +157,8 @@ function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress
   companyTaxId?: string;
   printedBy: string;
 }) {
-  const { isFieldVisible, getFieldLabel, isKpiVisible, getKpiLabel, header, footer } = useReportDesign('journal-caisse');
+  const { isFieldVisible, getFieldLabel, isKpiVisible, getKpiLabel, header, footer } =
+    useReportDesign('journal-caisse');
 
   const allOps = useMemo(() => {
     const ops: { time: string; ref: string; label: string; entry: number; exit: number }[] = [];
@@ -134,16 +171,18 @@ function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress
         exit: m.type === 'EXIT' ? m.amount : 0,
       });
     });
-    expenses.filter((e) => e.status === 'PAID').forEach((e) => {
-      const isEntry = e.categoryDirection === 'ENTRY';
-      ops.push({
-        time: e.createdAt,
-        ref: e.reference,
-        label: `${e.categoryName || 'Dépense'} — ${e.beneficiary}`,
-        entry: isEntry ? e.amount : 0,
-        exit: !isEntry ? e.amount : 0,
+    expenses
+      .filter((e) => e.status === 'PAID')
+      .forEach((e) => {
+        const isEntry = e.categoryDirection === 'ENTRY';
+        ops.push({
+          time: e.createdAt,
+          ref: e.reference,
+          label: `${e.categoryName || 'Dépense'} — ${e.beneficiary}`,
+          entry: isEntry ? e.amount : 0,
+          exit: !isEntry ? e.amount : 0,
+        });
       });
-    });
     ops.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
     return ops;
   }, [movements, expenses]);
@@ -153,7 +192,11 @@ function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
         title="État de Caisse — Journal de Caisse"
         subtitle={`Journée ${day.reference} du ${fmtDate(day.openedAt)}`}
         headerConfig={header}
@@ -163,25 +206,33 @@ function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress
       <div className="mb-4 grid grid-cols-4 gap-2 text-sm">
         {isKpiVisible('openingBalance') && (
           <div className="rounded border p-2 text-center">
-            <div className="text-xs text-gray-500">{getKpiLabel('openingBalance', 'Solde initial')}</div>
+            <div className="text-xs text-gray-500">
+              {getKpiLabel('openingBalance', 'Solde initial')}
+            </div>
             <div className="font-bold">{fmt(day.openingBalance)} FCFA</div>
           </div>
         )}
         {isKpiVisible('totalEntries') && (
           <div className="rounded border p-2 text-center">
-            <div className="text-xs text-gray-500">{getKpiLabel('totalEntries', 'Total encaissements')}</div>
+            <div className="text-xs text-gray-500">
+              {getKpiLabel('totalEntries', 'Total encaissements')}
+            </div>
             <div className="font-bold text-green-700">{fmt(totalEntries)} FCFA</div>
           </div>
         )}
         {isKpiVisible('totalExits') && (
           <div className="rounded border p-2 text-center">
-            <div className="text-xs text-gray-500">{getKpiLabel('totalExits', 'Total décaissements')}</div>
+            <div className="text-xs text-gray-500">
+              {getKpiLabel('totalExits', 'Total décaissements')}
+            </div>
             <div className="font-bold text-red-700">{fmt(totalExits)} FCFA</div>
           </div>
         )}
         {isKpiVisible('theoreticalBalance') && (
           <div className="rounded border p-2 text-center">
-            <div className="text-xs text-gray-500">{getKpiLabel('theoreticalBalance', 'Solde théorique')}</div>
+            <div className="text-xs text-gray-500">
+              {getKpiLabel('theoreticalBalance', 'Solde théorique')}
+            </div>
             <div className="font-bold">{fmt(day.theoreticalBalance)} FCFA</div>
           </div>
         )}
@@ -191,12 +242,32 @@ function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-100">
-            {isFieldVisible('time') && <th className="border px-2 py-1 text-left">{getFieldLabel('time', 'Heure')}</th>}
-            {isFieldVisible('reference') && <th className="border px-2 py-1 text-left">{getFieldLabel('reference', 'Référence')}</th>}
-            {isFieldVisible('label') && <th className="border px-2 py-1 text-left">{getFieldLabel('label', 'Libellé')}</th>}
-            {isFieldVisible('entry') && <th className="border px-2 py-1 text-right">{getFieldLabel('entry', 'Entrée (FCFA)')}</th>}
-            {isFieldVisible('exit') && <th className="border px-2 py-1 text-right">{getFieldLabel('exit', 'Sortie (FCFA)')}</th>}
-            {isFieldVisible('balance') && <th className="border px-2 py-1 text-right">{getFieldLabel('balance', 'Solde (FCFA)')}</th>}
+            {isFieldVisible('time') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('time', 'Heure')}</th>
+            )}
+            {isFieldVisible('reference') && (
+              <th className="border px-2 py-1 text-left">
+                {getFieldLabel('reference', 'Référence')}
+              </th>
+            )}
+            {isFieldVisible('label') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('label', 'Libellé')}</th>
+            )}
+            {isFieldVisible('entry') && (
+              <th className="border px-2 py-1 text-right">
+                {getFieldLabel('entry', 'Entrée (FCFA)')}
+              </th>
+            )}
+            {isFieldVisible('exit') && (
+              <th className="border px-2 py-1 text-right">
+                {getFieldLabel('exit', 'Sortie (FCFA)')}
+              </th>
+            )}
+            {isFieldVisible('balance') && (
+              <th className="border px-2 py-1 text-right">
+                {getFieldLabel('balance', 'Solde (FCFA)')}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -206,12 +277,26 @@ function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress
               running = running + op.entry - op.exit;
               return (
                 <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  {isFieldVisible('time') && <td className="border px-2 py-1 text-xs">{fmtTime(op.time)}</td>}
-                  {isFieldVisible('reference') && <td className="border px-2 py-1 font-mono text-xs">{op.ref}</td>}
+                  {isFieldVisible('time') && (
+                    <td className="border px-2 py-1 text-xs">{fmtTime(op.time)}</td>
+                  )}
+                  {isFieldVisible('reference') && (
+                    <td className="border px-2 py-1 font-mono text-xs">{op.ref}</td>
+                  )}
                   {isFieldVisible('label') && <td className="border px-2 py-1">{op.label}</td>}
-                  {isFieldVisible('entry') && <td className="border px-2 py-1 text-right">{op.entry > 0 ? fmt(op.entry) : '—'}</td>}
-                  {isFieldVisible('exit') && <td className="border px-2 py-1 text-right">{op.exit > 0 ? fmt(op.exit) : '—'}</td>}
-                  {isFieldVisible('balance') && <td className="border px-2 py-1 text-right font-medium">{fmt(running)}</td>}
+                  {isFieldVisible('entry') && (
+                    <td className="border px-2 py-1 text-right">
+                      {op.entry > 0 ? fmt(op.entry) : '—'}
+                    </td>
+                  )}
+                  {isFieldVisible('exit') && (
+                    <td className="border px-2 py-1 text-right">
+                      {op.exit > 0 ? fmt(op.exit) : '—'}
+                    </td>
+                  )}
+                  {isFieldVisible('balance') && (
+                    <td className="border px-2 py-1 text-right font-medium">{fmt(running)}</td>
+                  )}
                 </tr>
               );
             });
@@ -219,10 +304,27 @@ function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress
         </tbody>
         <tfoot>
           <tr className="bg-gray-200 font-bold">
-            <td colSpan={[isFieldVisible('time'), isFieldVisible('reference'), isFieldVisible('label')].filter(Boolean).length} className="border px-2 py-1 text-right">TOTAUX</td>
-            {isFieldVisible('entry') && <td className="border px-2 py-1 text-right text-green-800">{fmt(totalEntries)}</td>}
-            {isFieldVisible('exit') && <td className="border px-2 py-1 text-right text-red-800">{fmt(totalExits)}</td>}
-            {isFieldVisible('balance') && <td className="border px-2 py-1 text-right">{fmt(day.theoreticalBalance)}</td>}
+            <td
+              colSpan={
+                [
+                  isFieldVisible('time'),
+                  isFieldVisible('reference'),
+                  isFieldVisible('label'),
+                ].filter(Boolean).length
+              }
+              className="border px-2 py-1 text-right"
+            >
+              TOTAUX
+            </td>
+            {isFieldVisible('entry') && (
+              <td className="border px-2 py-1 text-right text-green-800">{fmt(totalEntries)}</td>
+            )}
+            {isFieldVisible('exit') && (
+              <td className="border px-2 py-1 text-right text-red-800">{fmt(totalExits)}</td>
+            )}
+            {isFieldVisible('balance') && (
+              <td className="border px-2 py-1 text-right">{fmt(day.theoreticalBalance)}</td>
+            )}
           </tr>
         </tfoot>
       </table>
@@ -235,7 +337,16 @@ function JournalDeCaisse({ day, movements, expenses, companyName, companyAddress
 /* ═══════════════════════════════════════════════════════════
    2. BROUILLARD DE CAISSE
    ═══════════════════════════════════════════════════════════ */
-function BrouillardDeCaisse({ day, movements, expenses, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function BrouillardDeCaisse({
+  day,
+  movements,
+  expenses,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   day: CashDayDetail;
   movements: CashDayMovement[];
   expenses: CashDayExpense[];
@@ -249,7 +360,15 @@ function BrouillardDeCaisse({ day, movements, expenses, companyName, companyAddr
 
   // All operations in strict chronological order — this is the "day book" for audit
   const allOps = useMemo(() => {
-    const ops: { time: string; ref: string; type: string; category: string; description: string; amount: number; direction: 'E' | 'S' }[] = [];
+    const ops: {
+      time: string;
+      ref: string;
+      type: string;
+      category: string;
+      description: string;
+      amount: number;
+      direction: 'E' | 'S';
+    }[] = [];
     movements.forEach((m) => {
       ops.push({
         time: m.time,
@@ -278,52 +397,91 @@ function BrouillardDeCaisse({ day, movements, expenses, companyName, companyAddr
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
         title="Brouillard de Caisse"
         subtitle={`Journée ${day.reference} du ${fmtDate(day.openedAt)} — Document d'audit`}
         headerConfig={header}
       />
 
       <p className="mb-3 text-xs text-gray-500 italic">
-        Détail chronologique de toutes les opérations enregistrées — usage audit et contrôle interne.
+        Détail chronologique de toutes les opérations enregistrées — usage audit et contrôle
+        interne.
       </p>
 
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-100">
-            {isFieldVisible('seq') && <th className="border px-2 py-1 text-left">{getFieldLabel('seq', 'N°')}</th>}
-            {isFieldVisible('time') && <th className="border px-2 py-1 text-left">{getFieldLabel('time', 'Heure')}</th>}
-            {isFieldVisible('reference') && <th className="border px-2 py-1 text-left">{getFieldLabel('reference', 'Réf.')}</th>}
-            {isFieldVisible('type') && <th className="border px-2 py-1 text-left">{getFieldLabel('type', 'Type')}</th>}
-            {isFieldVisible('category') && <th className="border px-2 py-1 text-left">{getFieldLabel('category', 'Catégorie')}</th>}
-            {isFieldVisible('description') && <th className="border px-2 py-1 text-left">{getFieldLabel('description', 'Description')}</th>}
-            {isFieldVisible('direction') && <th className="border px-2 py-1 text-center">{getFieldLabel('direction', 'E/S')}</th>}
-            {isFieldVisible('amount') && <th className="border px-2 py-1 text-right">{getFieldLabel('amount', 'Montant (FCFA)')}</th>}
+            {isFieldVisible('seq') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('seq', 'N°')}</th>
+            )}
+            {isFieldVisible('time') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('time', 'Heure')}</th>
+            )}
+            {isFieldVisible('reference') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('reference', 'Réf.')}</th>
+            )}
+            {isFieldVisible('type') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('type', 'Type')}</th>
+            )}
+            {isFieldVisible('category') && (
+              <th className="border px-2 py-1 text-left">
+                {getFieldLabel('category', 'Catégorie')}
+              </th>
+            )}
+            {isFieldVisible('description') && (
+              <th className="border px-2 py-1 text-left">
+                {getFieldLabel('description', 'Description')}
+              </th>
+            )}
+            {isFieldVisible('direction') && (
+              <th className="border px-2 py-1 text-center">{getFieldLabel('direction', 'E/S')}</th>
+            )}
+            {isFieldVisible('amount') && (
+              <th className="border px-2 py-1 text-right">
+                {getFieldLabel('amount', 'Montant (FCFA)')}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
           {allOps.map((op, i) => (
             <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              {isFieldVisible('seq') && <td className="border px-2 py-1 text-xs text-gray-500">{i + 1}</td>}
-              {isFieldVisible('time') && <td className="border px-2 py-1 text-xs">{fmtTime(op.time)}</td>}
-              {isFieldVisible('reference') && <td className="border px-2 py-1 font-mono text-xs">{op.ref}</td>}
+              {isFieldVisible('seq') && (
+                <td className="border px-2 py-1 text-xs text-gray-500">{i + 1}</td>
+              )}
+              {isFieldVisible('time') && (
+                <td className="border px-2 py-1 text-xs">{fmtTime(op.time)}</td>
+              )}
+              {isFieldVisible('reference') && (
+                <td className="border px-2 py-1 font-mono text-xs">{op.ref}</td>
+              )}
               {isFieldVisible('type') && <td className="border px-2 py-1 text-xs">{op.type}</td>}
-              {isFieldVisible('category') && <td className="border px-2 py-1 text-xs">{op.category}</td>}
-              {isFieldVisible('description') && <td className="border px-2 py-1">{op.description}</td>}
+              {isFieldVisible('category') && (
+                <td className="border px-2 py-1 text-xs">{op.category}</td>
+              )}
+              {isFieldVisible('description') && (
+                <td className="border px-2 py-1">{op.description}</td>
+              )}
               {isFieldVisible('direction') && (
-                <td className={`border px-2 py-1 text-center font-bold ${op.direction === 'E' ? 'text-green-700' : 'text-red-700'}`}>
+                <td
+                  className={`border px-2 py-1 text-center font-bold ${op.direction === 'E' ? 'text-green-700' : 'text-red-700'}`}
+                >
                   {op.direction === 'E' ? 'Entrée' : 'Sortie'}
                 </td>
               )}
-              {isFieldVisible('amount') && <td className="border px-2 py-1 text-right">{fmt(op.amount)}</td>}
+              {isFieldVisible('amount') && (
+                <td className="border px-2 py-1 text-right">{fmt(op.amount)}</td>
+              )}
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="mt-3 text-right text-sm font-bold">
-        Total opérations : {allOps.length}
-      </div>
+      <div className="mt-3 text-right text-sm font-bold">Total opérations : {allOps.length}</div>
 
       <ReportFooter printedBy={printedBy} footerConfig={footer} />
     </div>
@@ -333,7 +491,14 @@ function BrouillardDeCaisse({ day, movements, expenses, companyName, companyAddr
 /* ═══════════════════════════════════════════════════════════
    3. SITUATION DE CAISSE
    ═══════════════════════════════════════════════════════════ */
-function SituationDeCaisse({ day, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function SituationDeCaisse({
+  day,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   day: CashDayDetail;
   companyName: string;
   companyAddress?: string;
@@ -347,7 +512,11 @@ function SituationDeCaisse({ day, companyName, companyAddress, companyPhone, com
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
         title="Situation de Caisse"
         subtitle={`Journée ${day.reference} du ${fmtDate(day.openedAt)}`}
         headerConfig={header}
@@ -357,31 +526,49 @@ function SituationDeCaisse({ day, companyName, companyAddress, companyPhone, com
         <tbody>
           {isFieldVisible('openingBalance') && (
             <tr className="bg-gray-50">
-              <td className="border px-4 py-3 font-medium">{getFieldLabel('openingBalance', "Solde d'ouverture")}</td>
-              <td className="border px-4 py-3 text-right font-bold">{fmt(day.openingBalance)} FCFA</td>
+              <td className="border px-4 py-3 font-medium">
+                {getFieldLabel('openingBalance', "Solde d'ouverture")}
+              </td>
+              <td className="border px-4 py-3 text-right font-bold">
+                {fmt(day.openingBalance)} FCFA
+              </td>
             </tr>
           )}
           {isFieldVisible('totalEntries') && (
             <tr>
-              <td className="border px-4 py-3 font-medium">{getFieldLabel('totalEntries', 'Total des entrées')}</td>
-              <td className="border px-4 py-3 text-right font-bold text-green-700">+ {fmt(day.totalEntries)} FCFA</td>
+              <td className="border px-4 py-3 font-medium">
+                {getFieldLabel('totalEntries', 'Total des entrées')}
+              </td>
+              <td className="border px-4 py-3 text-right font-bold text-green-700">
+                + {fmt(day.totalEntries)} FCFA
+              </td>
             </tr>
           )}
           {isFieldVisible('totalExits') && (
             <tr className="bg-gray-50">
-              <td className="border px-4 py-3 font-medium">{getFieldLabel('totalExits', 'Total des sorties')}</td>
-              <td className="border px-4 py-3 text-right font-bold text-red-700">− {fmt(day.totalExits)} FCFA</td>
+              <td className="border px-4 py-3 font-medium">
+                {getFieldLabel('totalExits', 'Total des sorties')}
+              </td>
+              <td className="border px-4 py-3 text-right font-bold text-red-700">
+                − {fmt(day.totalExits)} FCFA
+              </td>
             </tr>
           )}
           {isFieldVisible('theoreticalBalance') && (
             <tr className="bg-blue-50">
-              <td className="border px-4 py-3 text-lg font-bold">{getFieldLabel('theoreticalBalance', 'Solde théorique (système)')}</td>
-              <td className="border px-4 py-3 text-right text-lg font-bold">{fmt(day.theoreticalBalance)} FCFA</td>
+              <td className="border px-4 py-3 text-lg font-bold">
+                {getFieldLabel('theoreticalBalance', 'Solde théorique (système)')}
+              </td>
+              <td className="border px-4 py-3 text-right text-lg font-bold">
+                {fmt(day.theoreticalBalance)} FCFA
+              </td>
             </tr>
           )}
           {isFieldVisible('actualBalance') && (
             <tr className="bg-yellow-50">
-              <td className="border px-4 py-3 text-lg font-bold">{getFieldLabel('actualBalance', 'Solde réel (comptage physique)')}</td>
+              <td className="border px-4 py-3 text-lg font-bold">
+                {getFieldLabel('actualBalance', 'Solde réel (comptage physique)')}
+              </td>
               <td className="border px-4 py-3 text-right text-lg font-bold">
                 {day.actualBalance != null ? `${fmt(day.actualBalance)} FCFA` : 'Non renseigné'}
               </td>
@@ -389,9 +576,14 @@ function SituationDeCaisse({ day, companyName, companyAddress, companyPhone, com
           )}
           {isFieldVisible('variance') && (
             <tr className={hasVariance ? 'bg-red-50' : 'bg-green-50'}>
-              <td className="border px-4 py-3 text-lg font-bold">{getFieldLabel('variance', 'Écart constaté')}</td>
-              <td className={`border px-4 py-3 text-right text-lg font-bold ${hasVariance ? 'text-red-700' : 'text-green-700'}`}>
-                {variance > 0 ? '+' : ''}{fmt(variance)} FCFA
+              <td className="border px-4 py-3 text-lg font-bold">
+                {getFieldLabel('variance', 'Écart constaté')}
+              </td>
+              <td
+                className={`border px-4 py-3 text-right text-lg font-bold ${hasVariance ? 'text-red-700' : 'text-green-700'}`}
+              >
+                {variance > 0 ? '+' : ''}
+                {fmt(variance)} FCFA
               </td>
             </tr>
           )}
@@ -408,8 +600,18 @@ function SituationDeCaisse({ day, companyName, companyAddress, companyPhone, com
       {(isFieldVisible('openedAt') || isFieldVisible('closedAt')) && (
         <div className="mt-4 rounded border border-gray-300 p-3 text-sm">
           <div className="grid grid-cols-2 gap-2">
-            {isFieldVisible('openedAt') && <div><span className="text-gray-500">Ouverture :</span> {fmtDateTime(day.openedAt)} par {day.openedByName}</div>}
-            {isFieldVisible('closedAt') && day.closedAt && <div><span className="text-gray-500">Clôture :</span> {fmtDateTime(day.closedAt)} par {day.closedByName}</div>}
+            {isFieldVisible('openedAt') && (
+              <div>
+                <span className="text-gray-500">Ouverture :</span> {fmtDateTime(day.openedAt)} par{' '}
+                {day.openedByName}
+              </div>
+            )}
+            {isFieldVisible('closedAt') && day.closedAt && (
+              <div>
+                <span className="text-gray-500">Clôture :</span> {fmtDateTime(day.closedAt)} par{' '}
+                {day.closedByName}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -422,7 +624,16 @@ function SituationDeCaisse({ day, companyName, companyAddress, companyPhone, com
 /* ═══════════════════════════════════════════════════════════
    4. FICHE DE COMPTAGE DE CAISSE
    ═══════════════════════════════════════════════════════════ */
-function FicheComptage({ day, counts, otherAmounts, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function FicheComptage({
+  day,
+  counts,
+  otherAmounts,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   day: CashDayDetail;
   counts: Record<number, number>;
   otherAmounts: { cheques: number; mobileMoney: number };
@@ -438,7 +649,11 @@ function FicheComptage({ day, counts, otherAmounts, companyName, companyAddress,
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
         title="Fiche de Comptage de Caisse"
         subtitle={`Journée ${day.reference} du ${fmtDate(day.openedAt)}`}
         headerConfig={header}
@@ -469,7 +684,9 @@ function FicheComptage({ day, counts, otherAmounts, companyName, companyAddress,
         </tbody>
         <tfoot>
           <tr className="bg-gray-200 font-bold">
-            <td colSpan={3} className="border px-3 py-1 text-right">Total espèces</td>
+            <td colSpan={3} className="border px-3 py-1 text-right">
+              Total espèces
+            </td>
             <td className="border px-3 py-1 text-right">{fmt(cashTotal)} FCFA</td>
           </tr>
         </tfoot>
@@ -507,7 +724,9 @@ function FicheComptage({ day, counts, otherAmounts, companyName, companyAddress,
           </div>
           <div>
             <span className="text-gray-500">Écart :</span>
-            <span className={`ml-2 font-bold ${Math.abs(grandTotal - day.theoreticalBalance) > 0.5 ? 'text-red-700' : 'text-green-700'}`}>
+            <span
+              className={`ml-2 font-bold ${Math.abs(grandTotal - day.theoreticalBalance) > 0.5 ? 'text-red-700' : 'text-green-700'}`}
+            >
               {fmt(grandTotal - day.theoreticalBalance)} FCFA
             </span>
           </div>
@@ -522,7 +741,14 @@ function FicheComptage({ day, counts, otherAmounts, companyName, companyAddress,
 /* ═══════════════════════════════════════════════════════════
    5. RAPPORT DES ÉCARTS DE CAISSE
    ═══════════════════════════════════════════════════════════ */
-function RapportEcarts({ day, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function RapportEcarts({
+  day,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   day: CashDayDetail;
   companyName: string;
   companyAddress?: string;
@@ -537,7 +763,11 @@ function RapportEcarts({ day, companyName, companyAddress, companyPhone, company
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
         title="Rapport des Écarts de Caisse"
         subtitle={`Journée ${day.reference} du ${fmtDate(day.openedAt)}`}
         headerConfig={header}
@@ -564,16 +794,21 @@ function RapportEcarts({ day, companyName, companyAddress, companyPhone, company
             <tbody>
               <tr className="bg-gray-50">
                 <td className="border px-4 py-3 font-medium">Solde théorique</td>
-                <td className="border px-4 py-3 text-right font-bold">{fmt(day.theoreticalBalance)} FCFA</td>
+                <td className="border px-4 py-3 text-right font-bold">
+                  {fmt(day.theoreticalBalance)} FCFA
+                </td>
               </tr>
               <tr>
                 <td className="border px-4 py-3 font-medium">Solde réel</td>
-                <td className="border px-4 py-3 text-right font-bold">{day.actualBalance != null ? `${fmt(day.actualBalance)} FCFA` : '—'}</td>
+                <td className="border px-4 py-3 text-right font-bold">
+                  {day.actualBalance != null ? `${fmt(day.actualBalance)} FCFA` : '—'}
+                </td>
               </tr>
               <tr className="bg-red-50">
                 <td className="border px-4 py-3 text-lg font-bold">Écart (montant)</td>
                 <td className="border px-4 py-3 text-right text-lg font-bold text-red-700">
-                  {variance > 0 ? '+' : ''}{fmt(variance)} FCFA
+                  {variance > 0 ? '+' : ''}
+                  {fmt(variance)} FCFA
                 </td>
               </tr>
               <tr className="bg-red-50">
@@ -594,7 +829,9 @@ function RapportEcarts({ day, companyName, companyAddress, companyPhone, company
           <div className="rounded border border-gray-300 bg-gray-50 p-4">
             <h4 className="mb-2 font-bold">Justification de l'écart :</h4>
             <div className="min-h-[60px] rounded border bg-white p-3 text-sm">
-              {day.comment || <span className="italic text-gray-400">Aucune justification renseignée</span>}
+              {day.comment || (
+                <span className="italic text-gray-400">Aucune justification renseignée</span>
+              )}
             </div>
           </div>
         </>
@@ -602,10 +839,22 @@ function RapportEcarts({ day, companyName, companyAddress, companyPhone, company
 
       <div className="mt-4 rounded border border-gray-300 p-3 text-sm">
         <div className="grid grid-cols-2 gap-2">
-          <div><span className="text-gray-500">Caissier :</span> {day.openedByName}</div>
-          {day.closedByName && <div><span className="text-gray-500">Clôturé par :</span> {day.closedByName}</div>}
-          <div><span className="text-gray-500">Ouverture :</span> {fmtDateTime(day.openedAt)}</div>
-          {day.closedAt && <div><span className="text-gray-500">Clôture :</span> {fmtDateTime(day.closedAt)}</div>}
+          <div>
+            <span className="text-gray-500">Caissier :</span> {day.openedByName}
+          </div>
+          {day.closedByName && (
+            <div>
+              <span className="text-gray-500">Clôturé par :</span> {day.closedByName}
+            </div>
+          )}
+          <div>
+            <span className="text-gray-500">Ouverture :</span> {fmtDateTime(day.openedAt)}
+          </div>
+          {day.closedAt && (
+            <div>
+              <span className="text-gray-500">Clôture :</span> {fmtDateTime(day.closedAt)}
+            </div>
+          )}
         </div>
       </div>
 
@@ -673,7 +922,8 @@ export default function CashReportsPage() {
   // Outside click to close dropdown
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setDropdownOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -684,11 +934,36 @@ export default function CashReportsPage() {
   }, []);
 
   const reports: { id: ReportType; label: string; icon: typeof FileText; desc: string }[] = [
-    { id: 'journal', label: t('cashReports.journal.title'), icon: FileText, desc: t('cashReports.journal.desc') },
-    { id: 'brouillard', label: t('cashReports.brouillard.title'), icon: BookOpen, desc: t('cashReports.brouillard.desc') },
-    { id: 'situation', label: t('cashReports.situation.title'), icon: Scale, desc: t('cashReports.situation.desc') },
-    { id: 'comptage', label: t('cashReports.comptage.title'), icon: Coins, desc: t('cashReports.comptage.desc') },
-    { id: 'ecarts', label: t('cashReports.ecarts.title'), icon: AlertTriangle, desc: t('cashReports.ecarts.desc') },
+    {
+      id: 'journal',
+      label: t('cashReports.journal.title'),
+      icon: FileText,
+      desc: t('cashReports.journal.desc'),
+    },
+    {
+      id: 'brouillard',
+      label: t('cashReports.brouillard.title'),
+      icon: BookOpen,
+      desc: t('cashReports.brouillard.desc'),
+    },
+    {
+      id: 'situation',
+      label: t('cashReports.situation.title'),
+      icon: Scale,
+      desc: t('cashReports.situation.desc'),
+    },
+    {
+      id: 'comptage',
+      label: t('cashReports.comptage.title'),
+      icon: Coins,
+      desc: t('cashReports.comptage.desc'),
+    },
+    {
+      id: 'ecarts',
+      label: t('cashReports.ecarts.title'),
+      icon: AlertTriangle,
+      desc: t('cashReports.ecarts.desc'),
+    },
   ];
 
   return (
@@ -721,7 +996,9 @@ export default function CashReportsPage() {
                     ? `${selectedDay.reference} — ${new Date(selectedDay.closedAt || selectedDay.openedAt).toLocaleDateString('fr-FR')}${selectedDay.status !== 'CLOSED' ? ` (${selectedDay.status === 'OPEN' ? 'En cours' : 'En attente'})` : ''}`
                     : t('cashReports.selectPlaceholder')}
                 </span>
-                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                />
               </button>
               {dropdownOpen && (
                 <div className="absolute z-20 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg">
@@ -738,14 +1015,18 @@ export default function CashReportsPage() {
                   </div>
                   <ul className="max-h-60 overflow-y-auto py-1">
                     {filteredDays.length === 0 ? (
-                      <li className="px-3 py-2 text-center text-sm text-gray-400">{t('cashReports.noResults')}</li>
+                      <li className="px-3 py-2 text-center text-sm text-gray-400">
+                        {t('cashReports.noResults')}
+                      </li>
                     ) : (
                       filteredDays.map((day) => (
                         <li key={day.id}>
                           <button
                             type="button"
                             className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50 ${
-                              day.id === selectedCashDayId ? 'bg-brand-gold/10 font-medium text-brand-gold' : 'text-gray-700'
+                              day.id === selectedCashDayId
+                                ? 'bg-brand-gold/10 font-medium text-brand-gold'
+                                : 'text-gray-700'
                             }`}
                             onClick={() => {
                               setSelectedCashDayId(day.id);
@@ -755,9 +1036,15 @@ export default function CashReportsPage() {
                               setOtherAmounts({ cheques: 0, mobileMoney: 0 });
                             }}
                           >
-                            <span>{day.reference} — {new Date(day.closedAt || day.openedAt).toLocaleDateString('fr-FR')}</span>
+                            <span>
+                              {day.reference} —{' '}
+                              {new Date(day.closedAt || day.openedAt).toLocaleDateString('fr-FR')}
+                            </span>
                             {day.status !== 'CLOSED' && (
-                              <Badge variant={day.status === 'OPEN' ? 'info' : 'warning'} className="ml-2 text-[10px] px-1.5 py-0">
+                              <Badge
+                                variant={day.status === 'OPEN' ? 'info' : 'warning'}
+                                className="ml-2 text-[10px] px-1.5 py-0"
+                              >
                                 {day.status === 'OPEN' ? 'En cours' : 'En attente'}
                               </Badge>
                             )}
@@ -780,7 +1067,8 @@ export default function CashReportsPage() {
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 flex items-center gap-2 text-sm text-blue-800">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                 <span>
-                  <strong>Journée en cours</strong> — Les rapports sont en temps réel. Le formulaire de comptage est modifiable tant que la caisse n'est pas clôturée.
+                  <strong>Journée en cours</strong> — Les rapports sont en temps réel. Le formulaire
+                  de comptage est modifiable tant que la caisse n'est pas clôturée.
                 </span>
               </div>
             )}
@@ -808,9 +1096,13 @@ export default function CashReportsPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{t('cashReports.comptage.formTitle')}</CardTitle>
+                    <CardTitle className="text-base">
+                      {t('cashReports.comptage.formTitle')}
+                    </CardTitle>
                     {!isDayOpen && (
-                      <Badge variant="default" className="text-xs">Lecture seule — journée clôturée</Badge>
+                      <Badge variant="default" className="text-xs">
+                        Lecture seule — journée clôturée
+                      </Badge>
                     )}
                   </div>
                 </CardHeader>
@@ -826,35 +1118,56 @@ export default function CashReportsPage() {
                             disabled={!isDayOpen}
                             className={`w-20 rounded border border-gray-300 px-2 py-1 text-right text-sm ${!isDayOpen ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                             value={counts[d.value] || ''}
-                            onChange={(e) => setCounts((prev) => ({ ...prev, [d.value]: parseInt(e.target.value) || 0 }))}
+                            onChange={(e) =>
+                              setCounts((prev) => ({
+                                ...prev,
+                                [d.value]: parseInt(e.target.value) || 0,
+                              }))
+                            }
                             placeholder="0"
                           />
-                          <span className="text-xs text-gray-400">= {fmt((counts[d.value] || 0) * d.value)}</span>
+                          <span className="text-xs text-gray-400">
+                            = {fmt((counts[d.value] || 0) * d.value)}
+                          </span>
                         </div>
                       ))}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700">{t('cashReports.comptage.cheques')}</label>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                          {t('cashReports.comptage.cheques')}
+                        </label>
                         <input
                           type="number"
                           min={0}
                           disabled={!isDayOpen}
                           className={`w-full rounded border border-gray-300 px-3 py-2 text-sm ${!isDayOpen ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                           value={otherAmounts.cheques || ''}
-                          onChange={(e) => setOtherAmounts((p) => ({ ...p, cheques: parseFloat(e.target.value) || 0 }))}
+                          onChange={(e) =>
+                            setOtherAmounts((p) => ({
+                              ...p,
+                              cheques: parseFloat(e.target.value) || 0,
+                            }))
+                          }
                           placeholder="0"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700">{t('cashReports.comptage.mobileMoney')}</label>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                          {t('cashReports.comptage.mobileMoney')}
+                        </label>
                         <input
                           type="number"
                           min={0}
                           disabled={!isDayOpen}
                           className={`w-full rounded border border-gray-300 px-3 py-2 text-sm ${!isDayOpen ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                           value={otherAmounts.mobileMoney || ''}
-                          onChange={(e) => setOtherAmounts((p) => ({ ...p, mobileMoney: parseFloat(e.target.value) || 0 }))}
+                          onChange={(e) =>
+                            setOtherAmounts((p) => ({
+                              ...p,
+                              mobileMoney: parseFloat(e.target.value) || 0,
+                            }))
+                          }
                           placeholder="0"
                         />
                       </div>
@@ -862,7 +1175,12 @@ export default function CashReportsPage() {
                     <div className="flex items-center justify-between rounded bg-gray-50 p-3">
                       <span className="font-medium">Total comptage :</span>
                       <span className="text-lg font-bold">
-                        {fmt(DENOMINATIONS.reduce((s, d) => s + d.value * (counts[d.value] || 0), 0) + otherAmounts.cheques + otherAmounts.mobileMoney)} FCFA
+                        {fmt(
+                          DENOMINATIONS.reduce((s, d) => s + d.value * (counts[d.value] || 0), 0) +
+                            otherAmounts.cheques +
+                            otherAmounts.mobileMoney,
+                        )}{' '}
+                        FCFA
                       </span>
                     </div>
                   </div>
@@ -889,24 +1207,60 @@ export default function CashReportsPage() {
               <CardContent>
                 <div ref={printRef} className="rounded border bg-white p-6">
                   {activeReport === 'journal' && (
-                    <JournalDeCaisse day={dayDetail} movements={opsData.movements} expenses={opsData.expenses}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <JournalDeCaisse
+                      day={dayDetail}
+                      movements={opsData.movements}
+                      expenses={opsData.expenses}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'brouillard' && (
-                    <BrouillardDeCaisse day={dayDetail} movements={opsData.movements} expenses={opsData.expenses}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <BrouillardDeCaisse
+                      day={dayDetail}
+                      movements={opsData.movements}
+                      expenses={opsData.expenses}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'situation' && (
-                    <SituationDeCaisse day={dayDetail}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <SituationDeCaisse
+                      day={dayDetail}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'comptage' && (
-                    <FicheComptage day={dayDetail} counts={counts} otherAmounts={otherAmounts}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <FicheComptage
+                      day={dayDetail}
+                      counts={counts}
+                      otherAmounts={otherAmounts}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'ecarts' && (
-                    <RapportEcarts day={dayDetail}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <RapportEcarts
+                      day={dayDetail}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                 </div>
               </CardContent>
@@ -918,26 +1272,65 @@ export default function CashReportsPage() {
       {/* Print area — hidden on screen, shown on print */}
       <div className="print-only">
         {dayDetail && opsData && (
-          <div className="p-4 text-black" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' }}>
+          <div
+            className="p-4 text-black"
+            style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' }}
+          >
             {activeReport === 'journal' && (
-              <JournalDeCaisse day={dayDetail} movements={opsData.movements} expenses={opsData.expenses}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <JournalDeCaisse
+                day={dayDetail}
+                movements={opsData.movements}
+                expenses={opsData.expenses}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'brouillard' && (
-              <BrouillardDeCaisse day={dayDetail} movements={opsData.movements} expenses={opsData.expenses}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <BrouillardDeCaisse
+                day={dayDetail}
+                movements={opsData.movements}
+                expenses={opsData.expenses}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'situation' && (
-              <SituationDeCaisse day={dayDetail}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <SituationDeCaisse
+                day={dayDetail}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'comptage' && (
-              <FicheComptage day={dayDetail} counts={counts} otherAmounts={otherAmounts}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <FicheComptage
+                day={dayDetail}
+                counts={counts}
+                otherAmounts={otherAmounts}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'ecarts' && (
-              <RapportEcarts day={dayDetail}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <RapportEcarts
+                day={dayDetail}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
           </div>
         )}

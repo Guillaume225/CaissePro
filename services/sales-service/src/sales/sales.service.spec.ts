@@ -1,9 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import {
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SalesService, SalesUser } from './sales.service';
 import { Sale } from '../entities/sale.entity';
@@ -138,7 +135,16 @@ describe('SalesService', () => {
         ...mockSale,
         id: 's2',
         client: mockClient,
-        items: [{ ...mockProduct, quantity: 2, lineTotalHt: 20000, lineVat: 3600, lineTotalTtc: 23600, product: mockProduct }],
+        items: [
+          {
+            ...mockProduct,
+            quantity: 2,
+            lineTotalHt: 20000,
+            lineVat: 3600,
+            lineTotalTtc: 23600,
+            product: mockProduct,
+          },
+        ],
         payments: [],
         receivable: null,
       });
@@ -221,9 +227,9 @@ describe('SalesService', () => {
   describe('update', () => {
     it('should only update DRAFT sales', async () => {
       mockSaleRepo.findOne.mockResolvedValue({ ...mockSale, status: SaleStatus.CONFIRMED });
-      await expect(
-        service.update('s1', { notes: 'test' }, USER),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.update('s1', { notes: 'test' }, USER)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -237,7 +243,15 @@ describe('SalesService', () => {
           client: mockClient,
           items: [],
           payments: [],
-          receivable: { id: 'r1', totalAmount: 11800, paidAmount: 0, outstandingAmount: 11800, dueDate: '2025-02-15', agingBucket: 'CURRENT', isSettled: false },
+          receivable: {
+            id: 'r1',
+            totalAmount: 11800,
+            paidAmount: 0,
+            outstandingAmount: 11800,
+            dueDate: '2025-02-15',
+            agingBucket: 'CURRENT',
+            isSettled: false,
+          },
         }); // findById
       mockSaleRepo.save.mockResolvedValue({ ...mockSale, status: SaleStatus.CONFIRMED });
       mockReceivableRepo.create.mockReturnValue({ id: 'r1' });

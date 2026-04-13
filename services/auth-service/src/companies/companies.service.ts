@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Company } from '../entities/company.entity';
@@ -112,11 +108,7 @@ export class CompaniesService {
     return this.toResponseDto(saved);
   }
 
-  async switchUserCompany(
-    userId: string,
-    companyId: string,
-    tenantId: string,
-  ): Promise<void> {
+  async switchUserCompany(userId: string, companyId: string, tenantId: string): Promise<void> {
     const company = await this.companyRepo.findOne({
       where: { id: companyId, tenantId, isActive: true },
     });

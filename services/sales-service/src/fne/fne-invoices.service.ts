@@ -141,18 +141,28 @@ export class FneInvoicesService {
 
     const lineVat = lineTotalHt * (taxRatePct / 100);
     const lineTotalTtc = lineTotalHt + lineVat;
-    return { lineTotalHt: Math.round(lineTotalHt * 100) / 100, lineVat: Math.round(lineVat * 100) / 100, lineTotalTtc: Math.round(lineTotalTtc * 100) / 100 };
+    return {
+      lineTotalHt: Math.round(lineTotalHt * 100) / 100,
+      lineVat: Math.round(lineVat * 100) / 100,
+      lineTotalTtc: Math.round(lineTotalTtc * 100) / 100,
+    };
   }
 
   /* ─── Create invoice + certify with FNE API ─── */
-  async createAndCertify(dto: CreateFneInvoiceDto, userId: string, companyId?: string): Promise<FneInvoice> {
+  async createAndCertify(
+    dto: CreateFneInvoiceDto,
+    userId: string,
+    companyId?: string,
+  ): Promise<FneInvoice> {
     // Validate
     if (!dto.items?.length) throw new BadRequestException('Au moins un article est requis');
     const VALID_FNE_TAXES = ['TVA', 'TVAB', 'TVAC', 'TVAD', 'TVAE'];
     for (const it of dto.items) {
       const stdTaxes = (it.taxes ?? []).filter((t) => VALID_FNE_TAXES.includes(t));
       if (stdTaxes.length !== 1) {
-        throw new BadRequestException(`Chaque article doit avoir exactement une taxe standard (TVA, TVAB, TVAC, TVAD ou TVAE). Article "${it.description}" en a ${stdTaxes.length}.`);
+        throw new BadRequestException(
+          `Chaque article doit avoir exactement une taxe standard (TVA, TVAB, TVAC, TVAD ou TVAE). Article "${it.description}" en a ${stdTaxes.length}.`,
+        );
       }
     }
     if (dto.template === FneTemplate.B2B && !dto.clientNcc) {
@@ -203,17 +213,19 @@ export class FneInvoicesService {
       const totals = this.computeLineTotals(it);
       subtotalHt += totals.lineTotalHt;
       totalVat += totals.lineVat;
-      itemEntities.push(this.itemRepo.create({
-        reference: it.reference || null,
-        description: it.description,
-        quantity: it.quantity,
-        amount: it.amount,
-        discount: it.discount ?? 0,
-        measurementUnit: it.measurementUnit || null,
-        taxes: it.taxes,
-        customTaxes: it.customTaxes || null,
-        ...totals,
-      }));
+      itemEntities.push(
+        this.itemRepo.create({
+          reference: it.reference || null,
+          description: it.description,
+          quantity: it.quantity,
+          amount: it.amount,
+          discount: it.discount ?? 0,
+          measurementUnit: it.measurementUnit || null,
+          taxes: it.taxes,
+          customTaxes: it.customTaxes || null,
+          ...totals,
+        }),
+      );
     }
 
     // Global discount
@@ -289,7 +301,9 @@ export class FneInvoicesService {
 
       // Store FNE item IDs
       if (res.invoice && Array.isArray((res.invoice as Record<string, unknown>).items)) {
-        const fneItems = (res.invoice as Record<string, unknown>).items as Array<Record<string, unknown>>;
+        const fneItems = (res.invoice as Record<string, unknown>).items as Array<
+          Record<string, unknown>
+        >;
         for (let i = 0; i < Math.min(fneItems.length, saved.items.length); i++) {
           saved.items[i].fneItemId = String(fneItems[i].id);
         }
@@ -318,7 +332,9 @@ export class FneInvoicesService {
   async certify(id: string, userId: string, companyId?: string): Promise<FneInvoice> {
     const invoice = await this.findById(id);
     if (invoice.status !== FneInvoiceStatus.DRAFT && invoice.status !== FneInvoiceStatus.ERROR) {
-      throw new BadRequestException('Seules les factures en brouillon ou en erreur peuvent être certifiées');
+      throw new BadRequestException(
+        'Seules les factures en brouillon ou en erreur peuvent être certifiées',
+      );
     }
 
     // Credit note → use refund API on the original invoice
@@ -378,7 +394,9 @@ export class FneInvoicesService {
       }
 
       if (res.invoice && Array.isArray((res.invoice as Record<string, unknown>).items)) {
-        const fneItems = (res.invoice as Record<string, unknown>).items as Array<Record<string, unknown>>;
+        const fneItems = (res.invoice as Record<string, unknown>).items as Array<
+          Record<string, unknown>
+        >;
         for (let i = 0; i < Math.min(fneItems.length, invoice.items.length); i++) {
           invoice.items[i].fneItemId = String(fneItems[i].id);
         }
@@ -391,7 +409,11 @@ export class FneInvoicesService {
         action: AuditAction.CREATE,
         entityType: 'fne_invoice',
         entityId: invoice.id,
-        newValue: { reference: invoice.reference, fneReference: res.reference, status: 'CERTIFIED' },
+        newValue: {
+          reference: invoice.reference,
+          fneReference: res.reference,
+          status: 'CERTIFIED',
+        },
       });
 
       return this.findById(invoice.id);
@@ -404,13 +426,17 @@ export class FneInvoicesService {
   }
 
   /* ─── Certify a credit note via FNE refund API ─── */
-  private async certifyCreditNote(invoice: FneInvoice, userId: string, companyId?: string): Promise<FneInvoice> {
+  private async certifyCreditNote(
+    invoice: FneInvoice,
+    userId: string,
+    companyId?: string,
+  ): Promise<FneInvoice> {
     if (!invoice.creditNoteOf) {
-      throw new BadRequestException('Avoir sans facture d\'origine');
+      throw new BadRequestException("Avoir sans facture d'origine");
     }
     const original = await this.findById(invoice.creditNoteOf);
     if (!original.fneInvoiceId) {
-      throw new BadRequestException('ID FNE manquant sur la facture d\'origine');
+      throw new BadRequestException("ID FNE manquant sur la facture d'origine");
     }
 
     const refundItems = invoice.items
@@ -434,7 +460,9 @@ export class FneInvoicesService {
       invoice.fneReference = res.reference;
       invoice.fneToken = res.token;
       invoice.fneResponse = res as unknown as Record<string, unknown>;
-      invoice.fneInvoiceId = res.invoice ? String((res.invoice as Record<string, unknown>)?.id ?? '') : '';
+      invoice.fneInvoiceId = res.invoice
+        ? String((res.invoice as Record<string, unknown>)?.id ?? '')
+        : '';
       invoice.balanceSticker = res.balance_funds ?? 0;
       invoice.fneWarning = res.warning ?? false;
       invoice.status = FneInvoiceStatus.CERTIFIED;
@@ -449,7 +477,11 @@ export class FneInvoicesService {
         action: AuditAction.CREATE,
         entityType: 'fne_credit_note',
         entityId: invoice.id,
-        newValue: { reference: invoice.reference, fneReference: res.reference, originalInvoice: original.reference },
+        newValue: {
+          reference: invoice.reference,
+          fneReference: res.reference,
+          originalInvoice: original.reference,
+        },
       });
 
       return this.findById(invoice.id);
@@ -480,8 +512,13 @@ export class FneInvoicesService {
     _companyId?: string,
   ): Promise<FneInvoice> {
     const original = await this.findById(invoiceId);
-    if (original.status !== FneInvoiceStatus.CERTIFIED && original.status !== FneInvoiceStatus.CREDIT_NOTE) {
-      throw new BadRequestException('Seules les factures certifiées peuvent faire l\'objet d\'un avoir');
+    if (
+      original.status !== FneInvoiceStatus.CERTIFIED &&
+      original.status !== FneInvoiceStatus.CREDIT_NOTE
+    ) {
+      throw new BadRequestException(
+        "Seules les factures certifiées peuvent faire l'objet d'un avoir",
+      );
     }
 
     // Validate refund items
@@ -490,7 +527,9 @@ export class FneInvoicesService {
       if (!item) throw new BadRequestException(`Article FNE ${ri.fneItemId} introuvable`);
       const remaining = Number(item.quantity) - Number(item.quantityReturned);
       if (ri.quantity > remaining) {
-        throw new BadRequestException(`Quantité max retournable pour "${item.description}" : ${remaining}`);
+        throw new BadRequestException(
+          `Quantité max retournable pour "${item.description}" : ${remaining}`,
+        );
       }
     }
 
@@ -517,18 +556,20 @@ export class FneInvoicesService {
       subtotalHt += totals.lineTotalHt;
       totalVat += totals.lineVat;
 
-      creditItems.push(this.itemRepo.create({
-        fneItemId: srcItem.fneItemId,
-        reference: srcItem.reference,
-        description: srcItem.description,
-        quantity: ri.quantity,
-        amount: srcItem.amount,
-        discount: srcItem.discount,
-        measurementUnit: srcItem.measurementUnit,
-        taxes: srcItem.taxes,
-        customTaxes: srcItem.customTaxes,
-        ...totals,
-      }));
+      creditItems.push(
+        this.itemRepo.create({
+          fneItemId: srcItem.fneItemId,
+          reference: srcItem.reference,
+          description: srcItem.description,
+          quantity: ri.quantity,
+          amount: srcItem.amount,
+          discount: srcItem.discount,
+          measurementUnit: srcItem.measurementUnit,
+          taxes: srcItem.taxes,
+          customTaxes: srcItem.customTaxes,
+          ...totals,
+        }),
+      );
     }
 
     const totalTtc = subtotalHt + totalVat;
@@ -592,7 +633,9 @@ export class FneInvoicesService {
   async update(id: string, dto: UpdateFneInvoiceDto, userId: string): Promise<FneInvoice> {
     const invoice = await this.findById(id);
     if (invoice.status !== FneInvoiceStatus.DRAFT && invoice.status !== FneInvoiceStatus.ERROR) {
-      throw new BadRequestException('Seules les factures en brouillon ou en erreur peuvent être modifiées');
+      throw new BadRequestException(
+        'Seules les factures en brouillon ou en erreur peuvent être modifiées',
+      );
     }
 
     // Validate
@@ -609,7 +652,9 @@ export class FneInvoicesService {
 
     // Update scalar fields
     if (dto.template !== undefined) invoice.template = dto.template;
-    if (dto.invoiceType !== undefined) invoice.invoiceType = dto.invoiceType === 'estimate' ? FneInvoiceType.ESTIMATE : FneInvoiceType.SALE;
+    if (dto.invoiceType !== undefined)
+      invoice.invoiceType =
+        dto.invoiceType === 'estimate' ? FneInvoiceType.ESTIMATE : FneInvoiceType.SALE;
     if (dto.paymentMethod !== undefined) invoice.paymentMethod = dto.paymentMethod;
     if (dto.clientCompanyName !== undefined) invoice.clientCompanyName = dto.clientCompanyName;
     if (dto.clientPhone !== undefined) invoice.clientPhone = dto.clientPhone;
@@ -618,12 +663,14 @@ export class FneInvoicesService {
     if (dto.clientSellerName !== undefined) invoice.clientSellerName = dto.clientSellerName || null;
     if (dto.pointOfSale !== undefined) invoice.pointOfSale = dto.pointOfSale;
     if (dto.establishment !== undefined) invoice.establishment = dto.establishment;
-    if (dto.commercialMessage !== undefined) invoice.commercialMessage = dto.commercialMessage || null;
+    if (dto.commercialMessage !== undefined)
+      invoice.commercialMessage = dto.commercialMessage || null;
     if (dto.footer !== undefined) invoice.footer = dto.footer || null;
     if (dto.isRne !== undefined) invoice.isRne = dto.isRne;
     if (dto.rne !== undefined) invoice.rne = dto.rne || null;
     if (dto.foreignCurrency !== undefined) invoice.foreignCurrency = dto.foreignCurrency || null;
-    if (dto.foreignCurrencyRate !== undefined) invoice.foreignCurrencyRate = dto.foreignCurrency ? Number(dto.foreignCurrencyRate ?? 0) : 0;
+    if (dto.foreignCurrencyRate !== undefined)
+      invoice.foreignCurrencyRate = dto.foreignCurrency ? Number(dto.foreignCurrencyRate ?? 0) : 0;
     if (dto.customTaxes !== undefined) invoice.customTaxes = dto.customTaxes || null;
     if (dto.discount !== undefined) invoice.discountPct = Number(dto.discount);
 
@@ -634,7 +681,9 @@ export class FneInvoicesService {
       for (const it of dto.items) {
         const stdTaxes = (it.taxes ?? []).filter((t) => VALID_FNE_TAXES.includes(t));
         if (stdTaxes.length !== 1) {
-          throw new BadRequestException(`Chaque article doit avoir exactement une taxe standard. Article "${it.description}" en a ${stdTaxes.length}.`);
+          throw new BadRequestException(
+            `Chaque article doit avoir exactement une taxe standard. Article "${it.description}" en a ${stdTaxes.length}.`,
+          );
         }
       }
 
@@ -649,17 +698,19 @@ export class FneInvoicesService {
         const totals = this.computeLineTotals(it);
         subtotalHt += totals.lineTotalHt;
         totalVat += totals.lineVat;
-        itemEntities.push(this.itemRepo.create({
-          reference: it.reference || null,
-          description: it.description,
-          quantity: it.quantity,
-          amount: it.amount,
-          discount: it.discount ?? 0,
-          measurementUnit: it.measurementUnit || null,
-          taxes: it.taxes,
-          customTaxes: it.customTaxes || null,
-          ...totals,
-        }));
+        itemEntities.push(
+          this.itemRepo.create({
+            reference: it.reference || null,
+            description: it.description,
+            quantity: it.quantity,
+            amount: it.amount,
+            discount: it.discount ?? 0,
+            measurementUnit: it.measurementUnit || null,
+            taxes: it.taxes,
+            customTaxes: it.customTaxes || null,
+            ...totals,
+          }),
+        );
       }
 
       const globalDiscountPct = Number(dto.discount ?? invoice.discountPct ?? 0);
@@ -700,7 +751,9 @@ export class FneInvoicesService {
   async remove(id: string, userId: string): Promise<{ deleted: true }> {
     const invoice = await this.findById(id);
     if (invoice.status !== FneInvoiceStatus.DRAFT && invoice.status !== FneInvoiceStatus.ERROR) {
-      throw new BadRequestException('Seules les factures non certifiées (brouillon ou erreur) peuvent être supprimées');
+      throw new BadRequestException(
+        'Seules les factures non certifiées (brouillon ou erreur) peuvent être supprimées',
+      );
     }
 
     const reference = invoice.reference;
@@ -719,7 +772,14 @@ export class FneInvoicesService {
   }
 
   /* ─── Bulk certify DRAFT/ERROR invoices ─── */
-  async bulkCertify(ids: string[], userId: string, companyId?: string): Promise<{ certified: number; errors: Array<{ id: string; reference?: string; error: string }> }> {
+  async bulkCertify(
+    ids: string[],
+    userId: string,
+    companyId?: string,
+  ): Promise<{
+    certified: number;
+    errors: Array<{ id: string; reference?: string; error: string }>;
+  }> {
     if (!ids?.length) throw new BadRequestException('Aucun ID fourni');
     if (ids.length > 50) throw new BadRequestException('Maximum 50 factures à la fois');
 
@@ -731,7 +791,9 @@ export class FneInvoicesService {
         await this.certify(id, userId, companyId);
         certified++;
       } catch (err) {
-        const invoice = await this.invoiceRepo.findOne({ where: { id }, select: ['id', 'reference'] }).catch(() => null);
+        const invoice = await this.invoiceRepo
+          .findOne({ where: { id }, select: ['id', 'reference'] })
+          .catch(() => null);
         errors.push({
           id,
           reference: invoice?.reference ?? undefined,
@@ -744,7 +806,10 @@ export class FneInvoicesService {
   }
 
   /* ─── Bulk delete non-certified invoices ─── */
-  async bulkRemove(ids: string[], userId: string): Promise<{ deleted: number; skipped: number; errors: string[] }> {
+  async bulkRemove(
+    ids: string[],
+    userId: string,
+  ): Promise<{ deleted: number; skipped: number; errors: string[] }> {
     if (!ids?.length) throw new BadRequestException('Aucun ID fourni');
     if (ids.length > 100) throw new BadRequestException('Maximum 100 factures à la fois');
 
@@ -783,7 +848,9 @@ export class FneInvoicesService {
         for (const it of dto.items) {
           const stdTaxes = (it.taxes ?? []).filter((t) => VALID_FNE_TAXES.includes(t));
           if (stdTaxes.length !== 1) {
-            throw new BadRequestException(`Article "${it.description}" doit avoir exactement une taxe standard.`);
+            throw new BadRequestException(
+              `Article "${it.description}" doit avoir exactement une taxe standard.`,
+            );
           }
         }
 
@@ -821,17 +888,19 @@ export class FneInvoicesService {
           const totals = this.computeLineTotals(it);
           subtotalHt += totals.lineTotalHt;
           totalVat += totals.lineVat;
-          itemEntities.push(this.itemRepo.create({
-            reference: it.reference || null,
-            description: it.description,
-            quantity: it.quantity,
-            amount: it.amount,
-            discount: it.discount ?? 0,
-            measurementUnit: it.measurementUnit || null,
-            taxes: it.taxes,
-            customTaxes: it.customTaxes || null,
-            ...totals,
-          }));
+          itemEntities.push(
+            this.itemRepo.create({
+              reference: it.reference || null,
+              description: it.description,
+              quantity: it.quantity,
+              amount: it.amount,
+              discount: it.discount ?? 0,
+              measurementUnit: it.measurementUnit || null,
+              taxes: it.taxes,
+              customTaxes: it.customTaxes || null,
+              ...totals,
+            }),
+          );
         }
 
         const discountAmount = subtotalHt * (globalDiscountPct / 100);
@@ -868,7 +937,11 @@ export class FneInvoicesService {
   }
 
   /* ─── Find by ID ─── */
-  async findById(id: string): Promise<FneInvoice & { creditNotes?: Array<{ id: string; reference: string; status: string }> }> {
+  async findById(
+    id: string,
+  ): Promise<
+    FneInvoice & { creditNotes?: Array<{ id: string; reference: string; status: string }> }
+  > {
     const inv = await this.invoiceRepo.findOne({
       where: { id },
       relations: ['items'],
@@ -882,7 +955,9 @@ export class FneInvoicesService {
       order: { createdAt: 'DESC' },
     });
 
-    return { ...inv, creditNotes: creditNotes.length ? creditNotes : undefined } as FneInvoice & { creditNotes?: FneInvoice[] };
+    return { ...inv, creditNotes: creditNotes.length ? creditNotes : undefined } as FneInvoice & {
+      creditNotes?: FneInvoice[];
+    };
   }
 
   /* ─── List with filters ─── */

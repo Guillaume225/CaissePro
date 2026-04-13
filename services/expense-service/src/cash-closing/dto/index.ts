@@ -54,7 +54,9 @@ export class ListCashClosingsQueryDto {
   @IsOptional()
   @Transform(({ value }) => {
     if (!value) return undefined;
-    const vals = String(value).split(',').map((v: string) => v.trim());
+    const vals = String(value)
+      .split(',')
+      .map((v: string) => v.trim());
     const valid = Object.values(CashDayStatus);
     return vals.filter((v: string) => valid.includes(v as CashDayStatus));
   })

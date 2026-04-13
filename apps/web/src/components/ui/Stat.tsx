@@ -13,7 +13,8 @@ interface StatProps {
 }
 
 export function Stat({ label, value, icon, trend, trendLabel, className, onClick }: StatProps) {
-  const trendDirection = trend === undefined ? null : trend > 0 ? 'up' : trend < 0 ? 'down' : 'flat';
+  const trendDirection =
+    trend === undefined ? null : trend > 0 ? 'up' : trend < 0 ? 'down' : 'flat';
 
   return (
     <div
@@ -56,9 +57,7 @@ export function Stat({ label, value, icon, trend, trendLabel, className, onClick
               <span className="text-xs font-medium">0%</span>
             </div>
           )}
-          {trendLabel && (
-            <span className="text-xs text-gray-400">{trendLabel}</span>
-          )}
+          {trendLabel && <span className="text-xs text-gray-400">{trendLabel}</span>}
         </div>
       )}
     </div>

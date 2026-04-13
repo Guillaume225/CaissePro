@@ -15,14 +15,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import {
-  FileText,
-  TrendingUp,
-  Stamp,
-  ReceiptText,
-  AlertTriangle,
-  FileEdit,
-} from 'lucide-react';
+import { FileText, TrendingUp, Stamp, ReceiptText, AlertTriangle, FileEdit } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, Stat } from '@/components/ui';
 import {
   useFneDashboardKpis,
@@ -69,7 +62,8 @@ export default function FneDashboardPage() {
   const { data: topClients = [] } = useFneTopClients();
   const { data: statusBreakdown = [] } = useFneStatusBreakdown();
 
-  const maxClientRevenue = topClients.length > 0 ? Math.max(...topClients.map((c) => c.revenue)) : 1;
+  const maxClientRevenue =
+    topClients.length > 0 ? Math.max(...topClients.map((c) => c.revenue)) : 1;
 
   return (
     <div className="space-y-6">
@@ -79,7 +73,7 @@ export default function FneDashboardPage() {
           {t('modules.fne.dashboardTitle', 'Tableau de bord FNE')}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          {t('modules.fne.dashboardSubtitle', 'Vue d\'ensemble de la facturation normalisée')}
+          {t('modules.fne.dashboardSubtitle', "Vue d'ensemble de la facturation normalisée")}
         </p>
       </div>
 
@@ -135,7 +129,9 @@ export default function FneDashboardPage() {
         {/* ── Area: Monthly revenue ──────── */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('modules.fne.chart.revenueEvolution', 'Évolution du CA certifié')}</CardTitle>
+            <CardTitle>
+              {t('modules.fne.chart.revenueEvolution', 'Évolution du CA certifié')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {monthlyTrend.length > 0 ? (
@@ -148,22 +144,49 @@ export default function FneDashboardPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
-                  <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={false}
-                    tickFormatter={(v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : `${(v / 1_000).toFixed(0)}K`} />
-                  <Tooltip formatter={(value) => formatCFA(Number(value))} contentStyle={TOOLTIP_STYLE} />
-                  <Area type="monotone" dataKey="revenue" name={t('modules.fne.chart.revenue', 'CA')} stroke="#4884BD" strokeWidth={2.5}
-                    fill="url(#fneGrad)" dot={{ r: 3, fill: '#4884BD', strokeWidth: 0 }} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v: number) =>
+                      v >= 1_000_000
+                        ? `${(v / 1_000_000).toFixed(1)}M`
+                        : `${(v / 1_000).toFixed(0)}K`
+                    }
+                  />
+                  <Tooltip
+                    formatter={(value) => formatCFA(Number(value))}
+                    contentStyle={TOOLTIP_STYLE}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    name={t('modules.fne.chart.revenue', 'CA')}
+                    stroke="#4884BD"
+                    strokeWidth={2.5}
+                    fill="url(#fneGrad)"
+                    dot={{ r: 3, fill: '#4884BD', strokeWidth: 0 }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
-            ) : <EmptyChart />}
+            ) : (
+              <EmptyChart />
+            )}
           </CardContent>
         </Card>
 
         {/* ── Pie: Status breakdown ──────── */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('modules.fne.chart.statusBreakdown', 'Répartition par statut')}</CardTitle>
+            <CardTitle>
+              {t('modules.fne.chart.statusBreakdown', 'Répartition par statut')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {statusBreakdown.length > 0 ? (
@@ -190,27 +213,49 @@ export default function FneDashboardPage() {
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
-            ) : <EmptyChart />}
+            ) : (
+              <EmptyChart />
+            )}
           </CardContent>
         </Card>
 
         {/* ── Bar: Monthly invoice count ── */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('modules.fne.chart.invoiceCount', 'Nombre de factures par mois')}</CardTitle>
+            <CardTitle>
+              {t('modules.fne.chart.invoiceCount', 'Nombre de factures par mois')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {monthlyTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <BarChart data={monthlyTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
-                  <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Bar dataKey="count" name={t('modules.fne.chart.count', 'Factures')} fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                  <Bar
+                    dataKey="count"
+                    name={t('modules.fne.chart.count', 'Factures')}
+                    fill="#10B981"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={48}
+                  />
                 </BarChart>
               </ResponsiveContainer>
-            ) : <EmptyChart />}
+            ) : (
+              <EmptyChart />
+            )}
           </CardContent>
         </Card>
 
@@ -231,18 +276,27 @@ export default function FneDashboardPage() {
                           {i + 1}. {client.clientName}
                         </span>
                         <div className="text-right">
-                          <span className="text-sm font-semibold text-gray-900">{formatCFA(client.revenue)}</span>
-                          <span className="ml-2 text-xs text-gray-400">({client.invoiceCount} fact.)</span>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {formatCFA(client.revenue)}
+                          </span>
+                          <span className="ml-2 text-xs text-gray-400">
+                            ({client.invoiceCount} fact.)
+                          </span>
                         </div>
                       </div>
                       <div className="h-2.5 w-full rounded-full bg-gray-100">
-                        <div className="h-2.5 rounded-full bg-blue-500 transition-all" style={{ width: `${pct}%` }} />
+                        <div
+                          className="h-2.5 rounded-full bg-blue-500 transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
                       </div>
                     </div>
                   );
                 })}
               </div>
-            ) : <EmptyChart />}
+            ) : (
+              <EmptyChart />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -251,9 +305,17 @@ export default function FneDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { to: '/fne/invoices', label: t('modules.fne.list', 'Factures'), icon: FileText },
-          { to: '/fne/invoices/new', label: t('modules.fne.new', 'Nouvelle facture'), icon: FileEdit },
+          {
+            to: '/fne/invoices/new',
+            label: t('modules.fne.new', 'Nouvelle facture'),
+            icon: FileEdit,
+          },
           { to: '/fne/clients', label: t('modules.fne.clients', 'Clients'), icon: FileText },
-          { to: '/fne/accounting', label: t('modules.fne.accounting', 'Écritures comptables'), icon: ReceiptText },
+          {
+            to: '/fne/accounting',
+            label: t('modules.fne.accounting', 'Écritures comptables'),
+            icon: ReceiptText,
+          },
         ].map(({ to, label, icon: Icon }) => (
           <button
             key={to}

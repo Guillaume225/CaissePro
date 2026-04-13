@@ -20,9 +20,9 @@ spec:
       labels:
         <<: *auth-labels
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3001"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3001'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: auth-service
@@ -85,9 +85,9 @@ spec:
       labels:
         <<: *expense-labels
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3002"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3002'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: expense-service
@@ -150,9 +150,9 @@ spec:
       labels:
         <<: *sales-labels
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3003"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3003'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: sales-service
@@ -215,9 +215,9 @@ spec:
       labels:
         <<: *audit-labels
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3004"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3004'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: audit-service
@@ -280,9 +280,9 @@ spec:
       labels:
         <<: *file-labels
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3005"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3005'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: file-service
@@ -343,9 +343,9 @@ spec:
       labels:
         <<: *notif-labels
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3006"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3006'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: notification-service
@@ -406,9 +406,9 @@ spec:
       labels:
         <<: *ai-labels
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8000'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: ai-service
@@ -422,13 +422,13 @@ spec:
                 name: app-secrets
           env:
             - name: ENVIRONMENT
-              value: "production"
+              value: 'production'
           resources:
             requests:
               cpu: 200m
               memory: 512Mi
             limits:
-              cpu: "1"
+              cpu: '1'
               memory: 1Gi
           readinessProbe:
             httpGet:
@@ -479,9 +479,9 @@ spec:
       labels:
         <<: *report-labels
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8001"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8001'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: report-service
@@ -495,7 +495,7 @@ spec:
                 name: app-secrets
           env:
             - name: ENVIRONMENT
-              value: "production"
+              value: 'production'
           resources:
             requests:
               cpu: 100m
@@ -719,7 +719,7 @@ spec:
       containers:
         - name: minio
           image: minio/minio:latest
-          command: ["server", "/data", "--console-address", ":9001"]
+          command: ['server', '/data', '--console-address', ':9001']
           ports:
             - containerPort: 9000
             - containerPort: 9001

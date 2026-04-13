@@ -1,12 +1,9 @@
+import { Controller, Get, Post, Put, Query, Body } from '@nestjs/common';
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Query,
-  Body,
-} from '@nestjs/common';
-import { FneSettingsService, CreateFneSettingDto, UpdateFneSettingDto } from './fne-settings.service';
+  FneSettingsService,
+  CreateFneSettingDto,
+  UpdateFneSettingDto,
+} from './fne-settings.service';
 import { Permissions } from '../common/decorators';
 import { FNE_PERMISSIONS } from '../common/permissions';
 

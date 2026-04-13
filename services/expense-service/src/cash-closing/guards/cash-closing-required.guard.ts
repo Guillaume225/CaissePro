@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { CashClosingService } from '../cash-closing.service';
 import { IS_PUBLIC_KEY } from '../../common/decorators';
@@ -47,7 +42,7 @@ export class CashClosingRequiredGuard implements CanActivate {
     const isClosed = await this.cashClosingService.isYesterdayClosed();
     if (!isClosed) {
       throw new ForbiddenException(
-        'La clôture de la veille n\'a pas été effectuée. Aucune opération n\'est autorisée tant que la caisse précédente n\'est pas clôturée.',
+        "La clôture de la veille n'a pas été effectuée. Aucune opération n'est autorisée tant que la caisse précédente n'est pas clôturée.",
       );
     }
 

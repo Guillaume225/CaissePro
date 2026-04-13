@@ -1,14 +1,12 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="report-header">
   <div class="company-info">
     <div class="company-name">{{ company_name }}</div>
     <div class="company-details">
-      {% if company_address %}{{ company_address }}<br>{% endif %}
-      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
-      {% if company_email %} — {{ company_email }}{% endif %}
-      {% if company_rccm %}<br>RCCM: {{ company_rccm }}{% endif %}
-      {% if company_cc %} — CC: {{ company_cc }}{% endif %}
+      {% if company_address %}{{ company_address }}<br />{% endif %} {% if company_phone %}Tél: {{
+      company_phone }}{% endif %} {% if company_email %} — {{ company_email }}{% endif %} {% if
+      company_rccm %}<br />RCCM: {{ company_rccm }}{% endif %} {% if company_cc %} — CC: {{
+      company_cc }}{% endif %}
     </div>
   </div>
   <div class="report-meta">
@@ -62,7 +60,9 @@
         <td class="text-right">{{ sale.amount_ht }}</td>
         <td class="text-right">{{ sale.tva }}</td>
         <td class="text-right font-bold">{{ sale.amount_ttc }}</td>
-        <td class="text-center"><span class="badge badge-{{ sale.status_class }}">{{ sale.status }}</span></td>
+        <td class="text-center">
+          <span class="badge badge-{{ sale.status_class }}">{{ sale.status }}</span>
+        </td>
       </tr>
       {% endfor %}
       <tr class="total-row">
@@ -96,7 +96,9 @@
         <td>{{ expense.category }}</td>
         <td>{{ expense.description }}</td>
         <td class="text-right font-bold">{{ expense.amount }}</td>
-        <td class="text-center"><span class="badge badge-{{ expense.status_class }}">{{ expense.status }}</span></td>
+        <td class="text-center">
+          <span class="badge badge-{{ expense.status_class }}">{{ expense.status }}</span>
+        </td>
       </tr>
       {% endfor %}
       <tr class="total-row">

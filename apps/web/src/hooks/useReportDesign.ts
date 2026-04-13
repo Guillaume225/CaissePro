@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
-import { useReportConfigStore, type ReportFieldConfig, type ReportKpiConfig } from '@/stores/report-config-store';
+import {
+  useReportConfigStore,
+  type ReportFieldConfig,
+  type ReportKpiConfig,
+} from '@/stores/report-config-store';
 
 export function useReportDesign(reportId: string) {
   const config = useReportConfigStore((s) => s.getConfig(reportId));

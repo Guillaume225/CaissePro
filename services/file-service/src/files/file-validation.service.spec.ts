@@ -25,10 +25,8 @@ const PDF_MAGIC = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2d]); // %PDF-
 const PNG_MAGIC = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
   // minimal IHDR
-  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-  0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
-  0xde,
+  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+  0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xde,
 ]);
 
 // JPEG magic bytes
@@ -52,16 +50,12 @@ describe('FileValidationService', () => {
   describe('validate', () => {
     it('should reject files exceeding max size', async () => {
       const file = mockFile({ size: 11_000_000 });
-      await expect(service.validate(file, 10_485_760)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validate(file, 10_485_760)).rejects.toThrow(BadRequestException);
     });
 
     it('should reject disallowed extensions', async () => {
       const file = mockFile({ originalname: 'malware.exe', size: 100 });
-      await expect(service.validate(file, 10_485_760)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validate(file, 10_485_760)).rejects.toThrow(BadRequestException);
     });
 
     it('should accept valid PDF files', async () => {
@@ -107,9 +101,7 @@ describe('FileValidationService', () => {
         buffer: exeBuffer,
         size: 100,
       });
-      await expect(service.validate(file, 10_485_760)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validate(file, 10_485_760)).rejects.toThrow(BadRequestException);
     });
 
     it('should reject when extension does not match detected MIME', async () => {
@@ -120,9 +112,7 @@ describe('FileValidationService', () => {
         buffer: PNG_MAGIC,
         size: 100,
       });
-      await expect(service.validate(file, 10_485_760)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validate(file, 10_485_760)).rejects.toThrow(BadRequestException);
     });
   });
 });

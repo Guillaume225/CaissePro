@@ -22,7 +22,11 @@ export class EmployeesController {
   @Get('disbursement-limit')
   async getDisbursementLimit() {
     const maxAmount = await this.employeesService.getDisbursementLimit();
-    return { success: true, data: { maxDisbursementAmount: maxAmount }, timestamp: new Date().toISOString() };
+    return {
+      success: true,
+      data: { maxDisbursementAmount: maxAmount },
+      timestamp: new Date().toISOString(),
+    };
   }
 
   @Public()
@@ -49,10 +53,7 @@ export class EmployeesController {
   }
 
   @Post()
-  async create(
-    @CurrentUser('tenantId') tenantId: string,
-    @Body() dto: CreateEmployeeDto,
-  ) {
+  async create(@CurrentUser('tenantId') tenantId: string, @Body() dto: CreateEmployeeDto) {
     const data = await this.employeesService.create(tenantId, dto);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
@@ -69,10 +70,7 @@ export class EmployeesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @CurrentUser('tenantId') tenantId: string,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  async remove(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
     await this.employeesService.remove(tenantId, id);
   }
 }

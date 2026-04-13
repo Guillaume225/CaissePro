@@ -34,10 +34,7 @@ export class PaymentsController {
 
   @Post()
   @Permissions(PAYMENT_PERMISSIONS.CREATE)
-  create(
-    @Body() dto: CreatePaymentDto,
-    @CurrentUser('id') userId: string,
-  ) {
+  create(@Body() dto: CreatePaymentDto, @CurrentUser('id') userId: string) {
     return this.paymentsService.create(dto, userId);
   }
 }

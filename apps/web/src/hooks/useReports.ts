@@ -1,10 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
-import type {
-  ReportRequest,
-  GeneratedReport,
-  NarrativeReport,
-} from '@/types/admin';
+import type { ReportRequest, GeneratedReport, NarrativeReport } from '@/types/admin';
 
 // ── Query keys ───────────────────────────────────────────
 const REPORT_KEYS = {

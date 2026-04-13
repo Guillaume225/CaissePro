@@ -21,10 +21,7 @@ export class NotificationsController {
    */
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(
-    @CurrentUser('id') userId: string,
-    @Query() query: ListNotificationsQueryDto,
-  ) {
+  async findAll(@CurrentUser('id') userId: string, @Query() query: ListNotificationsQueryDto) {
     return this.notificationsService.findAll(userId, query);
   }
 
@@ -53,10 +50,7 @@ export class NotificationsController {
    */
   @Patch(':id/read')
   @HttpCode(HttpStatus.OK)
-  async markAsRead(
-    @Param('id') id: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  async markAsRead(@Param('id') id: string, @CurrentUser('id') userId: string) {
     const notification = await this.notificationsService.markAsRead(id, userId);
     if (!notification) {
       throw new NotFoundException('Notification not found');

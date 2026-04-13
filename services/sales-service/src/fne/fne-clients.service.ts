@@ -67,8 +67,7 @@ export class FneClientsService {
     const perPage = Math.min(Math.max(Number(query.perPage) || 25, 1), 100);
     const skip = (page - 1) * perPage;
 
-    const qb = this.clientRepo.createQueryBuilder('c')
-      .where('c.isActive = 1');
+    const qb = this.clientRepo.createQueryBuilder('c').where('c.isActive = 1');
 
     if (query.search) {
       qb.andWhere(
@@ -77,9 +76,7 @@ export class FneClientsService {
       );
     }
 
-    qb.orderBy('c.companyName', 'ASC')
-      .skip(skip)
-      .take(perPage);
+    qb.orderBy('c.companyName', 'ASC').skip(skip).take(perPage);
 
     const [data, total] = await qb.getManyAndCount();
     return { data, meta: { total, page, perPage, totalPages: Math.ceil(total / perPage) } };

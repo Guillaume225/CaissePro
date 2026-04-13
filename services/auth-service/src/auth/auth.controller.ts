@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Req,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Body, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import {
@@ -79,10 +72,7 @@ export class AuthController {
 
   @Post('mfa/verify')
   @HttpCode(HttpStatus.OK)
-  async verifyMfa(
-    @CurrentUser('id') userId: string,
-    @Body() dto: VerifyMfaDto,
-  ) {
+  async verifyMfa(@CurrentUser('id') userId: string, @Body() dto: VerifyMfaDto) {
     const result = await this.authService.verifyMfa(userId, dto.code);
     return {
       success: true,

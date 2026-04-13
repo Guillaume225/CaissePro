@@ -43,7 +43,14 @@ export class AuditLogsService {
 
     const sortBy = query.sortBy ?? 'timestamp';
     const sortOrder = query.sortOrder ?? 'DESC';
-    const allowedSortFields = ['timestamp', 'sourceService', 'action', 'entityType', 'eventType', 'userId'];
+    const allowedSortFields = [
+      'timestamp',
+      'sourceService',
+      'action',
+      'entityType',
+      'eventType',
+      'userId',
+    ];
     const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'timestamp';
     qb.orderBy(`log.${safeSortBy}`, sortOrder as 'ASC' | 'DESC');
 
@@ -135,10 +142,7 @@ export class AuditLogsService {
       payload: entry.payload,
     });
 
-    const expected = crypto
-      .createHmac('sha256', this.hmacSecret)
-      .update(canonical)
-      .digest('hex');
+    const expected = crypto.createHmac('sha256', this.hmacSecret).update(canonical).digest('hex');
 
     return crypto.timingSafeEqual(
       Buffer.from(entry.signature, 'hex'),
@@ -160,7 +164,9 @@ export class AuditLogsService {
     });
 
     if (result.affected && result.affected > 0) {
-      this.logger.log(`Retention cron: purged ${result.affected} audit logs older than ${this.retentionYears} years`);
+      this.logger.log(
+        `Retention cron: purged ${result.affected} audit logs older than ${this.retentionYears} years`,
+      );
     }
   }
 
@@ -168,10 +174,7 @@ export class AuditLogsService {
   /*  Private helpers                                                   */
   /* ------------------------------------------------------------------ */
 
-  private applyFilters(
-    qb: SelectQueryBuilder<AuditLog>,
-    query: ListAuditLogsQueryDto,
-  ): void {
+  private applyFilters(qb: SelectQueryBuilder<AuditLog>, query: ListAuditLogsQueryDto): void {
     if (query.userId) {
       qb.andWhere('log.userId = :userId', { userId: query.userId });
     }

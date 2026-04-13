@@ -19,12 +19,7 @@ import { User } from '../entities/user.entity';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
-import {
-  JwtPayload,
-  AuthTokens,
-  LoginDto,
-  MfaSetupResponse,
-} from './dto';
+import { JwtPayload, AuthTokens, LoginDto, MfaSetupResponse } from './dto';
 
 const BCRYPT_ROUNDS = 12;
 const REFRESH_PREFIX = 'refresh:';
@@ -327,12 +322,7 @@ export class AuthService {
     const refreshExpRaw = this.configService.get<string>('jwt.refreshExpiration') || '7d';
     const refreshSeconds = this.parseExpiration(refreshExpRaw);
 
-    await this.redis.set(
-      `${REFRESH_PREFIX}${refreshToken}`,
-      user.id,
-      'EX',
-      refreshSeconds,
-    );
+    await this.redis.set(`${REFRESH_PREFIX}${refreshToken}`, user.id, 'EX', refreshSeconds);
 
     return {
       accessToken,
@@ -355,11 +345,16 @@ export class AuthService {
     if (!match) return 900;
     const val = parseInt(match[1], 10);
     switch (match[2]) {
-      case 's': return val;
-      case 'm': return val * 60;
-      case 'h': return val * 3600;
-      case 'd': return val * 86400;
-      default: return 900;
+      case 's':
+        return val;
+      case 'm':
+        return val * 60;
+      case 'h':
+        return val * 3600;
+      case 'd':
+        return val * 86400;
+      default:
+        return 900;
     }
   }
 }

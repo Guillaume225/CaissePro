@@ -13,13 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import {
-  Users,
-  UserCheck,
-  Shield,
-  ClipboardList,
-  ArrowRight,
-} from 'lucide-react';
+import { Users, UserCheck, Shield, ClipboardList, ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, Stat, Badge } from '@/components/ui';
 import {
   useAdminDashKpis,
@@ -109,17 +103,35 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             {hourlyActivity.length > 0 ? (
-                <ResponsiveContainer width="100%" height={288}>
-                  <BarChart data={hourlyActivity}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }}
-                      interval={2} />
-                    <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} tickLine={false} axisLine={false} allowDecimals={false} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <Bar dataKey="events" name={t('dashboards.admin.events')} fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={24} />
-                  </BarChart>
-                </ResponsiveContainer>
-            ) : <EmptyChart />}
+              <ResponsiveContainer width="100%" height={288}>
+                <BarChart data={hourlyActivity}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="hour"
+                    tick={{ fontSize: 10, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    interval={2}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Bar
+                    dataKey="events"
+                    name={t('dashboards.admin.events')}
+                    fill="#10B981"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={24}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart />
+            )}
           </CardContent>
         </Card>
 
@@ -130,17 +142,36 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             {roleDistrib.length > 0 ? (
-                <ResponsiveContainer width="100%" height={288}>
-                  <PieChart>
-                    <Pie data={roleDistrib} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="count" nameKey="name">
-                      {roleDistrib.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <Legend verticalAlign="bottom" iconType="circle" iconSize={8}
-                      formatter={(value: string) => <span className="text-xs text-gray-600">{value}</span>} />
-                  </PieChart>
-                </ResponsiveContainer>
-            ) : <EmptyChart />}
+              <ResponsiveContainer width="100%" height={288}>
+                <PieChart>
+                  <Pie
+                    data={roleDistrib}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={3}
+                    dataKey="count"
+                    nameKey="name"
+                  >
+                    {roleDistrib.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend
+                    verticalAlign="bottom"
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(value: string) => (
+                      <span className="text-xs text-gray-600">{value}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -152,7 +183,10 @@ export default function AdminDashboard() {
             <ClipboardList className="h-5 w-5 text-emerald-500" />
             {t('dashboards.admin.recentAuditLogs')}
           </CardTitle>
-          <button onClick={() => navigate('/admin/audit')} className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700">
+          <button
+            onClick={() => navigate('/admin/audit')}
+            className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700"
+          >
             {t('dashboards.admin.viewAll')} <ArrowRight className="h-4 w-4" />
           </button>
         </CardHeader>
@@ -173,18 +207,27 @@ export default function AdminDashboard() {
                     <tr key={log.id} className="border-b border-gray-50 last:border-0">
                       <td className="py-2.5 font-medium text-gray-700">{log.userName}</td>
                       <td className="py-2.5">
-                        <Badge variant={ACTION_VARIANTS[log.action] ?? 'default'} className="text-[10px]">
+                        <Badge
+                          variant={ACTION_VARIANTS[log.action] ?? 'default'}
+                          className="text-[10px]"
+                        >
                           {log.action}
                         </Badge>
                       </td>
-                      <td className="py-2.5 text-gray-500 max-w-[300px] truncate">{log.description}</td>
-                      <td className="py-2.5 text-right text-xs text-gray-400">{timeAgo(log.createdAt)}</td>
+                      <td className="py-2.5 text-gray-500 max-w-[300px] truncate">
+                        {log.description}
+                      </td>
+                      <td className="py-2.5 text-right text-xs text-gray-400">
+                        {timeAgo(log.createdAt)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          ) : <EmptyChart />}
+          ) : (
+            <EmptyChart />
+          )}
         </CardContent>
       </Card>
     </div>
@@ -192,5 +235,9 @@ export default function AdminDashboard() {
 }
 
 function EmptyChart() {
-  return <p className="flex h-48 items-center justify-center text-sm text-gray-400">Aucune donnée disponible</p>;
+  return (
+    <p className="flex h-48 items-center justify-center text-sm text-gray-400">
+      Aucune donnée disponible
+    </p>
+  );
 }

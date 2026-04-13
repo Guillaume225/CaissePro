@@ -46,7 +46,12 @@ export class Receivable {
   @Column({ type: 'date', name: 'due_date' })
   dueDate!: string;
 
-  @Column({ type: 'simple-enum', enum: AgingBucket, name: 'aging_bucket', default: AgingBucket.CURRENT })
+  @Column({
+    type: 'simple-enum',
+    enum: AgingBucket,
+    name: 'aging_bucket',
+    default: AgingBucket.CURRENT,
+  })
   agingBucket!: AgingBucket;
 
   @Column({ type: 'bit', name: 'is_settled', default: false })

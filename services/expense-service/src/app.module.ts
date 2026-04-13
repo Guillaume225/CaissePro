@@ -50,7 +50,16 @@ import { ReportConfiguration } from './report-configs/report-config.entity';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, redisConfig, jwtConfig, appConfig, workflowConfig, rabbitmqConfig, uploadConfig, cashClosingConfig],
+      load: [
+        databaseConfig,
+        redisConfig,
+        jwtConfig,
+        appConfig,
+        workflowConfig,
+        rabbitmqConfig,
+        uploadConfig,
+        cashClosingConfig,
+      ],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

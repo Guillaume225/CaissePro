@@ -53,7 +53,15 @@ type PeriodReportType =
 /* ═══════════════════════════════════════════════════════════
    Report header (company info)
    ═══════════════════════════════════════════════════════════ */
-function ReportHeader({ companyName, companyAddress, companyPhone, companyTaxId, title, subtitle, headerConfig }: {
+function ReportHeader({
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  title,
+  subtitle,
+  headerConfig,
+}: {
   companyName: string;
   companyAddress?: string;
   companyPhone?: string;
@@ -65,21 +73,33 @@ function ReportHeader({ companyName, companyAddress, companyPhone, companyTaxId,
   const hc = headerConfig;
   return (
     <div className="mb-6 border-b-2 border-gray-800 pb-4 text-center">
-      {(!hc || hc.showCompanyName) && <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>}
-      {(!hc || hc.showCompanyAddress) && companyAddress && <p className="text-sm text-gray-600">{companyAddress}</p>}
+      {(!hc || hc.showCompanyName) && (
+        <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>
+      )}
+      {(!hc || hc.showCompanyAddress) && companyAddress && (
+        <p className="text-sm text-gray-600">{companyAddress}</p>
+      )}
       <div className="flex justify-center gap-4 text-xs text-gray-500">
         {(!hc || hc.showCompanyPhone) && companyPhone && <span>Tél: {companyPhone}</span>}
         {(!hc || hc.showCompanyTaxId) && companyTaxId && <span>NIF: {companyTaxId}</span>}
       </div>
       <div className="mt-4">
         <h2 className="text-lg font-bold uppercase">{hc?.customTitle || title}</h2>
-        {(hc?.customSubtitle || subtitle) && <p className="text-sm text-gray-600">{hc?.customSubtitle || subtitle}</p>}
+        {(hc?.customSubtitle || subtitle) && (
+          <p className="text-sm text-gray-600">{hc?.customSubtitle || subtitle}</p>
+        )}
       </div>
     </div>
   );
 }
 
-function ReportFooter({ printedBy, footerConfig }: { printedBy: string; footerConfig?: ReportFooterConfig | null }) {
+function ReportFooter({
+  printedBy,
+  footerConfig,
+}: {
+  printedBy: string;
+  footerConfig?: ReportFooterConfig | null;
+}) {
   const fc = footerConfig;
   return (
     <div className="mt-8 border-t border-gray-300 pt-4">
@@ -111,16 +131,37 @@ function ReportFooter({ printedBy, footerConfig }: { printedBy: string; footerCo
 /* ═══════════════════════════════════════════════════════════
    1. GRAND LIVRE DE CAISSE
    ═══════════════════════════════════════════════════════════ */
-function GrandLivreDeCaisse({ days, allOps, periodLabel, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function GrandLivreDeCaisse({
+  days,
+  allOps,
+  periodLabel,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   days: CashClosingRecord[];
   allOps: Record<string, { movements: CashDayMovement[]; expenses: CashDayExpense[] }>;
   periodLabel: string;
-  companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
+  companyName: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyTaxId?: string;
+  printedBy: string;
 }) {
-  const { isFieldVisible, getFieldLabel, isKpiVisible, getKpiLabel, header, footer } = useReportDesign('grand-livre');
+  const { isFieldVisible, getFieldLabel, isKpiVisible, getKpiLabel, header, footer } =
+    useReportDesign('grand-livre');
 
   const flatOps = useMemo(() => {
-    const ops: { date: string; ref: string; dayRef: string; label: string; entry: number; exit: number }[] = [];
+    const ops: {
+      date: string;
+      ref: string;
+      dayRef: string;
+      label: string;
+      entry: number;
+      exit: number;
+    }[] = [];
     for (const day of days) {
       const dayData = allOps[day.id];
       if (!dayData) continue;
@@ -134,17 +175,19 @@ function GrandLivreDeCaisse({ days, allOps, periodLabel, companyName, companyAdd
           exit: m.type === 'EXIT' ? m.amount : 0,
         });
       });
-      dayData.expenses.filter((e) => e.status === 'PAID').forEach((e) => {
-        const isEntry = e.categoryDirection === 'ENTRY';
-        ops.push({
-          date: e.createdAt,
-          ref: e.reference,
-          dayRef: day.reference,
-          label: `${e.categoryName || 'Dépense'} — ${e.beneficiary}`,
-          entry: isEntry ? e.amount : 0,
-          exit: !isEntry ? e.amount : 0,
+      dayData.expenses
+        .filter((e) => e.status === 'PAID')
+        .forEach((e) => {
+          const isEntry = e.categoryDirection === 'ENTRY';
+          ops.push({
+            date: e.createdAt,
+            ref: e.reference,
+            dayRef: day.reference,
+            label: `${e.categoryName || 'Dépense'} — ${e.beneficiary}`,
+            entry: isEntry ? e.amount : 0,
+            exit: !isEntry ? e.amount : 0,
+          });
         });
-      });
     }
     ops.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     return ops;
@@ -156,31 +199,46 @@ function GrandLivreDeCaisse({ days, allOps, periodLabel, companyName, companyAdd
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
-        title="Grand Livre de Caisse" subtitle={`Période : ${periodLabel}`} headerConfig={header} />
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
+        title="Grand Livre de Caisse"
+        subtitle={`Période : ${periodLabel}`}
+        headerConfig={header}
+      />
 
       <div className="mb-4 grid grid-cols-4 gap-2 text-sm">
         {isKpiVisible('openingBalance') && (
           <div className="rounded border p-2 text-center">
-            <div className="text-xs text-gray-500">{getKpiLabel('openingBalance', 'Solde initial')}</div>
+            <div className="text-xs text-gray-500">
+              {getKpiLabel('openingBalance', 'Solde initial')}
+            </div>
             <div className="font-bold">{fmt(openingBalance)} FCFA</div>
           </div>
         )}
         {isKpiVisible('totalEntries') && (
           <div className="rounded border p-2 text-center">
-            <div className="text-xs text-gray-500">{getKpiLabel('totalEntries', 'Total encaissements')}</div>
+            <div className="text-xs text-gray-500">
+              {getKpiLabel('totalEntries', 'Total encaissements')}
+            </div>
             <div className="font-bold text-green-700">{fmt(totalEntries)} FCFA</div>
           </div>
         )}
         {isKpiVisible('totalExits') && (
           <div className="rounded border p-2 text-center">
-            <div className="text-xs text-gray-500">{getKpiLabel('totalExits', 'Total décaissements')}</div>
+            <div className="text-xs text-gray-500">
+              {getKpiLabel('totalExits', 'Total décaissements')}
+            </div>
             <div className="font-bold text-red-700">{fmt(totalExits)} FCFA</div>
           </div>
         )}
         {isKpiVisible('closingBalance') && (
           <div className="rounded border p-2 text-center">
-            <div className="text-xs text-gray-500">{getKpiLabel('closingBalance', 'Solde final')}</div>
+            <div className="text-xs text-gray-500">
+              {getKpiLabel('closingBalance', 'Solde final')}
+            </div>
             <div className="font-bold">{fmt(openingBalance + totalEntries - totalExits)} FCFA</div>
           </div>
         )}
@@ -189,13 +247,35 @@ function GrandLivreDeCaisse({ days, allOps, periodLabel, companyName, companyAdd
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-100">
-            {isFieldVisible('date') && <th className="border px-2 py-1 text-left">{getFieldLabel('date', 'Date')}</th>}
-            {isFieldVisible('dayRef') && <th className="border px-2 py-1 text-left">{getFieldLabel('dayRef', 'Journée')}</th>}
-            {isFieldVisible('reference') && <th className="border px-2 py-1 text-left">{getFieldLabel('reference', 'Référence')}</th>}
-            {isFieldVisible('label') && <th className="border px-2 py-1 text-left">{getFieldLabel('label', 'Libellé')}</th>}
-            {isFieldVisible('debit') && <th className="border px-2 py-1 text-right">{getFieldLabel('debit', 'Débit (FCFA)')}</th>}
-            {isFieldVisible('credit') && <th className="border px-2 py-1 text-right">{getFieldLabel('credit', 'Crédit (FCFA)')}</th>}
-            {isFieldVisible('balance') && <th className="border px-2 py-1 text-right">{getFieldLabel('balance', 'Solde (FCFA)')}</th>}
+            {isFieldVisible('date') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('date', 'Date')}</th>
+            )}
+            {isFieldVisible('dayRef') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('dayRef', 'Journée')}</th>
+            )}
+            {isFieldVisible('reference') && (
+              <th className="border px-2 py-1 text-left">
+                {getFieldLabel('reference', 'Référence')}
+              </th>
+            )}
+            {isFieldVisible('label') && (
+              <th className="border px-2 py-1 text-left">{getFieldLabel('label', 'Libellé')}</th>
+            )}
+            {isFieldVisible('debit') && (
+              <th className="border px-2 py-1 text-right">
+                {getFieldLabel('debit', 'Débit (FCFA)')}
+              </th>
+            )}
+            {isFieldVisible('credit') && (
+              <th className="border px-2 py-1 text-right">
+                {getFieldLabel('credit', 'Crédit (FCFA)')}
+              </th>
+            )}
+            {isFieldVisible('balance') && (
+              <th className="border px-2 py-1 text-right">
+                {getFieldLabel('balance', 'Solde (FCFA)')}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -205,13 +285,29 @@ function GrandLivreDeCaisse({ days, allOps, periodLabel, companyName, companyAdd
               running = running + op.entry - op.exit;
               return (
                 <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  {isFieldVisible('date') && <td className="border px-2 py-1 text-xs">{fmtShortDate(op.date)}</td>}
-                  {isFieldVisible('dayRef') && <td className="border px-2 py-1 font-mono text-xs">{op.dayRef}</td>}
-                  {isFieldVisible('reference') && <td className="border px-2 py-1 font-mono text-xs">{op.ref}</td>}
+                  {isFieldVisible('date') && (
+                    <td className="border px-2 py-1 text-xs">{fmtShortDate(op.date)}</td>
+                  )}
+                  {isFieldVisible('dayRef') && (
+                    <td className="border px-2 py-1 font-mono text-xs">{op.dayRef}</td>
+                  )}
+                  {isFieldVisible('reference') && (
+                    <td className="border px-2 py-1 font-mono text-xs">{op.ref}</td>
+                  )}
                   {isFieldVisible('label') && <td className="border px-2 py-1">{op.label}</td>}
-                  {isFieldVisible('debit') && <td className="border px-2 py-1 text-right">{op.entry > 0 ? fmt(op.entry) : '—'}</td>}
-                  {isFieldVisible('credit') && <td className="border px-2 py-1 text-right">{op.exit > 0 ? fmt(op.exit) : '—'}</td>}
-                  {isFieldVisible('balance') && <td className="border px-2 py-1 text-right font-medium">{fmt(running)}</td>}
+                  {isFieldVisible('debit') && (
+                    <td className="border px-2 py-1 text-right">
+                      {op.entry > 0 ? fmt(op.entry) : '—'}
+                    </td>
+                  )}
+                  {isFieldVisible('credit') && (
+                    <td className="border px-2 py-1 text-right">
+                      {op.exit > 0 ? fmt(op.exit) : '—'}
+                    </td>
+                  )}
+                  {isFieldVisible('balance') && (
+                    <td className="border px-2 py-1 text-right font-medium">{fmt(running)}</td>
+                  )}
                 </tr>
               );
             });
@@ -219,15 +315,37 @@ function GrandLivreDeCaisse({ days, allOps, periodLabel, companyName, companyAdd
         </tbody>
         <tfoot>
           <tr className="bg-gray-200 font-bold">
-            <td colSpan={[isFieldVisible('date'), isFieldVisible('dayRef'), isFieldVisible('reference'), isFieldVisible('label')].filter(Boolean).length} className="border px-2 py-1 text-right">TOTAUX</td>
-            {isFieldVisible('debit') && <td className="border px-2 py-1 text-right text-green-800">{fmt(totalEntries)}</td>}
-            {isFieldVisible('credit') && <td className="border px-2 py-1 text-right text-red-800">{fmt(totalExits)}</td>}
-            {isFieldVisible('balance') && <td className="border px-2 py-1 text-right">{fmt(openingBalance + totalEntries - totalExits)}</td>}
+            <td
+              colSpan={
+                [
+                  isFieldVisible('date'),
+                  isFieldVisible('dayRef'),
+                  isFieldVisible('reference'),
+                  isFieldVisible('label'),
+                ].filter(Boolean).length
+              }
+              className="border px-2 py-1 text-right"
+            >
+              TOTAUX
+            </td>
+            {isFieldVisible('debit') && (
+              <td className="border px-2 py-1 text-right text-green-800">{fmt(totalEntries)}</td>
+            )}
+            {isFieldVisible('credit') && (
+              <td className="border px-2 py-1 text-right text-red-800">{fmt(totalExits)}</td>
+            )}
+            {isFieldVisible('balance') && (
+              <td className="border px-2 py-1 text-right">
+                {fmt(openingBalance + totalEntries - totalExits)}
+              </td>
+            )}
           </tr>
         </tfoot>
       </table>
 
-      <p className="mt-2 text-right text-xs text-gray-400">{flatOps.length} opérations — {days.length} journées</p>
+      <p className="mt-2 text-right text-xs text-gray-400">
+        {flatOps.length} opérations — {days.length} journées
+      </p>
       <ReportFooter printedBy={printedBy} footerConfig={footer} />
     </div>
   );
@@ -236,58 +354,135 @@ function GrandLivreDeCaisse({ days, allOps, periodLabel, companyName, companyAdd
 /* ═══════════════════════════════════════════════════════════
    2. BALANCE DE CAISSE
    ═══════════════════════════════════════════════════════════ */
-function BalanceDeCaisse({ days, periodLabel, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function BalanceDeCaisse({
+  days,
+  periodLabel,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   days: CashClosingRecord[];
   periodLabel: string;
-  companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
+  companyName: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyTaxId?: string;
+  printedBy: string;
 }) {
   const { isFieldVisible, getFieldLabel, header, footer } = useReportDesign('balance');
   const totalDebits = days.reduce((s, d) => s + d.totalEntries, 0);
   const totalCredits = days.reduce((s, d) => s + d.totalExits, 0);
   const openingBalance = days.length > 0 ? days[0].openingBalance : 0;
-  const closingBalance = days.length > 0 ? (days[days.length - 1].actualBalance ?? days[days.length - 1].theoreticalBalance) : 0;
+  const closingBalance =
+    days.length > 0
+      ? (days[days.length - 1].actualBalance ?? days[days.length - 1].theoreticalBalance)
+      : 0;
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
-        title="Balance de Caisse" subtitle={`Période : ${periodLabel}`} headerConfig={header} />
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
+        title="Balance de Caisse"
+        subtitle={`Période : ${periodLabel}`}
+        headerConfig={header}
+      />
 
       <table className="mx-auto w-[560px] border-collapse text-sm">
         <thead>
           <tr className="bg-gray-100">
-            {isFieldVisible('date') && <th className="border px-4 py-2 text-left">{getFieldLabel('date', 'Journée')}</th>}
-            {isFieldVisible('reference') && <th className="border px-4 py-2 text-left">{getFieldLabel('reference', 'Date')}</th>}
-            {isFieldVisible('debit') && <th className="border px-4 py-2 text-right">{getFieldLabel('debit', 'Total Débit (FCFA)')}</th>}
-            {isFieldVisible('credit') && <th className="border px-4 py-2 text-right">{getFieldLabel('credit', 'Total Crédit (FCFA)')}</th>}
-            {isFieldVisible('balance') && <th className="border px-4 py-2 text-right">{getFieldLabel('balance', 'Solde (FCFA)')}</th>}
+            {isFieldVisible('date') && (
+              <th className="border px-4 py-2 text-left">{getFieldLabel('date', 'Journée')}</th>
+            )}
+            {isFieldVisible('reference') && (
+              <th className="border px-4 py-2 text-left">{getFieldLabel('reference', 'Date')}</th>
+            )}
+            {isFieldVisible('debit') && (
+              <th className="border px-4 py-2 text-right">
+                {getFieldLabel('debit', 'Total Débit (FCFA)')}
+              </th>
+            )}
+            {isFieldVisible('credit') && (
+              <th className="border px-4 py-2 text-right">
+                {getFieldLabel('credit', 'Total Crédit (FCFA)')}
+              </th>
+            )}
+            {isFieldVisible('balance') && (
+              <th className="border px-4 py-2 text-right">
+                {getFieldLabel('balance', 'Solde (FCFA)')}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
           {days.map((d, i) => (
             <tr key={d.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              {isFieldVisible('date') && <td className="border px-4 py-2 font-mono text-xs">{d.reference}</td>}
-              {isFieldVisible('reference') && <td className="border px-4 py-2 text-xs">{fmtShortDate(d.openedAt)}</td>}
-              {isFieldVisible('debit') && <td className="border px-4 py-2 text-right text-green-700">{fmt(d.totalEntries)}</td>}
-              {isFieldVisible('credit') && <td className="border px-4 py-2 text-right text-red-700">{fmt(d.totalExits)}</td>}
-              {isFieldVisible('balance') && <td className="border px-4 py-2 text-right font-medium">{fmt(d.actualBalance ?? d.theoreticalBalance)}</td>}
+              {isFieldVisible('date') && (
+                <td className="border px-4 py-2 font-mono text-xs">{d.reference}</td>
+              )}
+              {isFieldVisible('reference') && (
+                <td className="border px-4 py-2 text-xs">{fmtShortDate(d.openedAt)}</td>
+              )}
+              {isFieldVisible('debit') && (
+                <td className="border px-4 py-2 text-right text-green-700">
+                  {fmt(d.totalEntries)}
+                </td>
+              )}
+              {isFieldVisible('credit') && (
+                <td className="border px-4 py-2 text-right text-red-700">{fmt(d.totalExits)}</td>
+              )}
+              {isFieldVisible('balance') && (
+                <td className="border px-4 py-2 text-right font-medium">
+                  {fmt(d.actualBalance ?? d.theoreticalBalance)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr className="bg-gray-200 font-bold">
-            <td colSpan={[isFieldVisible('date'), isFieldVisible('reference')].filter(Boolean).length} className="border px-4 py-2 text-right">TOTAUX PÉRIODE</td>
-            {isFieldVisible('debit') && <td className="border px-4 py-2 text-right text-green-800">{fmt(totalDebits)}</td>}
-            {isFieldVisible('credit') && <td className="border px-4 py-2 text-right text-red-800">{fmt(totalCredits)}</td>}
-            {isFieldVisible('balance') && <td className="border px-4 py-2 text-right">{fmt(closingBalance)}</td>}
+            <td
+              colSpan={[isFieldVisible('date'), isFieldVisible('reference')].filter(Boolean).length}
+              className="border px-4 py-2 text-right"
+            >
+              TOTAUX PÉRIODE
+            </td>
+            {isFieldVisible('debit') && (
+              <td className="border px-4 py-2 text-right text-green-800">{fmt(totalDebits)}</td>
+            )}
+            {isFieldVisible('credit') && (
+              <td className="border px-4 py-2 text-right text-red-800">{fmt(totalCredits)}</td>
+            )}
+            {isFieldVisible('balance') && (
+              <td className="border px-4 py-2 text-right">{fmt(closingBalance)}</td>
+            )}
           </tr>
         </tfoot>
       </table>
 
       <div className="mt-4 rounded border p-3 text-sm">
         <div className="grid grid-cols-3 gap-4">
-          <div><span className="text-gray-500">Solde d'ouverture :</span> <span className="font-bold">{fmt(openingBalance)} FCFA</span></div>
-          <div><span className="text-gray-500">Solde de clôture :</span> <span className="font-bold">{fmt(closingBalance)} FCFA</span></div>
-          <div><span className="text-gray-500">Variation :</span> <span className={`font-bold ${closingBalance - openingBalance >= 0 ? 'text-green-700' : 'text-red-700'}`}>{closingBalance - openingBalance > 0 ? '+' : ''}{fmt(closingBalance - openingBalance)} FCFA</span></div>
+          <div>
+            <span className="text-gray-500">Solde d'ouverture :</span>{' '}
+            <span className="font-bold">{fmt(openingBalance)} FCFA</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Solde de clôture :</span>{' '}
+            <span className="font-bold">{fmt(closingBalance)} FCFA</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Variation :</span>{' '}
+            <span
+              className={`font-bold ${closingBalance - openingBalance >= 0 ? 'text-green-700' : 'text-red-700'}`}
+            >
+              {closingBalance - openingBalance > 0 ? '+' : ''}
+              {fmt(closingBalance - openingBalance)} FCFA
+            </span>
+          </div>
         </div>
       </div>
 
@@ -299,10 +494,22 @@ function BalanceDeCaisse({ days, periodLabel, companyName, companyAddress, compa
 /* ═══════════════════════════════════════════════════════════
    3. JOURNAL COMPTABLE DE CAISSE (format Sage)
    ═══════════════════════════════════════════════════════════ */
-function JournalComptable({ accountingData, periodLabel, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function JournalComptable({
+  accountingData,
+  periodLabel,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   accountingData: AccountingEntriesSummary[];
   periodLabel: string;
-  companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
+  companyName: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyTaxId?: string;
+  printedBy: string;
 }) {
   const { header, footer } = useReportDesign('journal-comptable');
   const allEntries = useMemo(() => {
@@ -319,8 +526,15 @@ function JournalComptable({ accountingData, periodLabel, companyName, companyAdd
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
-        title="Journal Comptable de Caisse" subtitle={`Période : ${periodLabel} — Format compatible Sage`} headerConfig={header} />
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
+        title="Journal Comptable de Caisse"
+        subtitle={`Période : ${periodLabel} — Format compatible Sage`}
+        headerConfig={header}
+      />
 
       <table className="w-full border-collapse text-sm">
         <thead>
@@ -351,7 +565,9 @@ function JournalComptable({ accountingData, periodLabel, companyName, companyAdd
         </tbody>
         <tfoot>
           <tr className="bg-gray-200 font-bold">
-            <td colSpan={6} className="border px-2 py-1 text-right">TOTAUX</td>
+            <td colSpan={6} className="border px-2 py-1 text-right">
+              TOTAUX
+            </td>
             <td className="border px-2 py-1 text-right">{fmt(totalDebit)}</td>
             <td className="border px-2 py-1 text-right">{fmt(totalCredit)}</td>
           </tr>
@@ -375,11 +591,24 @@ function JournalComptable({ accountingData, periodLabel, companyName, companyAdd
 /* ═══════════════════════════════════════════════════════════
    4. ÉTAT RÉCAPITULATIF DES ENCAISSEMENTS
    ═══════════════════════════════════════════════════════════ */
-function EtatEncaissements({ days, allOps, periodLabel, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function EtatEncaissements({
+  days,
+  allOps,
+  periodLabel,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   days: CashClosingRecord[];
   allOps: Record<string, { movements: CashDayMovement[]; expenses: CashDayExpense[] }>;
   periodLabel: string;
-  companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
+  companyName: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyTaxId?: string;
+  printedBy: string;
 }) {
   const { header, footer } = useReportDesign('encaissements');
   const breakdown = useMemo(() => {
@@ -391,33 +620,49 @@ function EtatEncaissements({ days, allOps, periodLabel, companyName, companyAddr
       const dayData = allOps[day.id];
       if (!dayData) continue;
 
-      dayData.movements.filter((m) => m.type === 'ENTRY').forEach((m) => {
-        byCat[m.category] = (byCat[m.category] || 0) + m.amount;
-        byPayMethod['CASH'] += m.amount; // movements are cash by default
-        total += m.amount;
-      });
+      dayData.movements
+        .filter((m) => m.type === 'ENTRY')
+        .forEach((m) => {
+          byCat[m.category] = (byCat[m.category] || 0) + m.amount;
+          byPayMethod['CASH'] += m.amount; // movements are cash by default
+          total += m.amount;
+        });
 
-      dayData.expenses.filter((e) => e.status === 'PAID' && e.categoryDirection === 'ENTRY').forEach((e) => {
-        byCat[e.categoryName || 'Autres'] = (byCat[e.categoryName || 'Autres'] || 0) + e.amount;
-        const pm = e.paymentMethod || 'CASH';
-        byPayMethod[pm] = (byPayMethod[pm] || 0) + e.amount;
-        total += e.amount;
-      });
+      dayData.expenses
+        .filter((e) => e.status === 'PAID' && e.categoryDirection === 'ENTRY')
+        .forEach((e) => {
+          byCat[e.categoryName || 'Autres'] = (byCat[e.categoryName || 'Autres'] || 0) + e.amount;
+          const pm = e.paymentMethod || 'CASH';
+          byPayMethod[pm] = (byPayMethod[pm] || 0) + e.amount;
+          total += e.amount;
+        });
     }
 
     return { byCat, byPayMethod, total };
   }, [days, allOps]);
 
   const payMethodLabels: Record<string, string> = {
-    CASH: 'Espèces', CHECK: 'Chèques', TRANSFER: 'Virements', MOBILE_MONEY: 'Mobile Money',
+    CASH: 'Espèces',
+    CHECK: 'Chèques',
+    TRANSFER: 'Virements',
+    MOBILE_MONEY: 'Mobile Money',
   };
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
-        title="État Récapitulatif des Encaissements" subtitle={`Période : ${periodLabel}`} headerConfig={header} />
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
+        title="État Récapitulatif des Encaissements"
+        subtitle={`Période : ${periodLabel}`}
+        headerConfig={header}
+      />
 
-      <h3 className="mb-2 text-sm font-bold uppercase text-gray-600">Ventilation par type d'encaissement</h3>
+      <h3 className="mb-2 text-sm font-bold uppercase text-gray-600">
+        Ventilation par type d'encaissement
+      </h3>
       <table className="mb-6 w-full border-collapse text-sm">
         <thead>
           <tr className="bg-green-50">
@@ -427,13 +672,17 @@ function EtatEncaissements({ days, allOps, periodLabel, companyName, companyAddr
           </tr>
         </thead>
         <tbody>
-          {Object.entries(breakdown.byPayMethod).filter(([, v]) => v > 0).map(([k, v], i) => (
-            <tr key={k} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              <td className="border px-3 py-2">{payMethodLabels[k] || k}</td>
-              <td className="border px-3 py-2 text-right font-medium">{fmt(v)}</td>
-              <td className="border px-3 py-2 text-right">{breakdown.total > 0 ? ((v / breakdown.total) * 100).toFixed(1) : '0.0'} %</td>
-            </tr>
-          ))}
+          {Object.entries(breakdown.byPayMethod)
+            .filter(([, v]) => v > 0)
+            .map(([k, v], i) => (
+              <tr key={k} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <td className="border px-3 py-2">{payMethodLabels[k] || k}</td>
+                <td className="border px-3 py-2 text-right font-medium">{fmt(v)}</td>
+                <td className="border px-3 py-2 text-right">
+                  {breakdown.total > 0 ? ((v / breakdown.total) * 100).toFixed(1) : '0.0'} %
+                </td>
+              </tr>
+            ))}
         </tbody>
         <tfoot>
           <tr className="bg-green-100 font-bold">
@@ -454,13 +703,17 @@ function EtatEncaissements({ days, allOps, periodLabel, companyName, companyAddr
           </tr>
         </thead>
         <tbody>
-          {Object.entries(breakdown.byCat).sort(([, a], [, b]) => b - a).map(([k, v], i) => (
-            <tr key={k} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              <td className="border px-3 py-2">{k}</td>
-              <td className="border px-3 py-2 text-right font-medium">{fmt(v)}</td>
-              <td className="border px-3 py-2 text-right">{breakdown.total > 0 ? ((v / breakdown.total) * 100).toFixed(1) : '0.0'} %</td>
-            </tr>
-          ))}
+          {Object.entries(breakdown.byCat)
+            .sort(([, a], [, b]) => b - a)
+            .map(([k, v], i) => (
+              <tr key={k} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <td className="border px-3 py-2">{k}</td>
+                <td className="border px-3 py-2 text-right font-medium">{fmt(v)}</td>
+                <td className="border px-3 py-2 text-right">
+                  {breakdown.total > 0 ? ((v / breakdown.total) * 100).toFixed(1) : '0.0'} %
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
 
@@ -472,11 +725,24 @@ function EtatEncaissements({ days, allOps, periodLabel, companyName, companyAddr
 /* ═══════════════════════════════════════════════════════════
    5. ÉTAT RÉCAPITULATIF DES DÉCAISSEMENTS
    ═══════════════════════════════════════════════════════════ */
-function EtatDecaissements({ days, allOps, periodLabel, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function EtatDecaissements({
+  days,
+  allOps,
+  periodLabel,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   days: CashClosingRecord[];
   allOps: Record<string, { movements: CashDayMovement[]; expenses: CashDayExpense[] }>;
   periodLabel: string;
-  companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
+  companyName: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyTaxId?: string;
+  printedBy: string;
 }) {
   const { header, footer } = useReportDesign('decaissements');
   const breakdown = useMemo(() => {
@@ -488,33 +754,50 @@ function EtatDecaissements({ days, allOps, periodLabel, companyName, companyAddr
       const dayData = allOps[day.id];
       if (!dayData) continue;
 
-      dayData.movements.filter((m) => m.type === 'EXIT').forEach((m) => {
-        byNature[m.category] = (byNature[m.category] || 0) + m.amount;
-        byPayMethod['CASH'] += m.amount;
-        total += m.amount;
-      });
+      dayData.movements
+        .filter((m) => m.type === 'EXIT')
+        .forEach((m) => {
+          byNature[m.category] = (byNature[m.category] || 0) + m.amount;
+          byPayMethod['CASH'] += m.amount;
+          total += m.amount;
+        });
 
-      dayData.expenses.filter((e) => e.status === 'PAID' && e.categoryDirection !== 'ENTRY').forEach((e) => {
-        byNature[e.categoryName || 'Autres'] = (byNature[e.categoryName || 'Autres'] || 0) + e.amount;
-        const pm = e.paymentMethod || 'CASH';
-        byPayMethod[pm] = (byPayMethod[pm] || 0) + e.amount;
-        total += e.amount;
-      });
+      dayData.expenses
+        .filter((e) => e.status === 'PAID' && e.categoryDirection !== 'ENTRY')
+        .forEach((e) => {
+          byNature[e.categoryName || 'Autres'] =
+            (byNature[e.categoryName || 'Autres'] || 0) + e.amount;
+          const pm = e.paymentMethod || 'CASH';
+          byPayMethod[pm] = (byPayMethod[pm] || 0) + e.amount;
+          total += e.amount;
+        });
     }
 
     return { byNature, byPayMethod, total };
   }, [days, allOps]);
 
   const payMethodLabels: Record<string, string> = {
-    CASH: 'Espèces', CHECK: 'Chèques', TRANSFER: 'Virements', MOBILE_MONEY: 'Mobile Money',
+    CASH: 'Espèces',
+    CHECK: 'Chèques',
+    TRANSFER: 'Virements',
+    MOBILE_MONEY: 'Mobile Money',
   };
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
-        title="État Récapitulatif des Décaissements" subtitle={`Période : ${periodLabel}`} headerConfig={header} />
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
+        title="État Récapitulatif des Décaissements"
+        subtitle={`Période : ${periodLabel}`}
+        headerConfig={header}
+      />
 
-      <h3 className="mb-2 text-sm font-bold uppercase text-gray-600">Ventilation par mode de paiement</h3>
+      <h3 className="mb-2 text-sm font-bold uppercase text-gray-600">
+        Ventilation par mode de paiement
+      </h3>
       <table className="mb-6 w-full border-collapse text-sm">
         <thead>
           <tr className="bg-red-50">
@@ -524,13 +807,17 @@ function EtatDecaissements({ days, allOps, periodLabel, companyName, companyAddr
           </tr>
         </thead>
         <tbody>
-          {Object.entries(breakdown.byPayMethod).filter(([, v]) => v > 0).map(([k, v], i) => (
-            <tr key={k} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              <td className="border px-3 py-2">{payMethodLabels[k] || k}</td>
-              <td className="border px-3 py-2 text-right font-medium">{fmt(v)}</td>
-              <td className="border px-3 py-2 text-right">{breakdown.total > 0 ? ((v / breakdown.total) * 100).toFixed(1) : '0.0'} %</td>
-            </tr>
-          ))}
+          {Object.entries(breakdown.byPayMethod)
+            .filter(([, v]) => v > 0)
+            .map(([k, v], i) => (
+              <tr key={k} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <td className="border px-3 py-2">{payMethodLabels[k] || k}</td>
+                <td className="border px-3 py-2 text-right font-medium">{fmt(v)}</td>
+                <td className="border px-3 py-2 text-right">
+                  {breakdown.total > 0 ? ((v / breakdown.total) * 100).toFixed(1) : '0.0'} %
+                </td>
+              </tr>
+            ))}
         </tbody>
         <tfoot>
           <tr className="bg-red-100 font-bold">
@@ -541,7 +828,9 @@ function EtatDecaissements({ days, allOps, periodLabel, companyName, companyAddr
         </tfoot>
       </table>
 
-      <h3 className="mb-2 text-sm font-bold uppercase text-gray-600">Ventilation par nature de dépense</h3>
+      <h3 className="mb-2 text-sm font-bold uppercase text-gray-600">
+        Ventilation par nature de dépense
+      </h3>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-100">
@@ -551,13 +840,17 @@ function EtatDecaissements({ days, allOps, periodLabel, companyName, companyAddr
           </tr>
         </thead>
         <tbody>
-          {Object.entries(breakdown.byNature).sort(([, a], [, b]) => b - a).map(([k, v], i) => (
-            <tr key={k} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              <td className="border px-3 py-2">{k}</td>
-              <td className="border px-3 py-2 text-right font-medium">{fmt(v)}</td>
-              <td className="border px-3 py-2 text-right">{breakdown.total > 0 ? ((v / breakdown.total) * 100).toFixed(1) : '0.0'} %</td>
-            </tr>
-          ))}
+          {Object.entries(breakdown.byNature)
+            .sort(([, a], [, b]) => b - a)
+            .map(([k, v], i) => (
+              <tr key={k} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <td className="border px-3 py-2">{k}</td>
+                <td className="border px-3 py-2 text-right font-medium">{fmt(v)}</td>
+                <td className="border px-3 py-2 text-right">
+                  {breakdown.total > 0 ? ((v / breakdown.total) * 100).toFixed(1) : '0.0'} %
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
 
@@ -569,22 +862,44 @@ function EtatDecaissements({ days, allOps, periodLabel, companyName, companyAddr
 /* ═══════════════════════════════════════════════════════════
    6. RAPPORT DE SYNTHÈSE DE TRÉSORERIE
    ═══════════════════════════════════════════════════════════ */
-function SyntheseTresorerie({ days, periodLabel, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function SyntheseTresorerie({
+  days,
+  periodLabel,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   days: CashClosingRecord[];
   periodLabel: string;
-  companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
+  companyName: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyTaxId?: string;
+  printedBy: string;
 }) {
   const { header, footer } = useReportDesign('synthese');
   const openingBalance = days.length > 0 ? days[0].openingBalance : 0;
   const totalEntries = days.reduce((s, d) => s + d.totalEntries, 0);
   const totalExits = days.reduce((s, d) => s + d.totalExits, 0);
-  const closingBalance = days.length > 0 ? (days[days.length - 1].actualBalance ?? days[days.length - 1].theoreticalBalance) : 0;
+  const closingBalance =
+    days.length > 0
+      ? (days[days.length - 1].actualBalance ?? days[days.length - 1].theoreticalBalance)
+      : 0;
   const netFlow = totalEntries - totalExits;
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
-        title="Rapport de Synthèse de Trésorerie" subtitle={`Période : ${periodLabel}`} headerConfig={header} />
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
+        title="Rapport de Synthèse de Trésorerie"
+        subtitle={`Période : ${periodLabel}`}
+        headerConfig={header}
+      />
 
       {/* Summary table */}
       <table className="mx-auto mb-6 w-[520px] border-collapse text-sm">
@@ -595,27 +910,38 @@ function SyntheseTresorerie({ days, periodLabel, companyName, companyAddress, co
           </tr>
           <tr>
             <td className="border px-4 py-3 font-medium">Total des entrées (encaissements)</td>
-            <td className="border px-4 py-3 text-right font-bold text-green-700">+ {fmt(totalEntries)} FCFA</td>
+            <td className="border px-4 py-3 text-right font-bold text-green-700">
+              + {fmt(totalEntries)} FCFA
+            </td>
           </tr>
           <tr className="bg-gray-50">
             <td className="border px-4 py-3 font-medium">Total des sorties (décaissements)</td>
-            <td className="border px-4 py-3 text-right font-bold text-red-700">− {fmt(totalExits)} FCFA</td>
+            <td className="border px-4 py-3 text-right font-bold text-red-700">
+              − {fmt(totalExits)} FCFA
+            </td>
           </tr>
           <tr className={netFlow >= 0 ? 'bg-green-50' : 'bg-red-50'}>
             <td className="border px-4 py-3 text-lg font-bold">Flux net de trésorerie</td>
-            <td className={`border px-4 py-3 text-right text-lg font-bold ${netFlow >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-              {netFlow > 0 ? '+' : ''}{fmt(netFlow)} FCFA
+            <td
+              className={`border px-4 py-3 text-right text-lg font-bold ${netFlow >= 0 ? 'text-green-700' : 'text-red-700'}`}
+            >
+              {netFlow > 0 ? '+' : ''}
+              {fmt(netFlow)} FCFA
             </td>
           </tr>
           <tr className="bg-blue-50">
             <td className="border px-4 py-3 text-lg font-bold">Solde de clôture de la période</td>
-            <td className="border px-4 py-3 text-right text-lg font-bold">{fmt(closingBalance)} FCFA</td>
+            <td className="border px-4 py-3 text-right text-lg font-bold">
+              {fmt(closingBalance)} FCFA
+            </td>
           </tr>
         </tbody>
       </table>
 
       {/* Daily trend */}
-      <h3 className="mb-2 text-sm font-bold uppercase text-gray-600">Évolution quotidienne de la trésorerie</h3>
+      <h3 className="mb-2 text-sm font-bold uppercase text-gray-600">
+        Évolution quotidienne de la trésorerie
+      </h3>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-100">
@@ -637,11 +963,16 @@ function SyntheseTresorerie({ days, periodLabel, companyName, companyAddress, co
                 <td className="border px-2 py-1 font-mono text-xs">{d.reference}</td>
                 <td className="border px-2 py-1 text-xs">{fmtShortDate(d.openedAt)}</td>
                 <td className="border px-2 py-1 text-right">{fmt(d.openingBalance)}</td>
-                <td className="border px-2 py-1 text-right text-green-700">{fmt(d.totalEntries)}</td>
+                <td className="border px-2 py-1 text-right text-green-700">
+                  {fmt(d.totalEntries)}
+                </td>
                 <td className="border px-2 py-1 text-right text-red-700">{fmt(d.totalExits)}</td>
                 <td className="border px-2 py-1 text-right font-medium">{fmt(actual)}</td>
-                <td className={`border px-2 py-1 text-right font-medium ${variation >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                  {variation > 0 ? '+' : ''}{fmt(variation)}
+                <td
+                  className={`border px-2 py-1 text-right font-medium ${variation >= 0 ? 'text-green-700' : 'text-red-700'}`}
+                >
+                  {variation > 0 ? '+' : ''}
+                  {fmt(variation)}
                 </td>
               </tr>
             );
@@ -651,8 +982,16 @@ function SyntheseTresorerie({ days, periodLabel, companyName, companyAddress, co
 
       <div className="mt-3 rounded border p-3 text-sm">
         <div className="grid grid-cols-2 gap-4">
-          <div><span className="text-gray-500">Nombre de journées :</span> <span className="font-bold">{days.length}</span></div>
-          <div><span className="text-gray-500">Moyenne journalière flux net :</span> <span className="font-bold">{days.length > 0 ? fmt(netFlow / days.length) : '0'} FCFA</span></div>
+          <div>
+            <span className="text-gray-500">Nombre de journées :</span>{' '}
+            <span className="font-bold">{days.length}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Moyenne journalière flux net :</span>{' '}
+            <span className="font-bold">
+              {days.length > 0 ? fmt(netFlow / days.length) : '0'} FCFA
+            </span>
+          </div>
         </div>
       </div>
 
@@ -664,21 +1003,43 @@ function SyntheseTresorerie({ days, periodLabel, companyName, companyAddress, co
 /* ═══════════════════════════════════════════════════════════
    7. ÉTAT DES ÉCARTS CUMULÉS
    ═══════════════════════════════════════════════════════════ */
-function EcartsCumules({ days, periodLabel, companyName, companyAddress, companyPhone, companyTaxId, printedBy }: {
+function EcartsCumules({
+  days,
+  periodLabel,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyTaxId,
+  printedBy,
+}: {
   days: CashClosingRecord[];
   periodLabel: string;
-  companyName: string; companyAddress?: string; companyPhone?: string; companyTaxId?: string; printedBy: string;
+  companyName: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyTaxId?: string;
+  printedBy: string;
 }) {
   const { header, footer } = useReportDesign('ecarts-cumules');
   const daysWithVariance = days.filter((d) => d.actualBalance != null);
   const totalVariance = daysWithVariance.reduce((s, d) => s + d.variance, 0);
   const daysWithEcart = daysWithVariance.filter((d) => Math.abs(d.variance) > 0.5);
-  const maxEcart = daysWithVariance.length > 0 ? Math.max(...daysWithVariance.map((d) => Math.abs(d.variance))) : 0;
+  const maxEcart =
+    daysWithVariance.length > 0
+      ? Math.max(...daysWithVariance.map((d) => Math.abs(d.variance)))
+      : 0;
 
   return (
     <div>
-      <ReportHeader companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId}
-        title="État des Écarts Cumulés" subtitle={`Période : ${periodLabel} — Audit & Contrôle financier`} headerConfig={header} />
+      <ReportHeader
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyTaxId={companyTaxId}
+        title="État des Écarts Cumulés"
+        subtitle={`Période : ${periodLabel} — Audit & Contrôle financier`}
+        headerConfig={header}
+      />
 
       {/* Summary KPIs */}
       <div className="mb-4 grid grid-cols-4 gap-3 text-sm">
@@ -688,12 +1049,19 @@ function EcartsCumules({ days, periodLabel, companyName, companyAddress, company
         </div>
         <div className="rounded border p-3 text-center">
           <div className="text-xs text-gray-500">Journées avec écart</div>
-          <div className={`text-xl font-bold ${daysWithEcart.length > 0 ? 'text-red-700' : 'text-green-700'}`}>{daysWithEcart.length}</div>
+          <div
+            className={`text-xl font-bold ${daysWithEcart.length > 0 ? 'text-red-700' : 'text-green-700'}`}
+          >
+            {daysWithEcart.length}
+          </div>
         </div>
         <div className="rounded border p-3 text-center">
           <div className="text-xs text-gray-500">Écart cumulé</div>
-          <div className={`text-xl font-bold ${Math.abs(totalVariance) > 0.5 ? 'text-red-700' : 'text-green-700'}`}>
-            {totalVariance > 0 ? '+' : ''}{fmt(totalVariance)} FCFA
+          <div
+            className={`text-xl font-bold ${Math.abs(totalVariance) > 0.5 ? 'text-red-700' : 'text-green-700'}`}
+          >
+            {totalVariance > 0 ? '+' : ''}
+            {fmt(totalVariance)} FCFA
           </div>
         </div>
         <div className="rounded border p-3 text-center">
@@ -713,7 +1081,8 @@ function EcartsCumules({ days, periodLabel, companyName, companyAddress, company
         <div className="mb-4 rounded-lg border-2 border-red-300 bg-red-50 p-3 flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-red-600" />
           <span className="text-sm font-semibold text-red-800">
-            {daysWithEcart.length} journée{daysWithEcart.length > 1 ? 's' : ''} avec écart détecté{daysWithEcart.length > 1 ? 's' : ''}
+            {daysWithEcart.length} journée{daysWithEcart.length > 1 ? 's' : ''} avec écart détecté
+            {daysWithEcart.length > 1 ? 's' : ''}
           </span>
         </div>
       )}
@@ -737,13 +1106,19 @@ function EcartsCumules({ days, periodLabel, companyName, companyAddress, company
             const hasGap = Math.abs(d.variance) > 0.5;
             const pct = d.theoreticalBalance !== 0 ? (d.variance / d.theoreticalBalance) * 100 : 0;
             return (
-              <tr key={d.id} className={hasGap ? 'bg-red-50' : (i % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+              <tr
+                key={d.id}
+                className={hasGap ? 'bg-red-50' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+              >
                 <td className="border px-2 py-1 font-mono text-xs">{d.reference}</td>
                 <td className="border px-2 py-1 text-xs">{fmtShortDate(d.openedAt)}</td>
                 <td className="border px-2 py-1 text-right">{fmt(d.theoreticalBalance)}</td>
                 <td className="border px-2 py-1 text-right">{fmt(d.actualBalance ?? 0)}</td>
-                <td className={`border px-2 py-1 text-right font-bold ${hasGap ? 'text-red-700' : 'text-green-700'}`}>
-                  {d.variance > 0 ? '+' : ''}{fmt(d.variance)}
+                <td
+                  className={`border px-2 py-1 text-right font-bold ${hasGap ? 'text-red-700' : 'text-green-700'}`}
+                >
+                  {d.variance > 0 ? '+' : ''}
+                  {fmt(d.variance)}
                 </td>
                 <td className="border px-2 py-1 text-right">{pct.toFixed(2)} %</td>
                 <td className="border px-2 py-1 text-xs">
@@ -756,9 +1131,14 @@ function EcartsCumules({ days, periodLabel, companyName, companyAddress, company
         </tbody>
         <tfoot>
           <tr className="bg-gray-200 font-bold">
-            <td colSpan={4} className="border px-2 py-1 text-right">ÉCART CUMULÉ</td>
-            <td className={`border px-2 py-1 text-right ${Math.abs(totalVariance) > 0.5 ? 'text-red-800' : 'text-green-800'}`}>
-              {totalVariance > 0 ? '+' : ''}{fmt(totalVariance)} FCFA
+            <td colSpan={4} className="border px-2 py-1 text-right">
+              ÉCART CUMULÉ
+            </td>
+            <td
+              className={`border px-2 py-1 text-right ${Math.abs(totalVariance) > 0.5 ? 'text-red-800' : 'text-green-800'}`}
+            >
+              {totalVariance > 0 ? '+' : ''}
+              {fmt(totalVariance)} FCFA
             </td>
             <td colSpan={3} className="border px-2 py-1" />
           </tr>
@@ -794,9 +1174,10 @@ export default function ManagerCashReportsPage() {
   // For day mode: fetch all closed days to populate the combo
   const { data: rawClosingHistory = [] } = useClosingHistory();
   const allClosedDays = useMemo(
-    () => rawClosingHistory
-      .filter((d) => d.status === 'CLOSED')
-      .sort((a, b) => new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime()),
+    () =>
+      rawClosingHistory
+        .filter((d) => d.status === 'CLOSED')
+        .sort((a, b) => new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime()),
     [rawClosingHistory],
   );
 
@@ -804,10 +1185,11 @@ export default function ManagerCashReportsPage() {
   const filteredDayOptions = useMemo(() => {
     if (!daySearch.trim()) return allClosedDays;
     const q = daySearch.toLowerCase();
-    return allClosedDays.filter((d) =>
-      d.reference.toLowerCase().includes(q) ||
-      fmtDate(d.openedAt).toLowerCase().includes(q) ||
-      (d.closedAt && fmtDate(d.closedAt).toLowerCase().includes(q)),
+    return allClosedDays.filter(
+      (d) =>
+        d.reference.toLowerCase().includes(q) ||
+        fmtDate(d.openedAt).toLowerCase().includes(q) ||
+        (d.closedAt && fmtDate(d.closedAt).toLowerCase().includes(q)),
     );
   }, [allClosedDays, daySearch]);
 
@@ -847,9 +1229,10 @@ export default function ManagerCashReportsPage() {
   const companyPhone = company?.phone;
   const companyTaxId = company?.taxId;
 
-  const periodLabel = mode === 'day' && selectedDay
-    ? `${selectedDay.reference} — ${fmtDate(selectedDay.openedAt)}`
-    : `Du ${fmtDate((dateFrom || '') + 'T00:00:00')} au ${fmtDate((dateTo || '') + 'T00:00:00')}`;
+  const periodLabel =
+    mode === 'day' && selectedDay
+      ? `${selectedDay.reference} — ${fmtDate(selectedDay.openedAt)}`
+      : `Du ${fmtDate((dateFrom || '') + 'T00:00:00')} au ${fmtDate((dateTo || '') + 'T00:00:00')}`;
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -877,26 +1260,64 @@ export default function ManagerCashReportsPage() {
     setActiveReport(id);
   }, []);
 
-  const closeTab = useCallback((id: PeriodReportType) => {
-    setOpenTabs((prev) => {
-      const next = prev.filter((t) => t !== id);
-      if (next.length === 0) return prev; // keep at least one tab
-      if (activeReport === id) {
-        const idx = prev.indexOf(id);
-        setActiveReport(next[Math.min(idx, next.length - 1)]);
-      }
-      return next;
-    });
-  }, [activeReport]);
+  const closeTab = useCallback(
+    (id: PeriodReportType) => {
+      setOpenTabs((prev) => {
+        const next = prev.filter((t) => t !== id);
+        if (next.length === 0) return prev; // keep at least one tab
+        if (activeReport === id) {
+          const idx = prev.indexOf(id);
+          setActiveReport(next[Math.min(idx, next.length - 1)]);
+        }
+        return next;
+      });
+    },
+    [activeReport],
+  );
 
   const reports: { id: PeriodReportType; label: string; icon: typeof FileText; desc: string }[] = [
-    { id: 'grand-livre', label: t('periodReports.grandLivre.title'), icon: BookOpen, desc: t('periodReports.grandLivre.desc') },
-    { id: 'balance', label: t('periodReports.balance.title'), icon: Scale, desc: t('periodReports.balance.desc') },
-    { id: 'journal-comptable', label: t('periodReports.journalComptable.title'), icon: FileText, desc: t('periodReports.journalComptable.desc') },
-    { id: 'encaissements', label: t('periodReports.encaissements.title'), icon: ArrowUpRight, desc: t('periodReports.encaissements.desc') },
-    { id: 'decaissements', label: t('periodReports.decaissements.title'), icon: ArrowDownRight, desc: t('periodReports.decaissements.desc') },
-    { id: 'synthese', label: t('periodReports.synthese.title'), icon: TrendingUp, desc: t('periodReports.synthese.desc') },
-    { id: 'ecarts-cumules', label: t('periodReports.ecartsCumules.title'), icon: AlertTriangle, desc: t('periodReports.ecartsCumules.desc') },
+    {
+      id: 'grand-livre',
+      label: t('periodReports.grandLivre.title'),
+      icon: BookOpen,
+      desc: t('periodReports.grandLivre.desc'),
+    },
+    {
+      id: 'balance',
+      label: t('periodReports.balance.title'),
+      icon: Scale,
+      desc: t('periodReports.balance.desc'),
+    },
+    {
+      id: 'journal-comptable',
+      label: t('periodReports.journalComptable.title'),
+      icon: FileText,
+      desc: t('periodReports.journalComptable.desc'),
+    },
+    {
+      id: 'encaissements',
+      label: t('periodReports.encaissements.title'),
+      icon: ArrowUpRight,
+      desc: t('periodReports.encaissements.desc'),
+    },
+    {
+      id: 'decaissements',
+      label: t('periodReports.decaissements.title'),
+      icon: ArrowDownRight,
+      desc: t('periodReports.decaissements.desc'),
+    },
+    {
+      id: 'synthese',
+      label: t('periodReports.synthese.title'),
+      icon: TrendingUp,
+      desc: t('periodReports.synthese.desc'),
+    },
+    {
+      id: 'ecarts-cumules',
+      label: t('periodReports.ecartsCumules.title'),
+      icon: AlertTriangle,
+      desc: t('periodReports.ecartsCumules.desc'),
+    },
   ];
 
   return (
@@ -948,7 +1369,9 @@ export default function ManagerCashReportsPage() {
             {mode === 'day' ? (
               <div className="flex flex-wrap items-end gap-4">
                 <div className="relative w-80" ref={dropdownRef}>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">{t('periodReports.dayLabel')}</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    {t('periodReports.dayLabel')}
+                  </label>
                   {/* Selected value / trigger */}
                   <button
                     type="button"
@@ -968,8 +1391,18 @@ export default function ManagerCashReportsPage() {
                         <span
                           role="button"
                           tabIndex={0}
-                          onClick={(e) => { e.stopPropagation(); setSelectedDayId(null); setDaySearch(''); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setSelectedDayId(null); setDaySearch(''); } }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDayId(null);
+                            setDaySearch('');
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.stopPropagation();
+                              setSelectedDayId(null);
+                              setDaySearch('');
+                            }
+                          }}
                           className="rounded p-0.5 hover:bg-gray-100"
                         >
                           <X className="h-3.5 w-3.5 text-gray-400" />
@@ -1010,14 +1443,18 @@ export default function ManagerCashReportsPage() {
                                 setDaySearch('');
                               }}
                               className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-brand-gold/10 ${
-                                d.id === selectedDayId ? 'bg-brand-gold/5 font-medium text-brand-gold' : 'text-gray-700'
+                                d.id === selectedDayId
+                                  ? 'bg-brand-gold/5 font-medium text-brand-gold'
+                                  : 'text-gray-700'
                               }`}
                             >
                               <span>
                                 <span className="font-medium">{d.reference}</span>
                                 <span className="ml-2 text-gray-500">{fmtDate(d.openedAt)}</span>
                               </span>
-                              <span className="text-xs text-gray-400">{fmt(d.theoreticalBalance)} FCFA</span>
+                              <span className="text-xs text-gray-400">
+                                {fmt(d.theoreticalBalance)} FCFA
+                              </span>
                             </li>
                           ))
                         )}
@@ -1029,7 +1466,9 @@ export default function ManagerCashReportsPage() {
             ) : (
               <div className="flex flex-wrap items-end gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">{t('periodReports.dateFrom')}</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    {t('periodReports.dateFrom')}
+                  </label>
                   <input
                     type="date"
                     value={dateFrom}
@@ -1038,7 +1477,9 @@ export default function ManagerCashReportsPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">{t('periodReports.dateTo')}</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    {t('periodReports.dateTo')}
+                  </label>
                   <input
                     type="date"
                     value={dateTo}
@@ -1080,8 +1521,8 @@ export default function ManagerCashReportsPage() {
                   activeReport === id
                     ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
                     : openTabs.includes(id)
-                    ? 'border-brand-gold/30 bg-brand-gold/5 text-gray-700 hover:bg-brand-gold/10'
-                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                      ? 'border-brand-gold/30 bg-brand-gold/5 text-gray-700 hover:bg-brand-gold/10'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <Icon className="mt-0.5 h-4 w-4 shrink-0" />
@@ -1097,9 +1538,7 @@ export default function ManagerCashReportsPage() {
           <div className="min-w-0 flex-1">
             {/* Loading state */}
             {isLoading && (
-              <div className="py-8 text-center text-sm text-gray-400">
-                {t('common.loading')}
-              </div>
+              <div className="py-8 text-center text-sm text-gray-400">{t('common.loading')}</div>
             )}
 
             {/* No data */}
@@ -1137,8 +1576,16 @@ export default function ManagerCashReportsPage() {
                             <span
                               role="button"
                               tabIndex={0}
-                              onClick={(e) => { e.stopPropagation(); closeTab(tabId); }}
-                              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); closeTab(tabId); } }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                closeTab(tabId);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.stopPropagation();
+                                  closeTab(tabId);
+                                }
+                              }}
                               className="ml-1 rounded p-0.5 opacity-0 transition-opacity hover:bg-gray-200 group-hover:opacity-100"
                             >
                               <X className="h-3 w-3" />
@@ -1157,32 +1604,84 @@ export default function ManagerCashReportsPage() {
                 {/* Report content */}
                 <div className="mt-4 rounded border bg-white p-6">
                   {activeReport === 'grand-livre' && (
-                    <GrandLivreDeCaisse days={days} allOps={allOps} periodLabel={periodLabel}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <GrandLivreDeCaisse
+                      days={days}
+                      allOps={allOps}
+                      periodLabel={periodLabel}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'balance' && (
-                    <BalanceDeCaisse days={days} periodLabel={periodLabel}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <BalanceDeCaisse
+                      days={days}
+                      periodLabel={periodLabel}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'journal-comptable' && (
-                    <JournalComptable accountingData={accountingData} periodLabel={periodLabel}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <JournalComptable
+                      accountingData={accountingData}
+                      periodLabel={periodLabel}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'encaissements' && (
-                    <EtatEncaissements days={days} allOps={allOps} periodLabel={periodLabel}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <EtatEncaissements
+                      days={days}
+                      allOps={allOps}
+                      periodLabel={periodLabel}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'decaissements' && (
-                    <EtatDecaissements days={days} allOps={allOps} periodLabel={periodLabel}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <EtatDecaissements
+                      days={days}
+                      allOps={allOps}
+                      periodLabel={periodLabel}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'synthese' && (
-                    <SyntheseTresorerie days={days} periodLabel={periodLabel}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <SyntheseTresorerie
+                      days={days}
+                      periodLabel={periodLabel}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                   {activeReport === 'ecarts-cumules' && (
-                    <EcartsCumules days={days} periodLabel={periodLabel}
-                      companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+                    <EcartsCumules
+                      days={days}
+                      periodLabel={periodLabel}
+                      companyName={companyName}
+                      companyAddress={companyAddress}
+                      companyPhone={companyPhone}
+                      companyTaxId={companyTaxId}
+                      printedBy={printedBy}
+                    />
                   )}
                 </div>
               </>
@@ -1194,34 +1693,89 @@ export default function ManagerCashReportsPage() {
       {/* Print area */}
       <div className="print-only">
         {days.length > 0 && (
-          <div className="p-4 text-black" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' }}>
+          <div
+            className="p-4 text-black"
+            style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' }}
+          >
             {activeReport === 'grand-livre' && (
-              <GrandLivreDeCaisse days={days} allOps={allOps} periodLabel={periodLabel}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <GrandLivreDeCaisse
+                days={days}
+                allOps={allOps}
+                periodLabel={periodLabel}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'balance' && (
-              <BalanceDeCaisse days={days} periodLabel={periodLabel}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <BalanceDeCaisse
+                days={days}
+                periodLabel={periodLabel}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'journal-comptable' && (
-              <JournalComptable accountingData={accountingData} periodLabel={periodLabel}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <JournalComptable
+                accountingData={accountingData}
+                periodLabel={periodLabel}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'encaissements' && (
-              <EtatEncaissements days={days} allOps={allOps} periodLabel={periodLabel}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <EtatEncaissements
+                days={days}
+                allOps={allOps}
+                periodLabel={periodLabel}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'decaissements' && (
-              <EtatDecaissements days={days} allOps={allOps} periodLabel={periodLabel}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <EtatDecaissements
+                days={days}
+                allOps={allOps}
+                periodLabel={periodLabel}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'synthese' && (
-              <SyntheseTresorerie days={days} periodLabel={periodLabel}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <SyntheseTresorerie
+                days={days}
+                periodLabel={periodLabel}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
             {activeReport === 'ecarts-cumules' && (
-              <EcartsCumules days={days} periodLabel={periodLabel}
-                companyName={companyName} companyAddress={companyAddress} companyPhone={companyPhone} companyTaxId={companyTaxId} printedBy={printedBy} />
+              <EcartsCumules
+                days={days}
+                periodLabel={periodLabel}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyTaxId={companyTaxId}
+                printedBy={printedBy}
+              />
             )}
           </div>
         )}

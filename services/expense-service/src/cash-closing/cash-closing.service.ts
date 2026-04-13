@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Repository, DataSource, In } from 'typeorm';
@@ -63,7 +58,10 @@ export class CashClosingService {
   async open(dto: OpenCashClosingDto, user: CashClosingUser) {
     // Check no open register exists
     const existing = await this.closingRepo.findOne({
-      where: { status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]), cashType: this.CASH_TYPE },
+      where: {
+        status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]),
+        cashType: this.CASH_TYPE,
+      },
     });
     if (existing) {
       throw new BadRequestException(
@@ -131,7 +129,10 @@ export class CashClosingService {
   /* ─── Get current open register ─── */
   async getCurrent() {
     const current = await this.closingRepo.findOne({
-      where: { status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]), cashType: this.CASH_TYPE },
+      where: {
+        status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]),
+        cashType: this.CASH_TYPE,
+      },
     });
     if (!current) {
       throw new NotFoundException('Aucune caisse ouverte actuellement.');
@@ -335,11 +336,16 @@ export class CashClosingService {
     if (currentHour !== reminderHour) return;
 
     const openClosing = await this.closingRepo.findOne({
-      where: { status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]), cashType: this.CASH_TYPE },
+      where: {
+        status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]),
+        cashType: this.CASH_TYPE,
+      },
     });
     if (!openClosing) return;
 
-    this.logger.warn(`Caisse non clôturée à ${reminderHour}h — envoi rappel (${openClosing.reference})`);
+    this.logger.warn(
+      `Caisse non clôturée à ${reminderHour}h — envoi rappel (${openClosing.reference})`,
+    );
 
     await this.eventsService.publish(ExpenseEvent.CASH_CLOSING_REMINDER, {
       closingId: openClosing.id,
@@ -352,7 +358,10 @@ export class CashClosingService {
   /* ─── State (for frontend CashRegisterState) ─── */
   async getState() {
     const current = await this.closingRepo.findOne({
-      where: { status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]), cashType: this.CASH_TYPE },
+      where: {
+        status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]),
+        cashType: this.CASH_TYPE,
+      },
     });
 
     if (!current) {
@@ -398,7 +407,9 @@ export class CashClosingService {
       if (userRow) {
         openedByName = `${userRow.first_name} ${userRow.last_name}`.trim();
       }
-    } catch { /* fallback to UUID */ }
+    } catch {
+      /* fallback to UUID */
+    }
 
     return {
       data: {
@@ -422,7 +433,10 @@ export class CashClosingService {
   /* ─── Operations (cash movements for the open day) ─── */
   async getOperations() {
     const current = await this.closingRepo.findOne({
-      where: { status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]), cashType: this.CASH_TYPE },
+      where: {
+        status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]),
+        cashType: this.CASH_TYPE,
+      },
     });
 
     if (!current) {
@@ -448,12 +462,23 @@ export class CashClosingService {
   }
 
   /* ─── Add a cash movement ─── */
-  async addMovement(dto: { type: string; category: string; amount: number; reference?: string; description: string }, user: CashClosingUser) {
+  async addMovement(
+    dto: {
+      type: string;
+      category: string;
+      amount: number;
+      reference?: string;
+      description: string;
+    },
+    user: CashClosingUser,
+  ) {
     const current = await this.closingRepo.findOne({
       where: { status: CashDayStatus.OPEN, cashType: this.CASH_TYPE },
     });
     if (!current) {
-      throw new BadRequestException('Impossible d\'ajouter un mouvement. La caisse est fermée ou en attente de clôture.');
+      throw new BadRequestException(
+        "Impossible d'ajouter un mouvement. La caisse est fermée ou en attente de clôture.",
+      );
     }
 
     const [row] = await this.dataSource.query(
@@ -478,7 +503,8 @@ export class CashClosingService {
     } else {
       current.totalExits = Number(current.totalExits) + dto.amount;
     }
-    current.theoreticalBalance = Number(current.openingBalance) + Number(current.totalEntries) - Number(current.totalExits);
+    current.theoreticalBalance =
+      Number(current.openingBalance) + Number(current.totalEntries) - Number(current.totalExits);
     await this.closingRepo.save(current);
 
     return {
@@ -511,7 +537,10 @@ export class CashClosingService {
     } else {
       // Try current day (OPEN or PENDING_CLOSE), fallback to last CLOSED
       cashDay = await this.closingRepo.findOne({
-        where: { status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]), cashType: this.CASH_TYPE },
+        where: {
+          status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]),
+          cashType: this.CASH_TYPE,
+        },
       });
       if (!cashDay) {
         cashDay = await this.closingRepo.findOne({
@@ -589,7 +618,11 @@ export class CashClosingService {
     }
 
     // ── Variance / closing gap entry (only for closed cash days) ──
-    if (cashDay.status === CashDayStatus.CLOSED && cashDay.variance && Math.abs(Number(cashDay.variance)) > 0.01) {
+    if (
+      cashDay.status === CashDayStatus.CLOSED &&
+      cashDay.variance &&
+      Math.abs(Number(cashDay.variance)) > 0.01
+    ) {
       const variance = Number(cashDay.variance);
       if (variance > 0) {
         // Positive variance: actual > theoretical → surplus in caisse
@@ -679,10 +712,14 @@ export class CashClosingService {
       throw new NotFoundException(`Journée de caisse introuvable (${cashDayId}).`);
     }
     if (cashDay.status !== CashDayStatus.CLOSED) {
-      throw new BadRequestException('Seules les journées clôturées peuvent être traitées comptablement.');
+      throw new BadRequestException(
+        'Seules les journées clôturées peuvent être traitées comptablement.',
+      );
     }
     if (cashDay.accountingProcessed) {
-      throw new BadRequestException('Les écritures comptables de cette journée ont déjà été traitées. Annulez le traitement pour retraiter.');
+      throw new BadRequestException(
+        'Les écritures comptables de cette journée ont déjà été traitées. Annulez le traitement pour retraiter.',
+      );
     }
 
     cashDay.accountingProcessed = true;
@@ -713,7 +750,10 @@ export class CashClosingService {
     await this.closingRepo.save(cashDay);
 
     return {
-      data: { success: true, message: 'Traitement comptable annulé. Vous pouvez retraiter cette journée.' },
+      data: {
+        success: true,
+        message: 'Traitement comptable annulé. Vous pouvez retraiter cette journée.',
+      },
     };
   }
 
@@ -742,7 +782,9 @@ export class CashClosingService {
         [closing.openedById],
       );
       if (userRow) openedByName = `${userRow.first_name} ${userRow.last_name}`.trim();
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     if (closing.closedById) {
       try {
         const [userRow] = await this.dataSource.query(
@@ -750,7 +792,9 @@ export class CashClosingService {
           [closing.closedById],
         );
         if (userRow) closedByName = `${userRow.first_name} ${userRow.last_name}`.trim();
-      } catch { /* fallback */ }
+      } catch {
+        /* fallback */
+      }
     }
 
     return {
@@ -797,8 +841,14 @@ export class CashClosingService {
 
     return {
       data: {
-        movements: movements.map((m: Record<string, unknown>) => ({ ...m, amount: Number(m.amount) })),
-        expenses: expenses.map((e: Record<string, unknown>) => ({ ...e, amount: Number(e.amount) })),
+        movements: movements.map((m: Record<string, unknown>) => ({
+          ...m,
+          amount: Number(m.amount),
+        })),
+        expenses: expenses.map((e: Record<string, unknown>) => ({
+          ...e,
+          amount: Number(e.amount),
+        })),
       },
     };
   }
@@ -840,12 +890,14 @@ export class CashClosingService {
     const closed = await this.isYesterdayClosed();
     if (!closed) {
       throw new BadRequestException(
-        'La clôture de la veille n\'a pas été effectuée. Veuillez d\'abord clôturer la caisse précédente.',
+        "La clôture de la veille n'a pas été effectuée. Veuillez d'abord clôturer la caisse précédente.",
       );
     }
   }
 
-  private async calculateTotals(cashDayId: string): Promise<{ totalEntries: number; totalExits: number }> {
+  private async calculateTotals(
+    cashDayId: string,
+  ): Promise<{ totalEntries: number; totalExits: number }> {
     // Split PAID expenses linked to this cash day by category direction: ENTRY vs EXIT
     const result = await this.dataSource.query(
       `SELECT

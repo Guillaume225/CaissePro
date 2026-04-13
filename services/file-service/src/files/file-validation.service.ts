@@ -2,12 +2,7 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { fromBuffer } from 'file-type';
 import * as path from 'path';
 
-const ALLOWED_MIME_TYPES = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/jpg',
-];
+const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png'];
 
@@ -28,9 +23,7 @@ export class FileValidationService {
   ): Promise<{ detectedMime: string; extension: string }> {
     // 1. Size check
     if (file.size > maxSize) {
-      throw new BadRequestException(
-        `File size ${file.size} exceeds maximum ${maxSize} bytes`,
-      );
+      throw new BadRequestException(`File size ${file.size} exceeds maximum ${maxSize} bytes`);
     }
 
     // 2. Extension check
@@ -46,9 +39,7 @@ export class FileValidationService {
     const detectedMime = detected?.mime || file.mimetype;
 
     if (!ALLOWED_MIME_TYPES.includes(detectedMime)) {
-      throw new BadRequestException(
-        `Detected MIME type "${detectedMime}" is not allowed`,
-      );
+      throw new BadRequestException(`Detected MIME type "${detectedMime}" is not allowed`);
     }
 
     // 4. Cross-check declared extension vs real MIME (spoofing detection)

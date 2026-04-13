@@ -77,7 +77,8 @@ export class FneSettingsService {
         maxRetries: dto.maxRetries ?? existing.maxRetries,
         journalSales: dto.journalSales ?? existing.journalSales,
         journalCash: dto.journalCash ?? existing.journalCash,
-        regimeImposition: dto.regimeImposition !== undefined ? dto.regimeImposition : existing.regimeImposition,
+        regimeImposition:
+          dto.regimeImposition !== undefined ? dto.regimeImposition : existing.regimeImposition,
         centreImpots: dto.centreImpots !== undefined ? dto.centreImpots : existing.centreImpots,
         bankRef: dto.bankRef !== undefined ? dto.bankRef : existing.bankRef,
       });

@@ -9,11 +9,7 @@ import { AuthModule } from '../auth/auth.module';
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, Role, Company]),
-    AuthModule,
-    AuditModule,
-  ],
+  imports: [TypeOrmModule.forFeature([User, Role, Company]), AuthModule, AuditModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

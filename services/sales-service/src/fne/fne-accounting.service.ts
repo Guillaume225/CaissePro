@@ -53,7 +53,10 @@ export class FneAccountingService {
    *
    * For credit notes, debits/credits are reversed.
    */
-  async generate(dto: GenerateEntriesDto, userId: string): Promise<{ generated: number; skipped: number; errors: string[] }> {
+  async generate(
+    dto: GenerateEntriesDto,
+    userId: string,
+  ): Promise<{ generated: number; skipped: number; errors: string[] }> {
     if (!dto.invoiceIds?.length) {
       throw new BadRequestException('Aucune facture sélectionnée');
     }
@@ -76,16 +79,19 @@ export class FneAccountingService {
     const allProducts = await this.productRepo.find({ where: { isActive: true } });
     const clientByPhone = new Map(allClients.map((c) => [c.phone, c]));
     const clientByName = new Map(allClients.map((c) => [c.companyName, c]));
-    const productByRef = new Map(allProducts.filter((p) => p.reference).map((p) => [p.reference!, p]));
+    const productByRef = new Map(
+      allProducts.filter((p) => p.reference).map((p) => [p.reference!, p]),
+    );
     const productByDesc = new Map(allProducts.map((p) => [p.description, p]));
 
     // Check which invoices already have entries
     const existingInvoiceIds = new Set(
-      (await this.entryRepo
-        .createQueryBuilder('e')
-        .select('DISTINCT e.invoiceId', 'invoiceId')
-        .where('e.invoiceId IN (:...ids)', { ids: dto.invoiceIds })
-        .getRawMany()
+      (
+        await this.entryRepo
+          .createQueryBuilder('e')
+          .select('DISTINCT e.invoiceId', 'invoiceId')
+          .where('e.invoiceId IN (:...ids)', { ids: dto.invoiceIds })
+          .getRawMany()
       ).map((r: { invoiceId: string }) => r.invoiceId),
     );
 
@@ -95,8 +101,13 @@ export class FneAccountingService {
 
     for (const invoice of invoices) {
       // Skip if not certified or credit_note
-      if (invoice.status !== FneInvoiceStatus.CERTIFIED && invoice.status !== FneInvoiceStatus.CREDIT_NOTE) {
-        errors.push(`${invoice.reference ?? invoice.id}: statut ${invoice.status} — seules les factures certifiées sont prises en charge`);
+      if (
+        invoice.status !== FneInvoiceStatus.CERTIFIED &&
+        invoice.status !== FneInvoiceStatus.CREDIT_NOTE
+      ) {
+        errors.push(
+          `${invoice.reference ?? invoice.id}: statut ${invoice.status} — seules les factures certifiées sont prises en charge`,
+        );
         continue;
       }
 
@@ -116,7 +127,8 @@ export class FneAccountingService {
       const journalCode = isCashPayment ? journalCash : journalSales;
 
       // Find client account code
-      const matchedClient = clientByPhone.get(invoice.clientPhone) ?? clientByName.get(invoice.clientCompanyName);
+      const matchedClient =
+        clientByPhone.get(invoice.clientPhone) ?? clientByName.get(invoice.clientCompanyName);
       const clientAccount = matchedClient?.accountCode ?? DEFAULT_CLIENT_ACCOUNT;
       const clientLabel = `Client – ${invoice.clientCompanyName}`;
 
@@ -133,7 +145,9 @@ export class FneAccountingService {
         totalVat += vat;
 
         // Find matching product for account codes
-        const matchedProduct = (item.reference ? productByRef.get(item.reference) : null) ?? productByDesc.get(item.description);
+        const matchedProduct =
+          (item.reference ? productByRef.get(item.reference) : null) ??
+          productByDesc.get(item.description);
         const productAccount = matchedProduct?.accountCode ?? DEFAULT_PRODUCT_ACCOUNT;
 
         // Accumulate by product account
@@ -141,7 +155,11 @@ export class FneAccountingService {
         if (existingProd) {
           existingProd.amount += ht;
         } else {
-          productEntries.push({ account: productAccount, label: `Vente – ${item.description}`, amount: ht });
+          productEntries.push({
+            account: productAccount,
+            label: `Vente – ${item.description}`,
+            amount: ht,
+          });
         }
 
         // VAT entry (only for non-zero taxes)
@@ -157,7 +175,7 @@ export class FneAccountingService {
         }
       }
 
-      const ttc = Number(invoice.totalTtc) || (totalHt + totalVat);
+      const ttc = Number(invoice.totalTtc) || totalHt + totalVat;
       const entries: Partial<FneAccountingEntry>[] = [];
 
       // Line 1: Débit Client = TTC (or Crédit for credit note)

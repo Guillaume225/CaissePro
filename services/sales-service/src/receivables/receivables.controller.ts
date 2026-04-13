@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
 import { ReceivablesService } from './receivables.service';
 import { Permissions } from '../common/decorators';
 import { RECEIVABLE_PERMISSIONS } from '../common/permissions';

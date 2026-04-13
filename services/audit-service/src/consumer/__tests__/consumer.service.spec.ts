@@ -202,10 +202,7 @@ describe('ConsumerService', () => {
         payload: null,
       });
 
-      const expected = crypto
-        .createHmac('sha256', HMAC_SECRET)
-        .update(canonical)
-        .digest('hex');
+      const expected = crypto.createHmac('sha256', HMAC_SECRET).update(canonical).digest('hex');
 
       expect(service.computeSignature(entry)).toBe(expected);
     });
@@ -214,7 +211,10 @@ describe('ConsumerService', () => {
   describe('handleMessage', () => {
     it('should process a valid message and ack', async () => {
       const ack = jest.fn();
-      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = { ack, nack: jest.fn() };
+      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = {
+        ack,
+        nack: jest.fn(),
+      };
 
       const msg = {
         fields: { routingKey: 'expense.created', exchange: 'expense.events' },
@@ -234,7 +234,10 @@ describe('ConsumerService', () => {
 
     it('should nack on malformed JSON', async () => {
       const nack = jest.fn();
-      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = { ack: jest.fn(), nack };
+      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = {
+        ack: jest.fn(),
+        nack,
+      };
 
       const msg = {
         fields: { routingKey: 'expense.created', exchange: 'expense.events' },

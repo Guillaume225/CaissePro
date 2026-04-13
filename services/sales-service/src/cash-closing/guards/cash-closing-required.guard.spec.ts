@@ -24,10 +24,7 @@ describe('CashClosingRequiredGuard (sales)', () => {
     service = { isYesterdayClosed: jest.fn() };
     reflector = new Reflector();
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
-    guard = new CashClosingRequiredGuard(
-      service as unknown as CashClosingService,
-      reflector,
-    );
+    guard = new CashClosingRequiredGuard(service as unknown as CashClosingService, reflector);
   });
 
   it('should allow GET requests without checking', async () => {

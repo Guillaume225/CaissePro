@@ -1,9 +1,25 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Plus, Pencil, Trash2 } from 'lucide-react';
-import { Button, Input, Modal, Badge, DataTable, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
+import {
+  Button,
+  Input,
+  Modal,
+  Badge,
+  DataTable,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
-import { useRoles, usePermissions, useCreateRole, useUpdateRole, useDeleteRole } from '@/hooks/useAdmin';
+import {
+  useRoles,
+  usePermissions,
+  useCreateRole,
+  useUpdateRole,
+  useDeleteRole,
+} from '@/hooks/useAdmin';
 import type { Role, CreateRoleDto } from '@/types/admin';
 
 type AnyRow = Record<string, unknown>;
@@ -24,11 +40,14 @@ export default function RoleManagementPage() {
   const [form, setForm] = useState<CreateRoleDto>({ name: '', description: '', permissions: [] });
 
   // Group permissions by module
-  const grouped = MODULE_ORDER.reduce<Record<string, { key: string; label: string }[]>>((acc, mod) => {
-    const perms = allPermissions.filter((p) => p.module === mod);
-    if (perms.length) acc[mod] = perms;
-    return acc;
-  }, {});
+  const grouped = MODULE_ORDER.reduce<Record<string, { key: string; label: string }[]>>(
+    (acc, mod) => {
+      const perms = allPermissions.filter((p) => p.module === mod);
+      if (perms.length) acc[mod] = perms;
+      return acc;
+    },
+    {},
+  );
 
   const openCreate = () => {
     setEditRole(null);
@@ -52,12 +71,12 @@ export default function RoleManagementPage() {
   };
 
   const toggleModule = (mod: string) => {
-    const keys = (grouped[mod] || []).map(p => p.key);
-    const allSelected = keys.every(k => form.permissions.includes(k));
-    setForm(f => ({
+    const keys = (grouped[mod] || []).map((p) => p.key);
+    const allSelected = keys.every((k) => form.permissions.includes(k));
+    setForm((f) => ({
       ...f,
       permissions: allSelected
-        ? f.permissions.filter(p => !keys.includes(p))
+        ? f.permissions.filter((p) => !keys.includes(p))
         : [...new Set([...f.permissions, ...keys])],
     }));
   };
@@ -83,19 +102,32 @@ export default function RoleManagementPage() {
       key: 'name',
       header: t('admin.rolesPage.name'),
       sortable: true,
-      render: (row) => { const r = row as unknown as Role; return (
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-brand-gold" />
-          <span className="font-medium text-gray-900">{r.name}</span>
-          {r.isSystem && <Badge variant="outline">{t('admin.rolesPage.systemRole')}</Badge>}
-        </div>
-      ); },
+      render: (row) => {
+        const r = row as unknown as Role;
+        return (
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-brand-gold" />
+            <span className="font-medium text-gray-900">{r.name}</span>
+            {r.isSystem && <Badge variant="outline">{t('admin.rolesPage.systemRole')}</Badge>}
+          </div>
+        );
+      },
     },
-    { key: 'description', header: t('admin.rolesPage.description'), render: (row) => <span className="text-sm text-gray-500">{(row as unknown as Role).description}</span> },
+    {
+      key: 'description',
+      header: t('admin.rolesPage.description'),
+      render: (row) => (
+        <span className="text-sm text-gray-500">{(row as unknown as Role).description}</span>
+      ),
+    },
     {
       key: 'permissions',
       header: t('admin.rolesPage.permissions'),
-      render: (row) => <Badge variant="info">{(row as unknown as Role).permissions.length} {t('admin.rolesPage.permsCount')}</Badge>,
+      render: (row) => (
+        <Badge variant="info">
+          {(row as unknown as Role).permissions.length} {t('admin.rolesPage.permsCount')}
+        </Badge>
+      ),
     },
     {
       key: 'usersCount',
@@ -106,18 +138,27 @@ export default function RoleManagementPage() {
     {
       key: 'actions',
       header: t('common.actions'),
-      render: (row) => { const r = row as unknown as Role; return (
-        <div className="flex items-center gap-1">
-          <button onClick={() => openEdit(r)} className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
-            <Pencil className="h-4 w-4" />
-          </button>
-          {!r.isSystem && (
-            <button onClick={() => setConfirmDelete(r)} className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
-              <Trash2 className="h-4 w-4" />
+      render: (row) => {
+        const r = row as unknown as Role;
+        return (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => openEdit(r)}
+              className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            >
+              <Pencil className="h-4 w-4" />
             </button>
-          )}
-        </div>
-      ); },
+            {!r.isSystem && (
+              <button
+                onClick={() => setConfirmDelete(r)}
+                className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -141,11 +182,24 @@ export default function RoleManagementPage() {
       )}
 
       {/* Create / Edit Modal with permission grid */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={editRole ? t('admin.rolesPage.editRole') : t('admin.rolesPage.addRole')} size="lg">
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editRole ? t('admin.rolesPage.editRole') : t('admin.rolesPage.addRole')}
+        size="lg"
+      >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input label={t('admin.rolesPage.name')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Input label={t('admin.rolesPage.description')} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <Input
+              label={t('admin.rolesPage.name')}
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <Input
+              label={t('admin.rolesPage.description')}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
           </div>
 
           {/* Permissions Grid */}
@@ -156,19 +210,23 @@ export default function RoleManagementPage() {
             <CardContent>
               <div className="space-y-4">
                 {Object.entries(grouped).map(([mod, perms]) => {
-                  const allChecked = perms.every(p => form.permissions.includes(p.key));
-                  const someChecked = perms.some(p => form.permissions.includes(p.key));
+                  const allChecked = perms.every((p) => form.permissions.includes(p.key));
+                  const someChecked = perms.some((p) => form.permissions.includes(p.key));
                   return (
                     <div key={mod}>
                       <label className="flex items-center gap-2 mb-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={allChecked}
-                          ref={(el) => { if (el) el.indeterminate = someChecked && !allChecked; }}
+                          ref={(el) => {
+                            if (el) el.indeterminate = someChecked && !allChecked;
+                          }}
                           onChange={() => toggleModule(mod)}
                           className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
                         />
-                        <span className="text-sm font-semibold text-gray-700 capitalize">{mod}</span>
+                        <span className="text-sm font-semibold text-gray-700 capitalize">
+                          {mod}
+                        </span>
                       </label>
                       <div className="ml-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                         {perms.map((p) => (
@@ -191,7 +249,9 @@ export default function RoleManagementPage() {
           </Card>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
+            <Button variant="ghost" onClick={() => setShowModal(false)}>
+              {t('common.cancel')}
+            </Button>
             <Button onClick={handleSubmit} loading={createRole.isPending || updateRole.isPending}>
               {editRole ? t('common.save') : t('common.create')}
             </Button>
@@ -199,11 +259,22 @@ export default function RoleManagementPage() {
         </div>
       </Modal>
 
-      <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title={t('admin.rolesPage.confirmDelete')} size="sm">
-        <p className="mb-4 text-sm text-gray-600">{t('admin.rolesPage.confirmDeleteMsg', { name: confirmDelete?.name })}</p>
+      <Modal
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title={t('admin.rolesPage.confirmDelete')}
+        size="sm"
+      >
+        <p className="mb-4 text-sm text-gray-600">
+          {t('admin.rolesPage.confirmDeleteMsg', { name: confirmDelete?.name })}
+        </p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</Button>
-          <Button variant="destructive" onClick={handleDelete} loading={deleteRole.isPending}>{t('common.delete')}</Button>
+          <Button variant="ghost" onClick={() => setConfirmDelete(null)}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} loading={deleteRole.isPending}>
+            {t('common.delete')}
+          </Button>
         </div>
       </Modal>
     </div>

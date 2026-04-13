@@ -9,12 +9,31 @@ import type { AuditLogEntry, AuditLogFilters, AuditAction } from '@/types/admin'
 type AnyRow = Record<string, unknown>;
 
 const ACTIONS: AuditAction[] = [
-  'CREATE', 'UPDATE', 'DELETE', 'SUBMIT', 'APPROVE', 'REJECT',
-  'PAY', 'CANCEL', 'LOGIN', 'LOGOUT', 'EXPORT',
-  'CASH_CLOSING_OPEN', 'CASH_CLOSING_CLOSE',
+  'CREATE',
+  'UPDATE',
+  'DELETE',
+  'SUBMIT',
+  'APPROVE',
+  'REJECT',
+  'PAY',
+  'CANCEL',
+  'LOGIN',
+  'LOGOUT',
+  'EXPORT',
+  'CASH_CLOSING_OPEN',
+  'CASH_CLOSING_CLOSE',
 ];
 
-const ENTITY_TYPES = ['expense', 'sale', 'payment', 'user', 'role', 'category', 'closing', 'report'];
+const ENTITY_TYPES = [
+  'expense',
+  'sale',
+  'payment',
+  'user',
+  'role',
+  'category',
+  'closing',
+  'report',
+];
 
 export default function AuditLogPage() {
   const { t } = useTranslation();
@@ -22,7 +41,9 @@ export default function AuditLogPage() {
   const [showFilters, setShowFilters] = useState(false);
   const { data: logs = [], isLoading } = useAuditLogs(filters);
 
-  const actionColor = (action: string): 'default' | 'success' | 'warning' | 'destructive' | 'info' => {
+  const actionColor = (
+    action: string,
+  ): 'default' | 'success' | 'warning' | 'destructive' | 'info' => {
     if (['CREATE', 'APPROVE', 'PAY'].includes(action)) return 'success';
     if (['DELETE', 'REJECT', 'CANCEL'].includes(action)) return 'destructive';
     if (['UPDATE', 'SUBMIT'].includes(action)) return 'info';
@@ -44,34 +65,54 @@ export default function AuditLogPage() {
       key: 'userName',
       header: t('admin.audit.user'),
       sortable: true,
-      render: (r) => <span className="font-medium text-gray-900">{(r as unknown as AuditLogEntry).userName}</span>,
+      render: (r) => (
+        <span className="font-medium text-gray-900">
+          {(r as unknown as AuditLogEntry).userName}
+        </span>
+      ),
     },
     {
       key: 'action',
       header: t('admin.audit.action'),
       sortable: true,
-      render: (r) => <Badge variant={actionColor((r as unknown as AuditLogEntry).action)}>{(r as unknown as AuditLogEntry).action}</Badge>,
+      render: (r) => (
+        <Badge variant={actionColor((r as unknown as AuditLogEntry).action)}>
+          {(r as unknown as AuditLogEntry).action}
+        </Badge>
+      ),
     },
     {
       key: 'entityType',
       header: t('admin.audit.entityType'),
       sortable: true,
-      render: (r) => <span className="text-xs capitalize text-gray-600">{(r as unknown as AuditLogEntry).entityType}</span>,
+      render: (r) => (
+        <span className="text-xs capitalize text-gray-600">
+          {(r as unknown as AuditLogEntry).entityType}
+        </span>
+      ),
     },
     {
       key: 'entityId',
       header: t('admin.audit.entityId'),
-      render: (r) => <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{(r as unknown as AuditLogEntry).entityId}</code>,
+      render: (r) => (
+        <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">
+          {(r as unknown as AuditLogEntry).entityId}
+        </code>
+      ),
     },
     {
       key: 'description',
       header: t('admin.audit.description'),
-      render: (r) => <span className="text-sm text-gray-600">{(r as unknown as AuditLogEntry).description}</span>,
+      render: (r) => (
+        <span className="text-sm text-gray-600">{(r as unknown as AuditLogEntry).description}</span>
+      ),
     },
     {
       key: 'ipAddress',
       header: t('admin.audit.ip'),
-      render: (r) => <code className="text-xs text-gray-400">{(r as unknown as AuditLogEntry).ipAddress}</code>,
+      render: (r) => (
+        <code className="text-xs text-gray-400">{(r as unknown as AuditLogEntry).ipAddress}</code>
+      ),
     },
   ];
 
@@ -99,14 +140,27 @@ export default function AuditLogPage() {
               <Select
                 label={t('admin.audit.action')}
                 value={filters.action || ''}
-                onChange={(e) => setFilters({ ...filters, action: (e.target.value || undefined) as AuditAction | undefined })}
-                options={[{ value: '', label: t('common.all') }, ...ACTIONS.map((a) => ({ value: a, label: a }))]}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    action: (e.target.value || undefined) as AuditAction | undefined,
+                  })
+                }
+                options={[
+                  { value: '', label: t('common.all') },
+                  ...ACTIONS.map((a) => ({ value: a, label: a })),
+                ]}
               />
               <Select
                 label={t('admin.audit.entityType')}
                 value={filters.entityType || ''}
-                onChange={(e) => setFilters({ ...filters, entityType: e.target.value || undefined })}
-                options={[{ value: '', label: t('common.all') }, ...ENTITY_TYPES.map((et) => ({ value: et, label: et }))]}
+                onChange={(e) =>
+                  setFilters({ ...filters, entityType: e.target.value || undefined })
+                }
+                options={[
+                  { value: '', label: t('common.all') },
+                  ...ENTITY_TYPES.map((et) => ({ value: et, label: et })),
+                ]}
               />
               <Input
                 label={t('admin.audit.dateFrom')}

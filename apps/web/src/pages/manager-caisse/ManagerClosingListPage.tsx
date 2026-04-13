@@ -9,8 +9,7 @@ import { useUsers } from '@/hooks/useAdmin';
 
 type AnyRow = Record<string, unknown>;
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
 function timeSince(dateStr: string): string {
   const now = new Date();
@@ -45,7 +44,9 @@ export default function ManagerClosingListPage() {
       sortable: true,
       render: (r) => {
         const row = r as unknown as CashDayRow;
-        return <span className="text-sm">{new Date(row.openedAt).toLocaleDateString('fr-FR')}</span>;
+        return (
+          <span className="text-sm">{new Date(row.openedAt).toLocaleDateString('fr-FR')}</span>
+        );
       },
     },
     {
@@ -95,7 +96,9 @@ export default function ManagerClosingListPage() {
             <Badge variant={isPending ? 'warning' : hours > 12 ? 'destructive' : 'success'}>
               {isPending ? t('closing.statusPendingClose') : t('closing.statusOpen')}
             </Badge>
-            <span className={`text-[10px] ${hours > 12 ? 'font-medium text-red-500' : 'text-gray-400'}`}>
+            <span
+              className={`text-[10px] ${hours > 12 ? 'font-medium text-red-500' : 'text-gray-400'}`}
+            >
               {timeSince(row.openedAt)}
             </span>
           </div>

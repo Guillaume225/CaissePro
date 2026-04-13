@@ -26,17 +26,49 @@ export default function NarrativeReportPage() {
     return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' });
   };
 
-  // Very basic markdown renderer  
+  // Very basic markdown renderer
   const renderMarkdown = (md: string) => {
     const lines = md.split('\n');
     return lines.map((line, i) => {
-      if (line.startsWith('### ')) return <h3 key={i} className="mt-4 mb-1 text-base font-semibold text-gray-800">{line.slice(4)}</h3>;
-      if (line.startsWith('## ')) return <h2 key={i} className="mt-6 mb-2 text-lg font-bold text-gray-900">{line.slice(3)}</h2>;
-      if (line.startsWith('# ')) return <h1 key={i} className="mt-6 mb-2 text-xl font-bold text-gray-900">{line.slice(2)}</h1>;
-      if (line.startsWith('- ')) return <li key={i} className="ml-4 text-sm text-gray-700 list-disc">{renderInline(line.slice(2))}</li>;
-      if (line.startsWith('> ')) return <blockquote key={i} className="border-l-4 border-brand-gold/30 pl-3 italic text-sm text-gray-600">{renderInline(line.slice(2))}</blockquote>;
+      if (line.startsWith('### '))
+        return (
+          <h3 key={i} className="mt-4 mb-1 text-base font-semibold text-gray-800">
+            {line.slice(4)}
+          </h3>
+        );
+      if (line.startsWith('## '))
+        return (
+          <h2 key={i} className="mt-6 mb-2 text-lg font-bold text-gray-900">
+            {line.slice(3)}
+          </h2>
+        );
+      if (line.startsWith('# '))
+        return (
+          <h1 key={i} className="mt-6 mb-2 text-xl font-bold text-gray-900">
+            {line.slice(2)}
+          </h1>
+        );
+      if (line.startsWith('- '))
+        return (
+          <li key={i} className="ml-4 text-sm text-gray-700 list-disc">
+            {renderInline(line.slice(2))}
+          </li>
+        );
+      if (line.startsWith('> '))
+        return (
+          <blockquote
+            key={i}
+            className="border-l-4 border-brand-gold/30 pl-3 italic text-sm text-gray-600"
+          >
+            {renderInline(line.slice(2))}
+          </blockquote>
+        );
       if (line.trim() === '') return <br key={i} />;
-      return <p key={i} className="text-sm text-gray-700 leading-relaxed">{renderInline(line)}</p>;
+      return (
+        <p key={i} className="text-sm text-gray-700 leading-relaxed">
+          {renderInline(line)}
+        </p>
+      );
     });
   };
 
@@ -44,7 +76,13 @@ export default function NarrativeReportPage() {
     // Bold **text**
     const parts = text.split(/\*\*(.*?)\*\*/g);
     return parts.map((part, i) =>
-      i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part,
+      i % 2 === 1 ? (
+        <strong key={i} className="font-semibold">
+          {part}
+        </strong>
+      ) : (
+        part
+      ),
     );
   };
 
@@ -66,7 +104,9 @@ export default function NarrativeReportPage() {
         </button>
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-brand-gold" />
-          <span className="text-sm font-semibold text-gray-800 capitalize">{periodLabel(period)}</span>
+          <span className="text-sm font-semibold text-gray-800 capitalize">
+            {periodLabel(period)}
+          </span>
         </div>
         <button
           disabled={periodIdx <= 0}

@@ -12,18 +12,18 @@ import { AuditLog } from '@/entities/audit-log.entity';
  */
 const EVENT_MAP: Record<string, { action: string; entityType: string }> = {
   // Expense events
-  'expense.created':   { action: 'CREATE',  entityType: 'expense' },
-  'expense.submitted': { action: 'SUBMIT',  entityType: 'expense' },
-  'expense.approved':  { action: 'APPROVE', entityType: 'expense' },
-  'expense.rejected':  { action: 'REJECT',  entityType: 'expense' },
-  'expense.paid':      { action: 'PAY',     entityType: 'expense' },
-  'expense.cancelled': { action: 'CANCEL',  entityType: 'expense' },
-  'budget.alert':      { action: 'ALERT',   entityType: 'budget' },
+  'expense.created': { action: 'CREATE', entityType: 'expense' },
+  'expense.submitted': { action: 'SUBMIT', entityType: 'expense' },
+  'expense.approved': { action: 'APPROVE', entityType: 'expense' },
+  'expense.rejected': { action: 'REJECT', entityType: 'expense' },
+  'expense.paid': { action: 'PAY', entityType: 'expense' },
+  'expense.cancelled': { action: 'CANCEL', entityType: 'expense' },
+  'budget.alert': { action: 'ALERT', entityType: 'budget' },
   // Sales events
-  'sale.created':        { action: 'CREATE',  entityType: 'sale' },
-  'sale.confirmed':      { action: 'CONFIRM', entityType: 'sale' },
-  'payment.received':    { action: 'RECEIVE', entityType: 'payment' },
-  'receivable.overdue':  { action: 'OVERDUE', entityType: 'receivable' },
+  'sale.created': { action: 'CREATE', entityType: 'sale' },
+  'sale.confirmed': { action: 'CONFIRM', entityType: 'sale' },
+  'payment.received': { action: 'RECEIVE', entityType: 'payment' },
+  'receivable.overdue': { action: 'OVERDUE', entityType: 'receivable' },
 };
 
 const EXCHANGES = ['expense.events', 'sales.events'];
@@ -78,11 +78,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`Connected to RabbitMQ — consuming from queue "${QUEUE_NAME}"`);
 
       // Start consuming
-      await channel.consume(
-        QUEUE_NAME,
-        (msg) => this.handleMessage(msg),
-        { noAck: false },
-      );
+      await channel.consume(QUEUE_NAME, (msg) => this.handleMessage(msg), { noAck: false });
 
       // Handle connection errors
       connection.on('error', (err) => {
@@ -134,7 +130,10 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       this.channel?.ack(msg);
       this.logger.debug(`Audit logged: ${routingKey} from ${exchange}`);
     } catch (error) {
-      this.logger.error(`Error processing message: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Error processing message: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       // Nack without requeue to avoid infinite loops on malformed messages
       this.channel?.nack(msg, false, false);
     }
@@ -178,9 +177,6 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       payload: entry.payload,
     });
 
-    return crypto
-      .createHmac('sha256', this.hmacSecret)
-      .update(canonical)
-      .digest('hex');
+    return crypto.createHmac('sha256', this.hmacSecret).update(canonical).digest('hex');
   }
 }

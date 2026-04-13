@@ -15,7 +15,11 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
-import { useFneAccountingEntries, useGenerateFneAccounting, useDeleteAllFneAccounting } from '@/hooks/useFneAccounting';
+import {
+  useFneAccountingEntries,
+  useGenerateFneAccounting,
+  useDeleteAllFneAccounting,
+} from '@/hooks/useFneAccounting';
 import { useFneInvoices } from '@/hooks/useFneInvoices';
 import { formatCFA, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -46,7 +50,10 @@ export default function FneAccountingPage() {
   const [generateResult, setGenerateResult] = useState<GenerateEntriesResult | null>(null);
 
   /* ── Fetch certified invoices without entries for generation ── */
-  const { data: invoicesData, isLoading: loadingInvoices } = useFneInvoices({ status: 'CERTIFIED', perPage: 100 });
+  const { data: invoicesData, isLoading: loadingInvoices } = useFneInvoices({
+    status: 'CERTIFIED',
+    perPage: 100,
+  });
   const certifiedInvoices = invoicesData?.data ?? [];
 
   const generateMutation = useGenerateFneAccounting();
@@ -90,20 +97,23 @@ export default function FneAccountingPage() {
   const handleExport = () => {
     if (!entries.length) return;
     const BOM = '\uFEFF';
-    const header = 'Journal;Date;N° Compte;Libellé compte;Débit;Crédit;Libellé écriture;Référence facture;Type opération\n';
-    const rows = entries.map((e) =>
-      [
-        e.journalCode,
-        e.entryDate,
-        e.accountNumber,
-        e.accountLabel,
-        Number(e.debit).toFixed(2),
-        Number(e.credit).toFixed(2),
-        e.label,
-        e.invoiceReference,
-        e.operationType,
-      ].join(';'),
-    ).join('\n');
+    const header =
+      'Journal;Date;N° Compte;Libellé compte;Débit;Crédit;Libellé écriture;Référence facture;Type opération\n';
+    const rows = entries
+      .map((e) =>
+        [
+          e.journalCode,
+          e.entryDate,
+          e.accountNumber,
+          e.accountLabel,
+          Number(e.debit).toFixed(2),
+          Number(e.credit).toFixed(2),
+          e.label,
+          e.invoiceReference,
+          e.operationType,
+        ].join(';'),
+      )
+      .join('\n');
     const blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -113,7 +123,8 @@ export default function FneAccountingPage() {
     URL.revokeObjectURL(url);
   };
 
-  const INPUT = 'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
+  const INPUT =
+    'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
 
   return (
     <div className="space-y-6">
@@ -145,7 +156,12 @@ export default function FneAccountingPage() {
           >
             <Trash2 className="mr-2 h-4 w-4" /> Annuler les écritures
           </Button>
-          <Button onClick={() => { setShowGenerateDialog(true); setGenerateResult(null); }}>
+          <Button
+            onClick={() => {
+              setShowGenerateDialog(true);
+              setGenerateResult(null);
+            }}
+          >
             <Play className="mr-2 h-4 w-4" /> Générer les écritures
           </Button>
         </div>
@@ -158,23 +174,49 @@ export default function FneAccountingPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               value={searchRef}
-              onChange={(e) => { setSearchRef(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearchRef(e.target.value);
+                setPage(1);
+              }}
               placeholder="Rechercher par réf. facture..."
               className={cn(INPUT, 'pl-10')}
             />
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-400" />
-            <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-              className={cn(INPUT, 'max-w-[160px]')} />
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setPage(1);
+              }}
+              className={cn(INPUT, 'max-w-[160px]')}
+            />
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-400" />
-            <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-              className={cn(INPUT, 'max-w-[160px]')} />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setPage(1);
+              }}
+              className={cn(INPUT, 'max-w-[160px]')}
+            />
           </div>
           {(searchRef || dateFrom || dateTo) && (
-            <Button variant="ghost" size="sm" onClick={() => { setSearchRef(''); setDateFrom(''); setDateTo(''); setPage(1); }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchRef('');
+                setDateFrom('');
+                setDateTo('');
+                setPage(1);
+              }}
+            >
               <X className="mr-1 h-4 w-4" /> Réinitialiser
             </Button>
           )}
@@ -216,10 +258,14 @@ export default function FneAccountingPage() {
                 {entries.map((e) => (
                   <tr key={e.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-2.5">
-                      <Badge variant="outline" className="text-xs font-mono">{e.journalCode}</Badge>
+                      <Badge variant="outline" className="text-xs font-mono">
+                        {e.journalCode}
+                      </Badge>
                     </td>
                     <td className="px-4 py-2.5 text-gray-700 text-xs">{formatDate(e.entryDate)}</td>
-                    <td className="px-4 py-2.5 font-mono text-gray-900 font-medium">{e.accountNumber}</td>
+                    <td className="px-4 py-2.5 font-mono text-gray-900 font-medium">
+                      {e.accountNumber}
+                    </td>
                     <td className="px-4 py-2.5 text-gray-700">{e.accountLabel}</td>
                     <td className="px-4 py-2.5 text-right font-mono text-gray-900">
                       {Number(e.debit) > 0 ? formatCFA(e.debit) : ''}
@@ -227,10 +273,17 @@ export default function FneAccountingPage() {
                     <td className="px-4 py-2.5 text-right font-mono text-gray-900">
                       {Number(e.credit) > 0 ? formatCFA(e.credit) : ''}
                     </td>
-                    <td className="px-4 py-2.5 text-gray-600 text-xs max-w-[200px] truncate">{e.label}</td>
-                    <td className="px-4 py-2.5 text-gray-500 text-xs font-mono">{e.invoiceReference}</td>
+                    <td className="px-4 py-2.5 text-gray-600 text-xs max-w-[200px] truncate">
+                      {e.label}
+                    </td>
+                    <td className="px-4 py-2.5 text-gray-500 text-xs font-mono">
+                      {e.invoiceReference}
+                    </td>
                     <td className="px-4 py-2.5">
-                      <Badge variant={e.operationType === 'CREDIT_NOTE' ? 'warning' : 'success'} className="text-xs">
+                      <Badge
+                        variant={e.operationType === 'CREDIT_NOTE' ? 'warning' : 'success'}
+                        className="text-xs"
+                      >
                         {e.operationType === 'CREDIT_NOTE' ? 'Avoir' : 'Vente'}
                       </Badge>
                     </td>
@@ -238,9 +291,15 @@ export default function FneAccountingPage() {
                 ))}
                 {/* Totals row */}
                 <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                  <td colSpan={4} className="px-4 py-3 text-right text-gray-700">Total page :</td>
-                  <td className="px-4 py-3 text-right font-mono text-gray-900">{formatCFA(totals.debit)}</td>
-                  <td className="px-4 py-3 text-right font-mono text-gray-900">{formatCFA(totals.credit)}</td>
+                  <td colSpan={4} className="px-4 py-3 text-right text-gray-700">
+                    Total page :
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-gray-900">
+                    {formatCFA(totals.debit)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-gray-900">
+                    {formatCFA(totals.credit)}
+                  </td>
                   <td colSpan={3} />
                 </tr>
               </>
@@ -256,10 +315,20 @@ export default function FneAccountingPage() {
             Page {meta.page} / {meta.totalPages} — {meta.total} écriture{meta.total > 1 ? 's' : ''}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
               Précédent
             </Button>
-            <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage((p) => p + 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= meta.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
               Suivant
             </Button>
           </div>
@@ -271,8 +340,13 @@ export default function FneAccountingPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Générer les écritures comptables</h2>
-              <button onClick={() => setShowGenerateDialog(false)} className="text-gray-400 hover:text-gray-600">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Générer les écritures comptables
+              </h2>
+              <button
+                onClick={() => setShowGenerateDialog(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -281,8 +355,8 @@ export default function FneAccountingPage() {
               <>
                 <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 mb-5">
                   <p className="text-sm text-blue-800">
-                    Cette action va générer les écritures comptables (journal <strong>VF</strong>) pour toutes les factures
-                    certifiées qui n'ont pas encore été traitées.
+                    Cette action va générer les écritures comptables (journal <strong>VF</strong>)
+                    pour toutes les factures certifiées qui n'ont pas encore été traitées.
                   </p>
                   <p className="text-sm text-blue-700 mt-2">
                     {loadingInvoices
@@ -291,19 +365,25 @@ export default function FneAccountingPage() {
                   </p>
                 </div>
                 <p className="text-xs text-gray-500 mb-5">
-                  Pour chaque facture : Débit Client (TTC) — Crédit Ventes (HT) — Crédit TVA collectée (si applicable).
-                  Les avoirs inversent les sens débit/crédit.
+                  Pour chaque facture : Débit Client (TTC) — Crédit Ventes (HT) — Crédit TVA
+                  collectée (si applicable). Les avoirs inversent les sens débit/crédit.
                 </p>
                 <div className="flex justify-end gap-3">
-                  <Button variant="ghost" onClick={() => setShowGenerateDialog(false)}>Annuler</Button>
+                  <Button variant="ghost" onClick={() => setShowGenerateDialog(false)}>
+                    Annuler
+                  </Button>
                   <Button
                     onClick={handleGenerateAll}
                     disabled={generateMutation.isPending || !certifiedInvoices.length}
                   >
                     {generateMutation.isPending ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Génération...</>
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Génération...
+                      </>
                     ) : (
-                      <><Play className="mr-2 h-4 w-4" /> Générer</>
+                      <>
+                        <Play className="mr-2 h-4 w-4" /> Générer
+                      </>
                     )}
                   </Button>
                 </div>
@@ -321,7 +401,8 @@ export default function FneAccountingPage() {
                     <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3">
                       <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
                       <p className="text-sm text-amber-800">
-                        <strong>{generateResult.skipped}</strong> facture(s) déjà traitée(s) (ignorées).
+                        <strong>{generateResult.skipped}</strong> facture(s) déjà traitée(s)
+                        (ignorées).
                       </p>
                     </div>
                   )}
@@ -353,15 +434,17 @@ export default function FneAccountingPage() {
                 <Trash2 className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Annuler les écritures comptables</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Annuler les écritures comptables
+                </h2>
                 <p className="text-sm text-gray-500">Cette action est irréversible</p>
               </div>
             </div>
 
             <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-5">
               <p className="text-sm text-red-800">
-                Toutes les écritures comptables générées seront supprimées.
-                Les factures concernées pourront être re-générées ultérieurement.
+                Toutes les écritures comptables générées seront supprimées. Les factures concernées
+                pourront être re-générées ultérieurement.
               </p>
               <p className="text-sm text-red-700 mt-2 font-medium">
                 {meta?.total ?? entries.length} écriture(s) seront supprimée(s).
@@ -369,16 +452,22 @@ export default function FneAccountingPage() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowCancelDialog(false)}>Annuler</Button>
+              <Button variant="ghost" onClick={() => setShowCancelDialog(false)}>
+                Annuler
+              </Button>
               <Button
                 onClick={handleDeleteAll}
                 disabled={deleteAllMutation.isPending}
                 className="bg-red-600 text-white hover:bg-red-700"
               >
                 {deleteAllMutation.isPending ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Suppression...</>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Suppression...
+                  </>
                 ) : (
-                  <><Trash2 className="mr-2 h-4 w-4" /> Confirmer la suppression</>
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" /> Confirmer la suppression
+                  </>
                 )}
               </Button>
             </div>

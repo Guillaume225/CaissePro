@@ -19,15 +19,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
-import {
-  Button,
-  Input,
-  Badge,
-  Card,
-  CardContent,
-  Stat,
-  Modal,
-} from '@/components/ui';
+import { Button, Input, Badge, Card, CardContent, Stat, Modal } from '@/components/ui';
 import {
   useCashState,
   useDayOperations,
@@ -40,8 +32,7 @@ import { usePendingDisbursementRequests } from '@/hooks/useDisbursementRequests'
 import { useExpenses, useExpenseCategories } from '@/hooks/useExpenses';
 import type { CashMovementType, CashMovementCategory } from '@/types/admin';
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
 export default function ClosingPage() {
   const { t } = useTranslation();
@@ -116,7 +107,9 @@ export default function ClosingPage() {
 
   // ── Pending requests count for stats block ─────────
   const { data: pendingRequests = [] } = usePendingDisbursementRequests();
-  const pendingOnly = pendingRequests.filter((r) => r.status === 'PENDING' || r.status === 'APPROVED');
+  const pendingOnly = pendingRequests.filter(
+    (r) => r.status === 'PENDING' || r.status === 'APPROVED',
+  );
 
   const pendingTotalAmount = pendingOnly.reduce((sum, r) => sum + r.amount, 0);
 
@@ -136,9 +129,15 @@ export default function ClosingPage() {
     };
     flattenCats(categories);
 
-    let draft = 0, pending = 0, approved = 0, paid = 0, rejected = 0;
-    let entries = 0, exits = 0;
-    let totalAmount = 0, paidAmount = 0;
+    let draft = 0,
+      pending = 0,
+      approved = 0,
+      paid = 0,
+      rejected = 0;
+    let entries = 0,
+      exits = 0;
+    let totalAmount = 0,
+      paidAmount = 0;
 
     for (const e of expenses) {
       totalAmount += e.amount;
@@ -149,24 +148,39 @@ export default function ClosingPage() {
       else if (dir === 'EXIT') exits++;
 
       switch (e.status) {
-        case 'DRAFT': draft++; break;
+        case 'DRAFT':
+          draft++;
+          break;
         case 'PENDING':
         case 'APPROVED_L1':
-          pending++; break;
+          pending++;
+          break;
         case 'APPROVED_L2':
-          approved++; break;
+          approved++;
+          break;
         case 'PAID':
           paid++;
           paidAmount += e.amount;
           break;
-        case 'REJECTED': rejected++; break;
+        case 'REJECTED':
+          rejected++;
+          break;
       }
     }
 
-    return { draft, pending, approved, paid, rejected, entries, exits, total: entries + exits, totalAmount, paidAmount };
+    return {
+      draft,
+      pending,
+      approved,
+      paid,
+      rejected,
+      entries,
+      exits,
+      total: entries + exits,
+      totalAmount,
+      paidAmount,
+    };
   }, [expenses, categories]);
-
-
 
   if (stateLoading) {
     return <p className="text-sm text-gray-500">{t('common.loading')}</p>;
@@ -182,10 +196,7 @@ export default function ClosingPage() {
         </div>
         <div className="flex gap-2">
           {state?.status === 'OPEN' && (
-            <Button
-              variant="destructive"
-              onClick={() => setShowLockModal(true)}
-            >
+            <Button variant="destructive" onClick={() => setShowLockModal(true)}>
               <LockKeyhole className="mr-2 h-4 w-4" />
               {t('closing.lockCash')}
             </Button>
@@ -216,7 +227,16 @@ export default function ClosingPage() {
             <Vault className="h-8 w-8 text-brand-gold" />
             <div>
               <p className="text-xs text-gray-500">{t('closing.status')}</p>
-              <Badge variant={state?.status === 'OPEN' ? 'success' : state?.status === 'PENDING_CLOSE' ? 'warning' : 'default'} className="mt-1">
+              <Badge
+                variant={
+                  state?.status === 'OPEN'
+                    ? 'success'
+                    : state?.status === 'PENDING_CLOSE'
+                      ? 'warning'
+                      : 'default'
+                }
+                className="mt-1"
+              >
                 {state?.status === 'OPEN'
                   ? t('closing.statusOpen')
                   : state?.status === 'PENDING_CLOSE'
@@ -262,8 +282,12 @@ export default function ClosingPage() {
           <CardContent className="flex items-center gap-3 py-4">
             <LockKeyhole className="h-6 w-6 text-orange-600" />
             <div>
-              <p className="text-sm font-semibold text-orange-800">{t('closing.pendingCloseBanner.title')}</p>
-              <p className="text-xs text-orange-600">{t('closing.pendingCloseBanner.description')}</p>
+              <p className="text-sm font-semibold text-orange-800">
+                {t('closing.pendingCloseBanner.title')}
+              </p>
+              <p className="text-xs text-orange-600">
+                {t('closing.pendingCloseBanner.description')}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -280,7 +304,9 @@ export default function ClosingPage() {
               <FileSignature className="h-6 w-6 text-amber-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-gray-800">{t('closing.pendingRequests.title')}</h3>
+              <h3 className="text-sm font-semibold text-gray-800">
+                {t('closing.pendingRequests.title')}
+              </h3>
               <div className="mt-1 flex items-center gap-4">
                 <div>
                   <span className="text-2xl font-bold text-gray-900">{pendingOnly.length}</span>
@@ -288,8 +314,12 @@ export default function ClosingPage() {
                 </div>
                 <div className="h-8 w-px bg-gray-200" />
                 <div>
-                  <span className="text-lg font-semibold text-gray-700">{fmt(pendingTotalAmount)}</span>
-                  <span className="ml-1 text-xs text-gray-500">{t('pendingRequests.totalAmount')}</span>
+                  <span className="text-lg font-semibold text-gray-700">
+                    {fmt(pendingTotalAmount)}
+                  </span>
+                  <span className="ml-1 text-xs text-gray-500">
+                    {t('pendingRequests.totalAmount')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -306,9 +336,12 @@ export default function ClosingPage() {
               <Receipt className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-800">{t('closing.expenseStats.title')}</h3>
+              <h3 className="text-sm font-semibold text-gray-800">
+                {t('closing.expenseStats.title')}
+              </h3>
               <p className="text-xs text-gray-500">
-                {t('closing.expenseStats.total', { count: expenseStats.total })} &middot; {fmt(expenseStats.totalAmount)}
+                {t('closing.expenseStats.total', { count: expenseStats.total })} &middot;{' '}
+                {fmt(expenseStats.totalAmount)}
               </p>
             </div>
           </div>
@@ -363,7 +396,9 @@ export default function ClosingPage() {
             <div className="mt-3 flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-2">
               <Banknote className="h-4 w-4 text-gray-500" />
               <span className="text-xs text-gray-500">{t('closing.expenseStats.paidTotal')}</span>
-              <span className="text-sm font-semibold text-gray-800">{fmt(expenseStats.paidAmount)}</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {fmt(expenseStats.paidAmount)}
+              </span>
             </div>
           )}
         </CardContent>
@@ -381,7 +416,9 @@ export default function ClosingPage() {
             <div className="flex items-center gap-3">
               <UnlockKeyhole className="h-8 w-8 text-emerald-600" />
               <div>
-                <p className="text-sm font-medium text-emerald-800">{t('closing.openModal.description')}</p>
+                <p className="text-sm font-medium text-emerald-800">
+                  {t('closing.openModal.description')}
+                </p>
                 <p className="text-xs text-emerald-600">{t('closing.openModal.hint')}</p>
               </div>
             </div>
@@ -430,18 +467,20 @@ export default function ClosingPage() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-amber-800">{t('closing.lockModal.warning')}</p>
+                <p className="text-sm font-semibold text-amber-800">
+                  {t('closing.lockModal.warning')}
+                </p>
                 <p className="mt-1 text-xs text-amber-600">{t('closing.lockModal.warningDesc')}</p>
               </div>
             </div>
           </div>
 
           {/* Step 1: Consult reports */}
-          <div className={`rounded-lg border p-4 ${
-            reportsVisited
-              ? 'border-green-200 bg-green-50'
-              : 'border-gray-200 bg-gray-50'
-          }`}>
+          <div
+            className={`rounded-lg border p-4 ${
+              reportsVisited ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {reportsVisited ? (
@@ -450,7 +489,9 @@ export default function ClosingPage() {
                   <Printer className="h-5 w-5 text-gray-400" />
                 )}
                 <div>
-                  <p className={`text-sm font-medium ${reportsVisited ? 'text-green-800' : 'text-gray-700'}`}>
+                  <p
+                    className={`text-sm font-medium ${reportsVisited ? 'text-green-800' : 'text-gray-700'}`}
+                  >
                     {t('closing.lockModal.step1')}
                   </p>
                   <p className="text-xs text-gray-500">{t('closing.lockModal.step1Desc')}</p>
@@ -466,15 +507,21 @@ export default function ClosingPage() {
           </div>
 
           {/* Step 2: Confirm lock */}
-          <div className={`rounded-lg border p-4 ${
-            reportsVisited
-              ? 'border-gray-200 bg-gray-50'
-              : 'border-gray-100 bg-gray-50/50 opacity-60'
-          }`}>
+          <div
+            className={`rounded-lg border p-4 ${
+              reportsVisited
+                ? 'border-gray-200 bg-gray-50'
+                : 'border-gray-100 bg-gray-50/50 opacity-60'
+            }`}
+          >
             <div className="flex items-center gap-3">
-              <LockKeyhole className={`h-5 w-5 ${reportsVisited ? 'text-red-500' : 'text-gray-300'}`} />
+              <LockKeyhole
+                className={`h-5 w-5 ${reportsVisited ? 'text-red-500' : 'text-gray-300'}`}
+              />
               <div>
-                <p className={`text-sm font-medium ${reportsVisited ? 'text-gray-700' : 'text-gray-400'}`}>
+                <p
+                  className={`text-sm font-medium ${reportsVisited ? 'text-gray-700' : 'text-gray-400'}`}
+                >
                   {t('closing.lockModal.step2')}
                 </p>
                 <p className="text-xs text-gray-500">{t('closing.lockModal.step2Desc')}</p>
@@ -509,7 +556,9 @@ export default function ClosingPage() {
         <div className="space-y-4">
           {/* Type selector */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">{t('closing.movementModal.type')}</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t('closing.movementModal.type')}
+            </label>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -540,7 +589,9 @@ export default function ClosingPage() {
 
           {/* Category */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">{t('closing.movementModal.category')}</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t('closing.movementModal.category')}
+            </label>
             <select
               value={mvCategory}
               onChange={(e) => setMvCategory(e.target.value as CashMovementCategory)}
@@ -570,7 +621,9 @@ export default function ClosingPage() {
           />
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">{t('closing.movementModal.description')}</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t('closing.movementModal.description')}
+            </label>
             <textarea
               value={mvDescription}
               onChange={(e) => setMvDescription(e.target.value)}
@@ -583,8 +636,11 @@ export default function ClosingPage() {
           {mvAmount !== '' && (
             <div className={`rounded-lg p-3 ${mvType === 'ENTRY' ? 'bg-green-50' : 'bg-red-50'}`}>
               <p className="text-xs text-gray-500">{t('closing.movementModal.preview')}</p>
-              <p className={`text-lg font-bold ${mvType === 'ENTRY' ? 'text-green-700' : 'text-red-700'}`}>
-                {mvType === 'ENTRY' ? '+' : '−'}{fmt(Number(mvAmount) || 0)}
+              <p
+                className={`text-lg font-bold ${mvType === 'ENTRY' ? 'text-green-700' : 'text-red-700'}`}
+              >
+                {mvType === 'ENTRY' ? '+' : '−'}
+                {fmt(Number(mvAmount) || 0)}
               </p>
             </div>
           )}

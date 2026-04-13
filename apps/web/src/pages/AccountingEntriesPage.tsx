@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, Download, CheckCircle2, XCircle, AlertTriangle, Search, ChevronDown } from 'lucide-react';
+import {
+  BookOpen,
+  Download,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Search,
+  ChevronDown,
+} from 'lucide-react';
 import {
   Button,
   Badge,
@@ -11,14 +19,18 @@ import {
   DataTable,
 } from '@/components/ui';
 import type { Column } from '@/components/ui/DataTable';
-import { useAccountingEntries, useClosingHistory, useProcessAccounting, useCancelAccounting } from '@/hooks/useClosing';
+import {
+  useAccountingEntries,
+  useClosingHistory,
+  useProcessAccounting,
+  useCancelAccounting,
+} from '@/hooks/useClosing';
 import type { AccountingEntry } from '@/types/admin';
 import * as XLSX from 'xlsx';
 
 type AnyRow = Record<string, unknown>;
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
 export default function AccountingEntriesPage() {
   const { t } = useTranslation();
@@ -55,8 +67,10 @@ export default function AccountingEntriesPage() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const { data: accountingSummary, isLoading: accountingLoading } =
-    useAccountingEntries(!!selectedCashDayId, selectedCashDayId || undefined);
+  const { data: accountingSummary, isLoading: accountingLoading } = useAccountingEntries(
+    !!selectedCashDayId,
+    selectedCashDayId || undefined,
+  );
 
   const processAccounting = useProcessAccounting();
   const cancelAccounting = useCancelAccounting();
@@ -88,8 +102,14 @@ export default function AccountingEntriesPage() {
 
     const ws = XLSX.utils.json_to_sheet(rows);
     ws['!cols'] = [
-      { wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 28 },
-      { wch: 15 }, { wch: 15 }, { wch: 14 }, { wch: 30 },
+      { wch: 12 },
+      { wch: 8 },
+      { wch: 12 },
+      { wch: 28 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 14 },
+      { wch: 30 },
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Écritures Comptables');
@@ -127,13 +147,19 @@ export default function AccountingEntriesPage() {
       header: t('closing.accounting.journalCode'),
       render: (r) => {
         const row = r as unknown as AccountingEntry;
-        return <Badge variant="default" className="text-xs">{row.journalCode}</Badge>;
+        return (
+          <Badge variant="default" className="text-xs">
+            {row.journalCode}
+          </Badge>
+        );
       },
     },
     {
       key: 'accountNumber',
       header: t('closing.accounting.accountNumber'),
-      render: (r) => <span className="font-mono text-sm">{(r as unknown as AccountingEntry).accountNumber}</span>,
+      render: (r) => (
+        <span className="font-mono text-sm">{(r as unknown as AccountingEntry).accountNumber}</span>
+      ),
     },
     {
       key: 'accountLabel',
@@ -145,7 +171,11 @@ export default function AccountingEntriesPage() {
       className: 'text-right',
       render: (r) => {
         const row = r as unknown as AccountingEntry;
-        return row.debit > 0 ? <span className="font-medium text-gray-900">{fmt(row.debit)}</span> : <span className="text-gray-300">—</span>;
+        return row.debit > 0 ? (
+          <span className="font-medium text-gray-900">{fmt(row.debit)}</span>
+        ) : (
+          <span className="text-gray-300">—</span>
+        );
       },
     },
     {
@@ -154,18 +184,26 @@ export default function AccountingEntriesPage() {
       className: 'text-right',
       render: (r) => {
         const row = r as unknown as AccountingEntry;
-        return row.credit > 0 ? <span className="font-medium text-gray-900">{fmt(row.credit)}</span> : <span className="text-gray-300">—</span>;
+        return row.credit > 0 ? (
+          <span className="font-medium text-gray-900">{fmt(row.credit)}</span>
+        ) : (
+          <span className="text-gray-300">—</span>
+        );
       },
     },
     {
       key: 'reference',
       header: t('closing.accounting.reference'),
-      render: (r) => <span className="text-xs text-gray-500">{(r as unknown as AccountingEntry).reference}</span>,
+      render: (r) => (
+        <span className="text-xs text-gray-500">{(r as unknown as AccountingEntry).reference}</span>
+      ),
     },
     {
       key: 'label',
       header: t('closing.accounting.label'),
-      render: (r) => <span className="text-sm text-gray-600">{(r as unknown as AccountingEntry).label}</span>,
+      render: (r) => (
+        <span className="text-sm text-gray-600">{(r as unknown as AccountingEntry).label}</span>
+      ),
     },
     {
       key: 'operationType',
@@ -178,7 +216,11 @@ export default function AccountingEntriesPage() {
           PAYMENT: 'info',
           CLOSING_GAP: 'warning',
         };
-        return <Badge variant={v[row.operationType] || 'default'}>{opTypeLabel[row.operationType] || row.operationType}</Badge>;
+        return (
+          <Badge variant={v[row.operationType] || 'default'}>
+            {opTypeLabel[row.operationType] || row.operationType}
+          </Badge>
+        );
       },
     },
   ];
@@ -208,7 +250,9 @@ export default function AccountingEntriesPage() {
               {/* Custom searchable select */}
               <button
                 type="button"
-                onClick={() => { setDropdownOpen((o) => !o); }}
+                onClick={() => {
+                  setDropdownOpen((o) => !o);
+                }}
                 className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm shadow-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
               >
                 <span className={selectedDay ? 'text-gray-900' : 'text-gray-400'}>
@@ -216,7 +260,9 @@ export default function AccountingEntriesPage() {
                     ? `${selectedDay.reference} — ${new Date(selectedDay.closedAt!).toLocaleDateString('fr-FR')}${selectedDay.accountingProcessed ? ` ✓ ${t('closing.accounting.processed')}` : ''}`
                     : t('closing.accounting.selectPlaceholder')}
                 </span>
-                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {dropdownOpen && (
@@ -245,7 +291,9 @@ export default function AccountingEntriesPage() {
                           <button
                             type="button"
                             className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50 ${
-                              day.id === selectedCashDayId ? 'bg-brand-gold/10 font-medium text-brand-gold' : 'text-gray-700'
+                              day.id === selectedCashDayId
+                                ? 'bg-brand-gold/10 font-medium text-brand-gold'
+                                : 'text-gray-700'
                             }`}
                             onClick={() => {
                               setSelectedCashDayId(day.id);
@@ -255,7 +303,8 @@ export default function AccountingEntriesPage() {
                             }}
                           >
                             <span>
-                              {day.reference} — {new Date(day.closedAt!).toLocaleDateString('fr-FR')}
+                              {day.reference} —{' '}
+                              {new Date(day.closedAt!).toLocaleDateString('fr-FR')}
                             </span>
                             {day.accountingProcessed && (
                               <Badge variant="success" className="ml-2 text-xs">
@@ -318,9 +367,7 @@ export default function AccountingEntriesPage() {
           </CardHeader>
           <CardContent>
             {accountingLoading ? (
-              <p className="py-6 text-center text-sm text-gray-400">
-                {t('common.loading')}
-              </p>
+              <p className="py-6 text-center text-sm text-gray-400">{t('common.loading')}</p>
             ) : accountingSummary ? (
               <div className="space-y-4">
                 {/* Processing status banner */}
@@ -330,7 +377,9 @@ export default function AccountingEntriesPage() {
                     <span>
                       {t('closing.accounting.processedAt', {
                         date: accountingSummary.accountingProcessedAt
-                          ? new Date(accountingSummary.accountingProcessedAt).toLocaleString('fr-FR')
+                          ? new Date(accountingSummary.accountingProcessedAt).toLocaleString(
+                              'fr-FR',
+                            )
                           : '',
                       })}
                     </span>
@@ -342,9 +391,16 @@ export default function AccountingEntriesPage() {
                   {accountingSummary.cashDayReference && (
                     <div className="text-sm">
                       <span className="text-gray-500">Journée:</span>{' '}
-                      <span className="font-semibold text-gray-900">{accountingSummary.cashDayReference}</span>
+                      <span className="font-semibold text-gray-900">
+                        {accountingSummary.cashDayReference}
+                      </span>
                       {accountingSummary.cashDayStatus && (
-                        <Badge variant={accountingSummary.cashDayStatus === 'CLOSED' ? 'success' : 'warning'} className="ml-2 text-xs">
+                        <Badge
+                          variant={
+                            accountingSummary.cashDayStatus === 'CLOSED' ? 'success' : 'warning'
+                          }
+                          className="ml-2 text-xs"
+                        >
                           {accountingSummary.cashDayStatus}
                         </Badge>
                       )}
@@ -352,14 +408,20 @@ export default function AccountingEntriesPage() {
                   )}
                   <div className="text-sm">
                     <span className="text-gray-500">{t('closing.accounting.totalDebit')}:</span>{' '}
-                    <span className="font-semibold text-gray-900">{fmt(accountingSummary.totalDebit)}</span>
+                    <span className="font-semibold text-gray-900">
+                      {fmt(accountingSummary.totalDebit)}
+                    </span>
                   </div>
                   <div className="text-sm">
                     <span className="text-gray-500">{t('closing.accounting.totalCredit')}:</span>{' '}
-                    <span className="font-semibold text-gray-900">{fmt(accountingSummary.totalCredit)}</span>
+                    <span className="font-semibold text-gray-900">
+                      {fmt(accountingSummary.totalCredit)}
+                    </span>
                   </div>
                   <div className="text-sm text-gray-500">
-                    {t('closing.accounting.entriesCount', { count: accountingSummary.entriesCount })}
+                    {t('closing.accounting.entriesCount', {
+                      count: accountingSummary.entriesCount,
+                    })}
                   </div>
                   <Badge variant={accountingSummary.isBalanced ? 'success' : 'destructive'}>
                     {accountingSummary.isBalanced

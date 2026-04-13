@@ -8,8 +8,7 @@ import type { CashClosingRecord } from '@/types/admin';
 
 type AnyRow = Record<string, unknown>;
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
 export default function ClosingHistoryPage() {
   const { t } = useTranslation();
@@ -30,25 +29,37 @@ export default function ClosingHistoryPage() {
     {
       key: 'reference',
       header: t('closing.history.reference'),
-      render: (r) => { const row = r as unknown as CashClosingRecord; return <span className="font-mono text-xs text-brand-gold">{row.reference}</span>; },
+      render: (r) => {
+        const row = r as unknown as CashClosingRecord;
+        return <span className="font-mono text-xs text-brand-gold">{row.reference}</span>;
+      },
     },
     {
       key: 'openingBalance',
       header: t('closing.openModal.openingBalance'),
       className: 'text-right',
-      render: (r) => { const row = r as unknown as CashClosingRecord; return <span className="text-sm">{fmt(row.openingBalance ?? 0)}</span>; },
+      render: (r) => {
+        const row = r as unknown as CashClosingRecord;
+        return <span className="text-sm">{fmt(row.openingBalance ?? 0)}</span>;
+      },
     },
     {
       key: 'theoreticalBalance',
       header: t('closing.history.theoretical'),
       className: 'text-right',
-      render: (r) => { const row = r as unknown as CashClosingRecord; return <span className="text-sm">{fmt(row.theoreticalBalance ?? 0)}</span>; },
+      render: (r) => {
+        const row = r as unknown as CashClosingRecord;
+        return <span className="text-sm">{fmt(row.theoreticalBalance ?? 0)}</span>;
+      },
     },
     {
       key: 'actualBalance',
       header: t('closing.history.actual'),
       className: 'text-right',
-      render: (r) => { const row = r as unknown as CashClosingRecord; return <span className="text-sm">{fmt(row.actualBalance ?? 0)}</span>; },
+      render: (r) => {
+        const row = r as unknown as CashClosingRecord;
+        return <span className="text-sm">{fmt(row.actualBalance ?? 0)}</span>;
+      },
     },
     {
       key: 'variance',
@@ -58,8 +69,11 @@ export default function ClosingHistoryPage() {
         const row = r as unknown as CashClosingRecord;
         const gap = row.variance ?? 0;
         return (
-          <span className={`font-medium ${gap === 0 ? 'text-gray-500' : gap > 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {gap > 0 ? '+' : ''}{fmt(gap)}
+          <span
+            className={`font-medium ${gap === 0 ? 'text-gray-500' : gap > 0 ? 'text-green-600' : 'text-red-600'}`}
+          >
+            {gap > 0 ? '+' : ''}
+            {fmt(gap)}
           </span>
         );
       },
@@ -70,7 +84,11 @@ export default function ClosingHistoryPage() {
       render: (r) => {
         const row = r as unknown as CashClosingRecord;
         const date = row.closedAt ? new Date(row.closedAt) : null;
-        return <span className="text-xs text-gray-500">{date ? date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>;
+        return (
+          <span className="text-xs text-gray-500">
+            {date ? date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—'}
+          </span>
+        );
       },
     },
     {

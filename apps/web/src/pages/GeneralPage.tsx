@@ -90,12 +90,32 @@ const moduleFlows: ModuleFlow[] = [
     borderColor: 'border-amber-200',
     ringColor: 'bg-amber-100 text-amber-600',
     steps: [
-      { to: '/manager-caisse/categories', labelKey: 'modules.manager-caisse.categories', icon: FolderTree },
-      { to: '/manager-caisse/accounting', labelKey: 'modules.manager-caisse.accounting', icon: BookOpen },
-      { to: '/manager-caisse/settings', labelKey: 'modules.manager-caisse.settings', icon: BadgeDollarSign },
+      {
+        to: '/manager-caisse/categories',
+        labelKey: 'modules.manager-caisse.categories',
+        icon: FolderTree,
+      },
+      {
+        to: '/manager-caisse/accounting',
+        labelKey: 'modules.manager-caisse.accounting',
+        icon: BookOpen,
+      },
+      {
+        to: '/manager-caisse/settings',
+        labelKey: 'modules.manager-caisse.settings',
+        icon: BadgeDollarSign,
+      },
       { to: '/manager-caisse/closing', labelKey: 'modules.manager-caisse.closing', icon: Lock },
-      { to: '/manager-caisse/closing-history', labelKey: 'modules.manager-caisse.closingHistory', icon: History },
-      { to: '/manager-caisse/accounting-entries', labelKey: 'modules.manager-caisse.accountingEntries', icon: BookOpen },
+      {
+        to: '/manager-caisse/closing-history',
+        labelKey: 'modules.manager-caisse.closingHistory',
+        icon: History,
+      },
+      {
+        to: '/manager-caisse/accounting-entries',
+        labelKey: 'modules.manager-caisse.accountingEntries',
+        icon: BookOpen,
+      },
     ],
   },
   {
@@ -159,12 +179,8 @@ export default function GeneralPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {t('dashboard.flows.title')}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {t('dashboard.flows.subtitle')}
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.flows.title')}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t('dashboard.flows.subtitle')}</p>
       </div>
 
       {/* Module flow cards */}
@@ -179,16 +195,17 @@ export default function GeneralPage() {
           >
             {/* Card header */}
             <div className="flex items-center gap-4 mb-5">
-              <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', flow.ringColor)}>
+              <div
+                className={cn(
+                  'flex h-12 w-12 items-center justify-center rounded-xl',
+                  flow.ringColor,
+                )}
+              >
                 <flow.icon className="h-6 w-6" />
               </div>
               <div className="flex-1">
-                <h2 className={cn('text-lg font-bold', flow.color)}>
-                  {t(flow.labelKey)}
-                </h2>
-                <p className="text-sm text-gray-500">
-                  {t(flow.descriptionKey)}
-                </p>
+                <h2 className={cn('text-lg font-bold', flow.color)}>{t(flow.labelKey)}</h2>
+                <p className="text-sm text-gray-500">{t(flow.descriptionKey)}</p>
               </div>
             </div>
 

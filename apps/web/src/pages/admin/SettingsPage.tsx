@@ -27,7 +27,7 @@ export default function SettingsPage() {
   };
 
   const updateNested = <K extends keyof AppSettings>(section: K, field: string, value: unknown) => {
-    setForm((f) => f ? { ...f, [section]: { ...f[section], [field]: value } } : f);
+    setForm((f) => (f ? { ...f, [section]: { ...f[section], [field]: value } } : f));
   };
 
   return (
@@ -64,7 +64,9 @@ export default function SettingsPage() {
               label={t('admin.settings.advanceDays')}
               type="number"
               value={form.validation.advanceJustificationDays}
-              onChange={(e) => updateNested('validation', 'advanceJustificationDays', +e.target.value)}
+              onChange={(e) =>
+                updateNested('validation', 'advanceJustificationDays', +e.target.value)
+              }
               hint={t('admin.settings.advanceDaysHint')}
             />
           </CardContent>
@@ -87,7 +89,9 @@ export default function SettingsPage() {
               hint={t('admin.settings.defaultTvaHint')}
             />
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">{t('admin.settings.maxDiscounts')}</p>
+              <p className="mb-2 text-sm font-medium text-gray-700">
+                {t('admin.settings.maxDiscounts')}
+              </p>
               {Object.entries(form.finance.maxDiscountByRole).map(([role, val]) => (
                 <div key={role} className="flex items-center gap-3 mb-2">
                   <span className="w-24 text-xs text-gray-500 capitalize">{role}</span>
@@ -101,7 +105,10 @@ export default function SettingsPage() {
                               ...f,
                               finance: {
                                 ...f.finance,
-                                maxDiscountByRole: { ...f.finance.maxDiscountByRole, [role]: +e.target.value },
+                                maxDiscountByRole: {
+                                  ...f.finance.maxDiscountByRole,
+                                  [role]: +e.target.value,
+                                },
                               },
                             }
                           : f,
@@ -152,16 +159,43 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <Input label={t('admin.settings.smtpHost')} value={form.smtp.host} onChange={(e) => updateNested('smtp', 'host', e.target.value)} />
-              <Input label={t('admin.settings.smtpPort')} type="number" value={form.smtp.port} onChange={(e) => updateNested('smtp', 'port', +e.target.value)} />
+              <Input
+                label={t('admin.settings.smtpHost')}
+                value={form.smtp.host}
+                onChange={(e) => updateNested('smtp', 'host', e.target.value)}
+              />
+              <Input
+                label={t('admin.settings.smtpPort')}
+                type="number"
+                value={form.smtp.port}
+                onChange={(e) => updateNested('smtp', 'port', +e.target.value)}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Input label={t('admin.settings.smtpUser')} value={form.smtp.user} onChange={(e) => updateNested('smtp', 'user', e.target.value)} />
-              <Input label={t('admin.settings.smtpPassword')} type="password" value={form.smtp.password} onChange={(e) => updateNested('smtp', 'password', e.target.value)} />
+              <Input
+                label={t('admin.settings.smtpUser')}
+                value={form.smtp.user}
+                onChange={(e) => updateNested('smtp', 'user', e.target.value)}
+              />
+              <Input
+                label={t('admin.settings.smtpPassword')}
+                type="password"
+                value={form.smtp.password}
+                onChange={(e) => updateNested('smtp', 'password', e.target.value)}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Input label={t('admin.settings.smtpFromName')} value={form.smtp.fromName} onChange={(e) => updateNested('smtp', 'fromName', e.target.value)} />
-              <Input label={t('admin.settings.smtpFromEmail')} type="email" value={form.smtp.fromEmail} onChange={(e) => updateNested('smtp', 'fromEmail', e.target.value)} />
+              <Input
+                label={t('admin.settings.smtpFromName')}
+                value={form.smtp.fromName}
+                onChange={(e) => updateNested('smtp', 'fromName', e.target.value)}
+              />
+              <Input
+                label={t('admin.settings.smtpFromEmail')}
+                type="email"
+                value={form.smtp.fromEmail}
+                onChange={(e) => updateNested('smtp', 'fromEmail', e.target.value)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -176,11 +210,27 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Input label={t('admin.settings.companyName')} value={form.company.name} onChange={(e) => updateNested('company', 'name', e.target.value)} />
-              <Input label={t('admin.settings.companyPhone')} value={form.company.phone} onChange={(e) => updateNested('company', 'phone', e.target.value)} />
-              <Input label={t('admin.settings.companyTaxId')} value={form.company.taxId} onChange={(e) => updateNested('company', 'taxId', e.target.value)} />
+              <Input
+                label={t('admin.settings.companyName')}
+                value={form.company.name}
+                onChange={(e) => updateNested('company', 'name', e.target.value)}
+              />
+              <Input
+                label={t('admin.settings.companyPhone')}
+                value={form.company.phone}
+                onChange={(e) => updateNested('company', 'phone', e.target.value)}
+              />
+              <Input
+                label={t('admin.settings.companyTaxId')}
+                value={form.company.taxId}
+                onChange={(e) => updateNested('company', 'taxId', e.target.value)}
+              />
             </div>
-            <Input label={t('admin.settings.companyAddress')} value={form.company.address} onChange={(e) => updateNested('company', 'address', e.target.value)} />
+            <Input
+              label={t('admin.settings.companyAddress')}
+              value={form.company.address}
+              onChange={(e) => updateNested('company', 'address', e.target.value)}
+            />
           </CardContent>
         </Card>
       </div>

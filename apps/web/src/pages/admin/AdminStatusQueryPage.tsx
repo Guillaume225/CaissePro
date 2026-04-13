@@ -1,19 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Search,
-  Database,
-  RefreshCw,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
-} from 'lucide-react';
+import { Search, Database, RefreshCw, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
-import {
-  useAdminQuery,
-  useAdminUpdateStatus,
-  type AdminEntityType,
-} from '@/hooks/useAdmin';
+import { useAdminQuery, useAdminUpdateStatus, type AdminEntityType } from '@/hooks/useAdmin';
 
 /* ─── Entity config ─── */
 interface EntityConfig {
@@ -25,7 +14,17 @@ interface EntityConfig {
 
 const fmtDate = (v: unknown) => {
   if (!v) return '—';
-  try { return new Date(v as string).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return String(v); }
+  try {
+    return new Date(v as string).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return String(v);
+  }
 };
 
 const fmtMoney = (v: unknown) => {
@@ -118,7 +117,10 @@ export default function AdminStatusQueryPage() {
   const [newStatus, setNewStatus] = useState('');
   const [reason, setReason] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [result, setResult] = useState<{ updated: number; results: { id: string; reference: string; oldStatus: string; newStatus: string }[] } | null>(null);
+  const [result, setResult] = useState<{
+    updated: number;
+    results: { id: string; reference: string; oldStatus: string; newStatus: string }[];
+  } | null>(null);
 
   const config = ENTITIES[entity];
   const { data, isLoading, refetch } = useAdminQuery(entity, searchTerm, filterStatus, page);
@@ -129,9 +131,7 @@ export default function AdminStatusQueryPage() {
   const allowedStatuses = data?.allowedStatuses || config.statuses;
 
   const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const toggleSelectAll = () => {
@@ -222,7 +222,10 @@ export default function AdminStatusQueryPage() {
                 <input
                   type="text"
                   value={searchTerm}
-                  onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                  }}
                   placeholder={t('adminQuery.searchPlaceholder')}
                   className="w-full rounded-md border border-gray-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
@@ -234,12 +237,17 @@ export default function AdminStatusQueryPage() {
               </label>
               <select
                 value={filterStatus}
-                onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setFilterStatus(e.target.value);
+                  setPage(1);
+                }}
                 className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               >
                 <option value="">{t('adminQuery.allStatuses')}</option>
                 {config.statuses.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
@@ -255,9 +263,7 @@ export default function AdminStatusQueryPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">
-              {t('adminQuery.results', { count: total })}
-            </CardTitle>
+            <CardTitle className="text-base">{t('adminQuery.results', { count: total })}</CardTitle>
             {selectedIds.length > 0 && (
               <Badge variant="info">
                 {t('adminQuery.selected', { count: selectedIds.length })}
@@ -269,7 +275,9 @@ export default function AdminStatusQueryPage() {
           {isLoading ? (
             <div className="py-8 text-center text-sm text-gray-400">{t('common.loading')}</div>
           ) : records.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-400">{t('adminQuery.noResults')}</div>
+            <div className="py-8 text-center text-sm text-gray-400">
+              {t('adminQuery.noResults')}
+            </div>
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -285,7 +293,9 @@ export default function AdminStatusQueryPage() {
                         />
                       </th>
                       {config.columns.map((col) => (
-                        <th key={col.key} className="px-3 py-2">{t(col.labelKey)}</th>
+                        <th key={col.key} className="px-3 py-2">
+                          {t(col.labelKey)}
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -308,7 +318,9 @@ export default function AdminStatusQueryPage() {
                         {config.columns.map((col) => (
                           <td key={col.key} className="px-3 py-2">
                             {col.key === 'status' ? (
-                              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(String(row[col.key]))}`}>
+                              <span
+                                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(String(row[col.key]))}`}
+                              >
                                 {String(row[col.key])}
                               </span>
                             ) : col.fmt ? (
@@ -331,10 +343,20 @@ export default function AdminStatusQueryPage() {
                     Page {page} / {Math.ceil(total / 50)}
                   </span>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
                       {t('common.previous')}
                     </Button>
-                    <Button size="sm" variant="outline" disabled={page * 50 >= total} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page * 50 >= total}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       {t('common.next')}
                     </Button>
                   </div>
@@ -367,7 +389,9 @@ export default function AdminStatusQueryPage() {
                 >
                   <option value="">{t('adminQuery.selectStatus')}</option>
                   {allowedStatuses.map((s) => (
-                    <option key={s} value={s}>{s}</option>
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -418,25 +442,29 @@ export default function AdminStatusQueryPage() {
               </div>
             </div>
             <div className="mb-4 rounded-lg bg-gray-50 p-3 text-sm">
-              <p><strong>{t(config.labelKey)}</strong></p>
+              <p>
+                <strong>{t(config.labelKey)}</strong>
+              </p>
               <p>{t('adminQuery.confirmCount', { count: selectedIds.length })}</p>
               <p className="flex items-center gap-1">
                 {t('adminQuery.confirmNewStatus')}:
-                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(newStatus)}`}>
+                <span
+                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(newStatus)}`}
+                >
                   {newStatus}
                 </span>
               </p>
-              {reason && <p className="mt-1 text-gray-500">{t('adminQuery.reason')}: {reason}</p>}
+              {reason && (
+                <p className="mt-1 text-gray-500">
+                  {t('adminQuery.reason')}: {reason}
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowConfirm(false)}>
                 {t('common.cancel')}
               </Button>
-              <Button
-                variant="default"
-                onClick={handleApply}
-                disabled={updateMutation.isPending}
-              >
+              <Button variant="default" onClick={handleApply} disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? t('common.loading') : t('common.confirm')}
               </Button>
             </div>
@@ -450,18 +478,24 @@ export default function AdminStatusQueryPage() {
           <CardContent className="py-4">
             <div className="flex items-center gap-2 text-green-700">
               <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">{t('adminQuery.success', { count: result.updated })}</span>
+              <span className="font-medium">
+                {t('adminQuery.success', { count: result.updated })}
+              </span>
             </div>
             {result.results?.length > 0 && (
               <ul className="mt-2 space-y-1 text-sm text-gray-600">
                 {result.results.map((r) => (
                   <li key={r.id}>
                     <span className="font-medium">{r.reference}</span>:{' '}
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(r.oldStatus)}`}>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(r.oldStatus)}`}
+                    >
                       {r.oldStatus}
                     </span>
                     {' → '}
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(r.newStatus)}`}>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColor(r.newStatus)}`}
+                    >
                       {r.newStatus}
                     </span>
                   </li>

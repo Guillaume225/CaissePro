@@ -80,8 +80,14 @@ class InMemoryRedis {
   multi() {
     const ops: Array<() => Promise<unknown>> = [];
     const chain = {
-      incr: (key: string) => { ops.push(() => this.incr(key)); return chain; },
-      expire: (key: string, sec: number) => { ops.push(() => this.expire(key, sec)); return chain; },
+      incr: (key: string) => {
+        ops.push(() => this.incr(key));
+        return chain;
+      },
+      expire: (key: string, sec: number) => {
+        ops.push(() => this.expire(key, sec));
+        return chain;
+      },
       exec: async () => {
         const results: Array<[null, unknown]> = [];
         for (const op of ops) results.push([null, await op()]);

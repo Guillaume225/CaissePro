@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Store, Building2, Plus, Pencil, Trash2, MapPin, Search, ChevronRight, ArrowLeft, ChevronDown, Settings, Key, Globe, Hash } from 'lucide-react';
+import {
+  Store,
+  Building2,
+  Plus,
+  Pencil,
+  Trash2,
+  MapPin,
+  Search,
+  ChevronRight,
+  ArrowLeft,
+  ChevronDown,
+  Settings,
+  Key,
+  Globe,
+  Hash,
+} from 'lucide-react';
 import { Button, Input, Modal, Badge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import {
@@ -71,7 +86,17 @@ export default function FneConfigPage() {
         bankRef: fneSetting.bankRef ?? '',
       });
     } else if (!settingLoading && settingsCompanyId) {
-      setSettingsForm({ apiUrl: 'http://54.247.95.108/ws', apiKey: '', nif: '', maxRetries: 3, journalSales: 'VF', journalCash: 'CA', regimeImposition: '', centreImpots: '', bankRef: '' });
+      setSettingsForm({
+        apiUrl: 'http://54.247.95.108/ws',
+        apiKey: '',
+        nif: '',
+        maxRetries: 3,
+        journalSales: 'VF',
+        journalCash: 'CA',
+        regimeImposition: '',
+        centreImpots: '',
+        bankRef: '',
+      });
     }
   }, [fneSetting, settingLoading, settingsCompanyId]);
 
@@ -103,7 +128,9 @@ export default function FneConfigPage() {
   const [modalTarget, setModalTarget] = useState<'est' | 'pos'>('est');
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<ItemForm>(defaultForm);
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'est' | 'pos' } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'est' | 'pos' } | null>(
+    null,
+  );
 
   const estList = estData?.data ?? [];
   const posList = posData?.data ?? [];
@@ -119,7 +146,12 @@ export default function FneConfigPage() {
   const openEditEst = (item: FneEstablishmentRecord) => {
     setModalTarget('est');
     setEditId(item.id);
-    setForm({ name: item.name, address: item.address ?? '', isActive: item.isActive, companyId: item.companyId });
+    setForm({
+      name: item.name,
+      address: item.address ?? '',
+      isActive: item.isActive,
+      companyId: item.companyId,
+    });
     setShowModal(true);
   };
 
@@ -133,7 +165,12 @@ export default function FneConfigPage() {
   const openEditPos = (item: FnePointOfSaleRecord) => {
     setModalTarget('pos');
     setEditId(item.id);
-    setForm({ name: item.name, address: item.address ?? '', isActive: item.isActive, companyId: '' });
+    setForm({
+      name: item.name,
+      address: item.address ?? '',
+      isActive: item.isActive,
+      companyId: '',
+    });
     setShowModal(true);
   };
 
@@ -180,11 +217,13 @@ export default function FneConfigPage() {
     setConfirmDelete(null);
   };
 
-  const isPending = createPos.isPending || updatePos.isPending || createEst.isPending || updateEst.isPending;
+  const isPending =
+    createPos.isPending || updatePos.isPending || createEst.isPending || updateEst.isPending;
 
-  const modalLabel = modalTarget === 'est'
-    ? t('admin.fneConfig.establishment', 'établissement')
-    : t('admin.fneConfig.pointOfSale', 'point de vente');
+  const modalLabel =
+    modalTarget === 'est'
+      ? t('admin.fneConfig.establishment', 'établissement')
+      : t('admin.fneConfig.pointOfSale', 'point de vente');
 
   /* ── Render POS list for selected establishment ── */
   const renderPosView = () => (
@@ -193,15 +232,16 @@ export default function FneConfigPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => { setSelectedEst(null); setSearch(''); }}
+            onClick={() => {
+              setSelectedEst(null);
+              setSearch('');
+            }}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {selectedEst!.name}
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">{selectedEst!.name}</h1>
             <p className="text-sm text-gray-500">
               {t('admin.fneConfig.posOfEstablishment', 'Points de vente de cet établissement')}
             </p>
@@ -253,10 +293,16 @@ export default function FneConfigPage() {
               )}
             >
               <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition-all group-hover:opacity-100">
-                <button onClick={() => openEditPos(item)} className="rounded-lg p-1.5 text-gray-300 hover:bg-gray-100 hover:text-gray-600">
+                <button
+                  onClick={() => openEditPos(item)}
+                  className="rounded-lg p-1.5 text-gray-300 hover:bg-gray-100 hover:text-gray-600"
+                >
                   <Pencil className="h-4 w-4" />
                 </button>
-                <button onClick={() => setConfirmDelete({ id: item.id, type: 'pos' })} className="rounded-lg p-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500">
+                <button
+                  onClick={() => setConfirmDelete({ id: item.id, type: 'pos' })}
+                  className="rounded-lg p-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500"
+                >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -266,7 +312,10 @@ export default function FneConfigPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="truncate text-sm font-semibold text-gray-900">{item.name}</h3>
-                  <Badge variant={item.isActive ? 'success' : 'outline'} className="mt-0.5 text-[10px]">
+                  <Badge
+                    variant={item.isActive ? 'success' : 'outline'}
+                    className="mt-0.5 text-[10px]"
+                  >
                     {item.isActive ? t('common.active', 'Actif') : t('common.inactive', 'Inactif')}
                   </Badge>
                 </div>
@@ -306,7 +355,9 @@ export default function FneConfigPage() {
           >
             <option value="">{t('admin.fneConfig.allCompanies', 'Toutes les sociétés')}</option>
             {companies.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
           </select>
           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -338,17 +389,26 @@ export default function FneConfigPage() {
                 'group relative overflow-hidden rounded-xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer',
                 !item.isActive && 'opacity-60',
               )}
-              onClick={() => { setSelectedEst(item); setSearch(''); }}
+              onClick={() => {
+                setSelectedEst(item);
+                setSearch('');
+              }}
             >
               <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition-all group-hover:opacity-100">
                 <button
-                  onClick={(e) => { e.stopPropagation(); openEditEst(item); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEditEst(item);
+                  }}
                   className="rounded-lg p-1.5 text-gray-300 hover:bg-gray-100 hover:text-gray-600"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmDelete({ id: item.id, type: 'est' }); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete({ id: item.id, type: 'est' });
+                  }}
                   className="rounded-lg p-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -360,7 +420,10 @@ export default function FneConfigPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="truncate text-sm font-semibold text-gray-900">{item.name}</h3>
-                  <Badge variant={item.isActive ? 'success' : 'outline'} className="mt-0.5 text-[10px]">
+                  <Badge
+                    variant={item.isActive ? 'success' : 'outline'}
+                    className="mt-0.5 text-[10px]"
+                  >
                     {item.isActive ? t('common.active', 'Actif') : t('common.inactive', 'Inactif')}
                   </Badge>
                 </div>
@@ -374,9 +437,7 @@ export default function FneConfigPage() {
               {(() => {
                 const company = companies.find((c) => c.id === item.companyId);
                 return company ? (
-                  <div className="mt-1 text-xs text-gray-400 truncate">
-                    {company.name}
-                  </div>
+                  <div className="mt-1 text-xs text-gray-400 truncate">{company.name}</div>
                 ) : null;
               })()}
               <div className="mt-3 flex items-center gap-1 text-xs font-medium text-brand-gold">
@@ -423,9 +484,13 @@ export default function FneConfigPage() {
             onChange={(e) => setSettingsCompanyId(e.target.value)}
             className="w-full appearance-none rounded-lg border border-gray-300 bg-white py-2.5 pl-3.5 pr-9 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
           >
-            <option value="">{t('admin.fneConfig.selectCompany', 'Sélectionner une société...')}</option>
+            <option value="">
+              {t('admin.fneConfig.selectCompany', 'Sélectionner une société...')}
+            </option>
             {companies.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
           </select>
           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -436,7 +501,10 @@ export default function FneConfigPage() {
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 py-16">
           <Settings className="mb-3 h-10 w-10 text-gray-300" />
           <p className="text-sm text-gray-500">
-            {t('admin.fneConfig.selectCompanyFirst', 'Sélectionnez une société pour configurer les paramètres FNE')}
+            {t(
+              'admin.fneConfig.selectCompanyFirst',
+              'Sélectionnez une société pour configurer les paramètres FNE',
+            )}
           </p>
         </div>
       ) : settingLoading ? (
@@ -453,8 +521,14 @@ export default function FneConfigPage() {
               </h3>
               <p className="text-xs text-gray-500">
                 {fneSetting
-                  ? t('admin.fneConfig.settingsConfigured', 'Configuration existante — modifiez si nécessaire')
-                  : t('admin.fneConfig.settingsNew', 'Aucune configuration — renseignez les paramètres')}
+                  ? t(
+                      'admin.fneConfig.settingsConfigured',
+                      'Configuration existante — modifiez si nécessaire',
+                    )
+                  : t(
+                      'admin.fneConfig.settingsNew',
+                      'Aucune configuration — renseignez les paramètres',
+                    )}
               </p>
             </div>
           </div>
@@ -463,7 +537,7 @@ export default function FneConfigPage() {
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Globe className="h-4 w-4 text-gray-400" />
-                {t('admin.fneConfig.apiUrl', 'URL de l\'API FNE')}
+                {t('admin.fneConfig.apiUrl', "URL de l'API FNE")}
               </label>
               <input
                 value={settingsForm.apiUrl}
@@ -486,14 +560,17 @@ export default function FneConfigPage() {
                 className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
               />
               <p className="text-xs text-gray-400">
-                {t('admin.fneConfig.apiKeyHint', 'Le token Bearer fourni par la plateforme FNE pour la certification des factures')}
+                {t(
+                  'admin.fneConfig.apiKeyHint',
+                  'Le token Bearer fourni par la plateforme FNE pour la certification des factures',
+                )}
               </p>
             </div>
 
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Hash className="h-4 w-4 text-gray-400" />
-                {t('admin.fneConfig.nif', 'NIF (Numéro d\'Identification Fiscale)')}
+                {t('admin.fneConfig.nif', "NIF (Numéro d'Identification Fiscale)")}
               </label>
               <input
                 value={settingsForm.nif}
@@ -512,7 +589,9 @@ export default function FneConfigPage() {
                 min={1}
                 max={10}
                 value={settingsForm.maxRetries}
-                onChange={(e) => setSettingsForm((f) => ({ ...f, maxRetries: parseInt(e.target.value) || 3 }))}
+                onChange={(e) =>
+                  setSettingsForm((f) => ({ ...f, maxRetries: parseInt(e.target.value) || 3 }))
+                }
                 className="w-32 rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
               />
             </div>
@@ -523,7 +602,10 @@ export default function FneConfigPage() {
                 {t('admin.fneConfig.journalCodesTitle', 'Codes journaux comptables')}
               </h4>
               <p className="text-xs text-gray-400 mb-4">
-                {t('admin.fneConfig.journalCodesHint', 'Codes utilisés lors de la génération des écritures comptables')}
+                {t(
+                  'admin.fneConfig.journalCodesHint',
+                  'Codes utilisés lors de la génération des écritures comptables',
+                )}
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
@@ -532,12 +614,16 @@ export default function FneConfigPage() {
                   </label>
                   <input
                     value={settingsForm.journalSales}
-                    onChange={(e) => setSettingsForm((f) => ({ ...f, journalSales: e.target.value.toUpperCase() }))}
+                    onChange={(e) =>
+                      setSettingsForm((f) => ({ ...f, journalSales: e.target.value.toUpperCase() }))
+                    }
                     placeholder="VF"
                     maxLength={10}
                     className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                   />
-                  <p className="text-xs text-gray-400">{t('admin.fneConfig.journalSalesHint', 'Ex: VF (Ventes Facturées)')}</p>
+                  <p className="text-xs text-gray-400">
+                    {t('admin.fneConfig.journalSalesHint', 'Ex: VF (Ventes Facturées)')}
+                  </p>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700">
@@ -545,12 +631,16 @@ export default function FneConfigPage() {
                   </label>
                   <input
                     value={settingsForm.journalCash}
-                    onChange={(e) => setSettingsForm((f) => ({ ...f, journalCash: e.target.value.toUpperCase() }))}
+                    onChange={(e) =>
+                      setSettingsForm((f) => ({ ...f, journalCash: e.target.value.toUpperCase() }))
+                    }
                     placeholder="CA"
                     maxLength={10}
                     className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                   />
-                  <p className="text-xs text-gray-400">{t('admin.fneConfig.journalCashHint', 'Ex: CA (Caisse)')}</p>
+                  <p className="text-xs text-gray-400">
+                    {t('admin.fneConfig.journalCashHint', 'Ex: CA (Caisse)')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -561,16 +651,21 @@ export default function FneConfigPage() {
                 {t('admin.fneConfig.fiscalInfoTitle', 'Informations fiscales (impression)')}
               </h4>
               <p className="text-xs text-gray-400 mb-4">
-                {t('admin.fneConfig.fiscalInfoHint', 'Ces informations apparaissent sur l\'état imprimé de la facture FNE')}
+                {t(
+                  'admin.fneConfig.fiscalInfoHint',
+                  "Ces informations apparaissent sur l'état imprimé de la facture FNE",
+                )}
               </p>
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700">
-                    {t('admin.fneConfig.regimeImposition', 'Régime d\'imposition')}
+                    {t('admin.fneConfig.regimeImposition', "Régime d'imposition")}
                   </label>
                   <input
                     value={settingsForm.regimeImposition}
-                    onChange={(e) => setSettingsForm((f) => ({ ...f, regimeImposition: e.target.value }))}
+                    onChange={(e) =>
+                      setSettingsForm((f) => ({ ...f, regimeImposition: e.target.value }))
+                    }
                     placeholder="Ex: RNI, RSI, Microentreprise"
                     maxLength={100}
                     className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
@@ -582,7 +677,9 @@ export default function FneConfigPage() {
                   </label>
                   <input
                     value={settingsForm.centreImpots}
-                    onChange={(e) => setSettingsForm((f) => ({ ...f, centreImpots: e.target.value }))}
+                    onChange={(e) =>
+                      setSettingsForm((f) => ({ ...f, centreImpots: e.target.value }))
+                    }
                     placeholder="Ex: 822 Recette des Grandes Entreprises"
                     maxLength={255}
                     className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
@@ -609,9 +706,7 @@ export default function FneConfigPage() {
                 disabled={!settingsForm.apiKey}
                 loading={upsertSetting.isPending}
               >
-                {fneSetting
-                  ? t('common.save', 'Enregistrer')
-                  : t('common.create', 'Créer')}
+                {fneSetting ? t('common.save', 'Enregistrer') : t('common.create', 'Créer')}
               </Button>
               {settingsSaved && (
                 <span className="text-sm text-green-600 font-medium">
@@ -627,7 +722,9 @@ export default function FneConfigPage() {
 
   return (
     <>
-      {selectedEst ? renderPosView() : (
+      {selectedEst ? (
+        renderPosView()
+      ) : (
         <div className="space-y-6">
           {/* Page header + tabs */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -636,7 +733,10 @@ export default function FneConfigPage() {
                 {t('admin.fneConfig.title', 'Configuration FNE')}
               </h1>
               <p className="text-sm text-gray-500">
-                {t('admin.fneConfig.subtitle', 'Gérez les établissements, points de vente et paramètres API')}
+                {t(
+                  'admin.fneConfig.subtitle',
+                  'Gérez les établissements, points de vente et paramètres API',
+                )}
               </p>
             </div>
             {activeTab === 'establishments' && (
@@ -684,9 +784,11 @@ export default function FneConfigPage() {
       <Modal
         open={showModal}
         onClose={() => setShowModal(false)}
-        title={editId
-          ? `${t('common.edit', 'Modifier')} ${modalLabel}`
-          : `${t('admin.fneConfig.add', 'Ajouter')} ${modalLabel}`}
+        title={
+          editId
+            ? `${t('common.edit', 'Modifier')} ${modalLabel}`
+            : `${t('admin.fneConfig.add', 'Ajouter')} ${modalLabel}`
+        }
         size="md"
       >
         <div className="space-y-4">
@@ -706,9 +808,13 @@ export default function FneConfigPage() {
                     !!editId && 'opacity-60 cursor-not-allowed',
                   )}
                 >
-                  <option value="">{t('admin.fneConfig.selectCompany', 'Sélectionner une société...')}</option>
+                  <option value="">
+                    {t('admin.fneConfig.selectCompany', 'Sélectionner une société...')}
+                  </option>
                   {companies.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -741,7 +847,11 @@ export default function FneConfigPage() {
             <Button variant="ghost" onClick={() => setShowModal(false)}>
               {t('common.cancel', 'Annuler')}
             </Button>
-            <Button onClick={handleSubmit} disabled={!form.name || (modalTarget === 'est' && !editId && !form.companyId)} loading={isPending}>
+            <Button
+              onClick={handleSubmit}
+              disabled={!form.name || (modalTarget === 'est' && !editId && !form.companyId)}
+              loading={isPending}
+            >
               {editId ? t('common.save', 'Enregistrer') : t('common.create', 'Créer')}
             </Button>
           </div>
@@ -758,8 +868,14 @@ export default function FneConfigPage() {
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
             {confirmDelete?.type === 'est'
-              ? t('admin.fneConfig.confirmDeleteEst', 'Supprimer cet établissement désactivera aussi tous ses points de vente.')
-              : t('admin.fneConfig.confirmDeleteMessage', 'Êtes-vous sûr de vouloir supprimer cet élément ?')}
+              ? t(
+                  'admin.fneConfig.confirmDeleteEst',
+                  'Supprimer cet établissement désactivera aussi tous ses points de vente.',
+                )
+              : t(
+                  'admin.fneConfig.confirmDeleteMessage',
+                  'Êtes-vous sûr de vouloir supprimer cet élément ?',
+                )}
           </p>
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setConfirmDelete(null)}>

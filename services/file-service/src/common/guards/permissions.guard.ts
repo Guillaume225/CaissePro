@@ -18,9 +18,7 @@ export class PermissionsGuard implements CanActivate {
     if (!user?.permissions || !Array.isArray(user.permissions)) {
       throw new ForbiddenException('Permissions information missing');
     }
-    const hasAllPermissions = requiredPermissions.every((perm) =>
-      user.permissions.includes(perm),
-    );
+    const hasAllPermissions = requiredPermissions.every((perm) => user.permissions.includes(perm));
     if (!hasAllPermissions) {
       throw new ForbiddenException('Insufficient permissions');
     }

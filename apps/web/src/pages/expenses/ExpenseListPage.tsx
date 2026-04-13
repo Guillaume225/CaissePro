@@ -18,14 +18,24 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { Button, Badge, Card, Modal } from '@/components/ui';
-import { useExpenses, useExportExpenses, useDeleteExpense, useExpenseCategories, usePayExpense, useSubmitExpense } from '@/hooks/useExpenses';
+import {
+  useExpenses,
+  useExportExpenses,
+  useDeleteExpense,
+  useExpenseCategories,
+  usePayExpense,
+  useSubmitExpense,
+} from '@/hooks/useExpenses';
 import { useCashState } from '@/hooks/useClosing';
 import { formatCFA, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Expense, ExpenseStatus, ExpenseFilters } from '@/types/expense';
 
 // ── Status config ────────────────────────────────────────
-const STATUS_CONFIG: Record<string, { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }
+> = {
   DRAFT: { label: 'Brouillon', variant: 'outline' },
   PENDING: { label: 'En attente', variant: 'warning' },
   APPROVED: { label: 'Approuvée', variant: 'info' },
@@ -80,12 +90,27 @@ export default function ExpenseListPage() {
       sortOrder,
       ...(currentCashDayId && { cashDayId: currentCashDayId }),
       ...(search && { search }),
-      ...(statusFilter && { status: statusFilter.includes(',') ? statusFilter.split(',') as ExpenseStatus[] : statusFilter as ExpenseStatus }),
+      ...(statusFilter && {
+        status: statusFilter.includes(',')
+          ? (statusFilter.split(',') as ExpenseStatus[])
+          : (statusFilter as ExpenseStatus),
+      }),
       ...(categoryFilter && { categoryId: categoryFilter }),
       ...(dateFrom && { dateFrom }),
       ...(dateTo && { dateTo }),
     }),
-    [page, perPage, sortBy, sortOrder, currentCashDayId, search, statusFilter, categoryFilter, dateFrom, dateTo],
+    [
+      page,
+      perPage,
+      sortBy,
+      sortOrder,
+      currentCashDayId,
+      search,
+      statusFilter,
+      categoryFilter,
+      dateFrom,
+      dateTo,
+    ],
   );
 
   // ── Queries ──────────────────────────────────
@@ -111,9 +136,7 @@ export default function ExpenseListPage() {
 
   const SortIcon = ({ col }: { col: string }) => (
     <span className="ml-1 text-gray-300">
-      {sortBy === col ? (
-        sortOrder === 'ASC' ? '↑' : '↓'
-      ) : '↕'}
+      {sortBy === col ? (sortOrder === 'ASC' ? '↑' : '↓') : '↕'}
     </span>
   );
 
@@ -160,12 +183,18 @@ export default function ExpenseListPage() {
             <input
               type="text"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder={t('expenses.searchPlaceholder')}
               className="h-10 w-full rounded-lg border border-gray-300 pl-9 pr-3 text-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
                 <X className="h-4 w-4" />
               </button>
             )}
@@ -174,11 +203,16 @@ export default function ExpenseListPage() {
           {/* Status select */}
           <select
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             className="h-10 rounded-lg border border-gray-300 px-3 text-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
           >
             {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
 
@@ -219,12 +253,17 @@ export default function ExpenseListPage() {
               <label className="text-xs font-medium text-gray-500">{t('expenses.category')}</label>
               <select
                 value={categoryFilter}
-                onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setCategoryFilter(e.target.value);
+                  setPage(1);
+                }}
                 className="h-9 rounded-lg border border-gray-300 px-3 text-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
               >
                 <option value="">{t('expenses.allCategories')}</option>
                 {categories?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -237,7 +276,10 @@ export default function ExpenseListPage() {
                 <input
                   type="date"
                   value={dateFrom}
-                  onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setPage(1);
+                  }}
                   className="h-9 rounded-lg border border-gray-300 pl-8 pr-3 text-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                 />
               </div>
@@ -249,7 +291,10 @@ export default function ExpenseListPage() {
                 <input
                   type="date"
                   value={dateTo}
-                  onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setPage(1);
+                  }}
                   className="h-9 rounded-lg border border-gray-300 pl-8 pr-3 text-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                 />
               </div>
@@ -288,23 +333,29 @@ export default function ExpenseListPage() {
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/60">
                     <Th onClick={() => handleSort('reference')}>
-                      {t('expenses.reference')}<SortIcon col="reference" />
+                      {t('expenses.reference')}
+                      <SortIcon col="reference" />
                     </Th>
                     <Th onClick={() => handleSort('date')}>
-                      {t('common.date')}<SortIcon col="date" />
+                      {t('common.date')}
+                      <SortIcon col="date" />
                     </Th>
                     <Th onClick={() => handleSort('categoryName')}>
-                      {t('expenses.category')}<SortIcon col="categoryName" />
+                      {t('expenses.category')}
+                      <SortIcon col="categoryName" />
                     </Th>
                     <Th onClick={() => handleSort('beneficiary')}>
-                      {t('expenses.beneficiary')}<SortIcon col="beneficiary" />
+                      {t('expenses.beneficiary')}
+                      <SortIcon col="beneficiary" />
                     </Th>
                     <Th onClick={() => handleSort('amount')} className="text-right">
-                      {t('common.amount')}<SortIcon col="amount" />
+                      {t('common.amount')}
+                      <SortIcon col="amount" />
                     </Th>
                     <Th>{t('expenses.cashDay')}</Th>
                     <Th onClick={() => handleSort('status')}>
-                      {t('common.status')}<SortIcon col="status" />
+                      {t('common.status')}
+                      <SortIcon col="status" />
                     </Th>
                     <Th>{t('expenses.validation')}</Th>
                     <Th className="text-right">{t('common.actions')}</Th>
@@ -329,7 +380,10 @@ export default function ExpenseListPage() {
                             {exp.reference}
                             {exp.disbursementRequestId && (
                               <button
-                                onClick={(e) => { e.stopPropagation(); navigate(`/pending-requests`); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/pending-requests`);
+                                }}
                                 className="text-amber-500 hover:text-amber-700"
                                 title={t('expenses.linkedRequest')}
                               >
@@ -346,7 +400,9 @@ export default function ExpenseListPage() {
                         </td>
                         <td className="px-4 py-3">
                           {exp.cashDayRef ? (
-                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{exp.cashDayRef}</span>
+                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                              {exp.cashDayRef}
+                            </span>
                           ) : (
                             <span className="text-gray-300">—</span>
                           )}
@@ -360,7 +416,10 @@ export default function ExpenseListPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
                             <button
-                              onClick={(e) => { e.stopPropagation(); navigate(`/expenses/${exp.id}`); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/expenses/${exp.id}`);
+                              }}
                               className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                               title={t('common.edit')}
                             >
@@ -369,14 +428,20 @@ export default function ExpenseListPage() {
                             {exp.status === 'DRAFT' && (
                               <>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); submitMutation.mutate(exp.id); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    submitMutation.mutate(exp.id);
+                                  }}
                                   className="rounded p-1.5 text-green-500 hover:bg-green-50 hover:text-green-700"
                                   title={t('expenses.submit')}
                                 >
                                   <Send className="h-4 w-4" />
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); navigate(`/expenses/${exp.id}`); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/expenses/${exp.id}`);
+                                  }}
                                   className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                                   title={t('common.edit')}
                                 >
@@ -393,7 +458,10 @@ export default function ExpenseListPage() {
                             )}
                             {exp.status === 'APPROVED_L2' && (
                               <button
-                                onClick={(e) => { e.stopPropagation(); setPayExpense(exp); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPayExpense(exp);
+                                }}
                                 className="rounded p-1.5 text-blue-500 hover:bg-blue-50 hover:text-blue-700"
                                 title={t('expenses.markPaid')}
                               >
@@ -419,22 +487,35 @@ export default function ExpenseListPage() {
                   </span>
                   <select
                     value={perPage}
-                    onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
+                    onChange={(e) => {
+                      setPerPage(Number(e.target.value));
+                      setPage(1);
+                    }}
                     className="h-8 rounded border border-gray-200 px-2 text-xs"
                   >
                     {PAGE_SIZES.map((s) => (
-                      <option key={s} value={s}>{s} / {t('expenses.page')}</option>
+                      <option key={s} value={s}>
+                        {s} / {t('expenses.page')}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div className="flex items-center gap-1">
-                  <PaginationBtn onClick={() => setPage(1)} disabled={page <= 1}>«</PaginationBtn>
-                  <PaginationBtn onClick={() => setPage(page - 1)} disabled={page <= 1}>‹</PaginationBtn>
+                  <PaginationBtn onClick={() => setPage(1)} disabled={page <= 1}>
+                    «
+                  </PaginationBtn>
+                  <PaginationBtn onClick={() => setPage(page - 1)} disabled={page <= 1}>
+                    ‹
+                  </PaginationBtn>
                   <span className="px-3 text-xs font-medium text-gray-600">
                     {page} / {totalPages}
                   </span>
-                  <PaginationBtn onClick={() => setPage(page + 1)} disabled={page >= totalPages}>›</PaginationBtn>
-                  <PaginationBtn onClick={() => setPage(totalPages)} disabled={page >= totalPages}>»</PaginationBtn>
+                  <PaginationBtn onClick={() => setPage(page + 1)} disabled={page >= totalPages}>
+                    ›
+                  </PaginationBtn>
+                  <PaginationBtn onClick={() => setPage(totalPages)} disabled={page >= totalPages}>
+                    »
+                  </PaginationBtn>
                 </div>
               </div>
             )}
@@ -457,7 +538,10 @@ export default function ExpenseListPage() {
               onClick={() => {
                 if (!payExpense) return;
                 payMutation.mutate(payExpense.id, {
-                  onSuccess: () => { payMutation.reset(); setPayExpense(null); },
+                  onSuccess: () => {
+                    payMutation.reset();
+                    setPayExpense(null);
+                  },
                 });
               }}
               loading={payMutation.isPending}
@@ -474,7 +558,8 @@ export default function ExpenseListPage() {
             {payMutation.isError && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-3">
                 <p className="text-sm font-medium text-red-800">
-                  {(payMutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message || t('expenses.payError')}
+                  {(payMutation.error as { response?: { data?: { message?: string } } })?.response
+                    ?.data?.message || t('expenses.payError')}
                 </p>
               </div>
             )}
@@ -563,7 +648,8 @@ function PaginationBtn({
 function ApprovalInfo({ expense }: { expense: Expense }) {
   if (!expense.approvals || expense.approvals.length === 0) {
     if (expense.status === 'DRAFT') return <span className="text-xs text-gray-400">—</span>;
-    if (expense.status === 'PENDING') return <span className="text-xs text-amber-600">En attente N1</span>;
+    if (expense.status === 'PENDING')
+      return <span className="text-xs text-amber-600">En attente N1</span>;
     return <span className="text-xs text-gray-400">—</span>;
   }
 

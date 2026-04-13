@@ -22,7 +22,10 @@ import type { Expense, ExpenseStatus, ExpenseApproval } from '@/types/expense';
 
 type TabFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
-const STATUS_CONFIG: Record<ExpenseStatus, { variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive'; icon: typeof Clock }> = {
+const STATUS_CONFIG: Record<
+  ExpenseStatus,
+  { variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive'; icon: typeof Clock }
+> = {
   DRAFT: { variant: 'outline', icon: Clock },
   PENDING: { variant: 'warning', icon: Clock },
   APPROVED_L1: { variant: 'info', icon: CheckCircle2 },
@@ -49,9 +52,15 @@ export default function ExpenseValidationPage() {
   const [approveModalOpen, setApproveModalOpen] = useState(false);
 
   // Fetch all PENDING expenses for validation
-  const { data: pendingData, isLoading: pendingLoading } = useExpenses({ status: 'PENDING', perPage: 100 });
+  const { data: pendingData, isLoading: pendingLoading } = useExpenses({
+    status: 'PENDING',
+    perPage: 100,
+  });
   // Fetch recently approved/rejected for the history tabs
-  const { data: approvedData } = useExpenses({ status: ['APPROVED_L1', 'APPROVED_L2', 'PAID'], perPage: 50 });
+  const { data: approvedData } = useExpenses({
+    status: ['APPROVED_L1', 'APPROVED_L2', 'PAID'],
+    perPage: 50,
+  });
   const { data: rejectedData } = useExpenses({ status: 'REJECTED', perPage: 50 });
 
   // Filter expenses that are at the user's validation level
@@ -73,10 +82,18 @@ export default function ExpenseValidationPage() {
   const activeList = useMemo(() => {
     let list: Expense[] = [];
     switch (activeTab) {
-      case 'pending': list = pendingExpenses; break;
-      case 'approved': list = approvedExpenses; break;
-      case 'rejected': list = rejectedExpenses; break;
-      case 'all': list = [...pendingExpenses, ...approvedExpenses, ...rejectedExpenses]; break;
+      case 'pending':
+        list = pendingExpenses;
+        break;
+      case 'approved':
+        list = approvedExpenses;
+        break;
+      case 'rejected':
+        list = rejectedExpenses;
+        break;
+      case 'all':
+        list = [...pendingExpenses, ...approvedExpenses, ...rejectedExpenses];
+        break;
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -136,7 +153,11 @@ export default function ExpenseValidationPage() {
     { key: 'pending', label: t('validation.tabs.pending'), count: pendingExpenses.length },
     { key: 'approved', label: t('validation.tabs.approved'), count: approvedExpenses.length },
     { key: 'rejected', label: t('validation.tabs.rejected'), count: rejectedExpenses.length },
-    { key: 'all', label: t('validation.tabs.all'), count: pendingExpenses.length + approvedExpenses.length + rejectedExpenses.length },
+    {
+      key: 'all',
+      label: t('validation.tabs.all'),
+      count: pendingExpenses.length + approvedExpenses.length + rejectedExpenses.length,
+    },
   ];
 
   // DataTable columns
@@ -153,7 +174,9 @@ export default function ExpenseValidationPage() {
       key: 'date',
       header: t('common.date'),
       sortable: true,
-      render: (row: Expense & Record<string, unknown>) => <span className="text-sm text-gray-600">{formatDate(row.date)}</span>,
+      render: (row: Expense & Record<string, unknown>) => (
+        <span className="text-sm text-gray-600">{formatDate(row.date)}</span>
+      ),
     },
     {
       key: 'beneficiary',
@@ -195,7 +218,9 @@ export default function ExpenseValidationPage() {
         return (
           <Badge variant={cfg.variant} className="gap-1">
             <Icon className="h-3 w-3" />
-            {t(`expenses.status${row.status.charAt(0) + (row.status as string).slice(1).toLowerCase()}`)}
+            {t(
+              `expenses.status${row.status.charAt(0) + (row.status as string).slice(1).toLowerCase()}`,
+            )}
           </Badge>
         );
       },
@@ -209,7 +234,10 @@ export default function ExpenseValidationPage() {
         return (
           <div className="flex items-center gap-1">
             <button
-              onClick={(e) => { e.stopPropagation(); openDetail(row as Expense); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                openDetail(row as Expense);
+              }}
               className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               title={t('validation.viewDetail')}
             >
@@ -313,7 +341,9 @@ export default function ExpenseValidationPage() {
                   <span
                     className={cn(
                       'rounded-full px-1.5 py-0.5 text-xs',
-                      activeTab === tab.key ? 'bg-brand-gold/10 text-brand-gold' : 'bg-gray-200 text-gray-500',
+                      activeTab === tab.key
+                        ? 'bg-brand-gold/10 text-brand-gold'
+                        : 'bg-gray-200 text-gray-500',
                     )}
                   >
                     {tab.count}
@@ -355,16 +385,16 @@ export default function ExpenseValidationPage() {
       {/* ── Detail Modal ──────────────────── */}
       <Modal
         open={detailModalOpen}
-        onClose={() => { setDetailModalOpen(false); setSelectedExpense(null); }}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedExpense(null);
+        }}
         title={selectedExpense?.reference ?? ''}
         size="lg"
         footer={
           selectedExpense?.status === 'PENDING' && getUserApprovalLevel(selectedExpense) ? (
             <div className="flex w-full items-center justify-between">
-              <Button
-                variant="destructive"
-                onClick={() => setRejectModalOpen(true)}
-              >
+              <Button variant="destructive" onClick={() => setRejectModalOpen(true)}>
                 <XCircle className="h-4 w-4" />
                 {t('expenses.reject')}
               </Button>
@@ -376,16 +406,20 @@ export default function ExpenseValidationPage() {
                   <Eye className="h-4 w-4" />
                   {t('validation.viewFull')}
                 </Button>
-                <Button
-                  onClick={() => setApproveModalOpen(true)}
-                >
+                <Button onClick={() => setApproveModalOpen(true)}>
                   <CheckCircle2 className="h-4 w-4" />
                   {t('expenses.approve')}
                 </Button>
               </div>
             </div>
           ) : (
-            <Button variant="outline" onClick={() => { setDetailModalOpen(false); setSelectedExpense(null); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDetailModalOpen(false);
+                setSelectedExpense(null);
+              }}
+            >
               {t('common.close')}
             </Button>
           )
@@ -396,8 +430,12 @@ export default function ExpenseValidationPage() {
             {/* Status Badge */}
             <div className="flex items-center gap-3">
               <Badge variant={STATUS_CONFIG[selectedExpense.status].variant} className="gap-1">
-                {createElement(STATUS_CONFIG[selectedExpense.status].icon, { className: 'h-3 w-3' })}
-                {t(`expenses.status${selectedExpense.status.charAt(0) + selectedExpense.status.slice(1).toLowerCase()}`)}
+                {createElement(STATUS_CONFIG[selectedExpense.status].icon, {
+                  className: 'h-3 w-3',
+                })}
+                {t(
+                  `expenses.status${selectedExpense.status.charAt(0) + selectedExpense.status.slice(1).toLowerCase()}`,
+                )}
               </Badge>
               <span className="text-xs text-gray-400">
                 {t('expenses.createdBy')} {selectedExpense.createdByName}
@@ -411,25 +449,33 @@ export default function ExpenseValidationPage() {
                   <Calendar className="h-3.5 w-3.5" />
                   {t('common.date')}
                 </p>
-                <p className="mt-1 text-sm font-medium text-gray-700">{formatDate(selectedExpense.date)}</p>
+                <p className="mt-1 text-sm font-medium text-gray-700">
+                  {formatDate(selectedExpense.date)}
+                </p>
               </div>
               <div>
                 <p className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
                   <CreditCard className="h-3.5 w-3.5" />
                   {t('common.amount')}
                 </p>
-                <p className="mt-1 text-lg font-bold text-gray-900">{formatCFA(selectedExpense.amount)}</p>
+                <p className="mt-1 text-lg font-bold text-gray-900">
+                  {formatCFA(selectedExpense.amount)}
+                </p>
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500">{t('expenses.category')}</p>
-                <p className="mt-1 text-sm font-medium text-gray-700">{selectedExpense.categoryName}</p>
+                <p className="mt-1 text-sm font-medium text-gray-700">
+                  {selectedExpense.categoryName}
+                </p>
               </div>
               <div>
                 <p className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
                   <User className="h-3.5 w-3.5" />
                   {t('expenses.beneficiary')}
                 </p>
-                <p className="mt-1 text-sm font-medium text-gray-700">{selectedExpense.beneficiary || '—'}</p>
+                <p className="mt-1 text-sm font-medium text-gray-700">
+                  {selectedExpense.beneficiary || '—'}
+                </p>
               </div>
             </div>
 
@@ -475,9 +521,13 @@ export default function ExpenseValidationPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-gray-700">{appr.approverName}</p>
-                          <Badge variant="outline" className="text-[10px]">N{appr.level}</Badge>
+                          <Badge variant="outline" className="text-[10px]">
+                            N{appr.level}
+                          </Badge>
                           {appr.status === 'PENDING' && appr.approverId === user?.id && (
-                            <Badge variant="warning" className="text-[10px]">{t('validation.yourTurn')}</Badge>
+                            <Badge variant="warning" className="text-[10px]">
+                              {t('validation.yourTurn')}
+                            </Badge>
                           )}
                         </div>
                         {appr.approvedAt && (
@@ -502,18 +552,24 @@ export default function ExpenseValidationPage() {
       {/* ── Approve Modal ─────────────────── */}
       <Modal
         open={approveModalOpen}
-        onClose={() => { setApproveModalOpen(false); setApproveComment(''); }}
+        onClose={() => {
+          setApproveModalOpen(false);
+          setApproveComment('');
+        }}
         title={t('validation.approveTitle')}
         size="sm"
         footer={
           <>
-            <Button variant="outline" onClick={() => { setApproveModalOpen(false); setApproveComment(''); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setApproveModalOpen(false);
+                setApproveComment('');
+              }}
+            >
               {t('common.cancel')}
             </Button>
-            <Button
-              onClick={handleApprove}
-              loading={approveMutation.isPending}
-            >
+            <Button onClick={handleApprove} loading={approveMutation.isPending}>
               <CheckCircle2 className="h-4 w-4" />
               {t('validation.confirmApprove')}
             </Button>
@@ -532,7 +588,9 @@ export default function ExpenseValidationPage() {
             </div>
           )}
           <div>
-            <label className="text-sm font-medium text-gray-700">{t('validation.commentOptional')}</label>
+            <label className="text-sm font-medium text-gray-700">
+              {t('validation.commentOptional')}
+            </label>
             <textarea
               value={approveComment}
               onChange={(e) => setApproveComment(e.target.value)}
@@ -547,12 +605,21 @@ export default function ExpenseValidationPage() {
       {/* ── Reject Modal ──────────────────── */}
       <Modal
         open={rejectModalOpen}
-        onClose={() => { setRejectModalOpen(false); setRejectComment(''); }}
+        onClose={() => {
+          setRejectModalOpen(false);
+          setRejectComment('');
+        }}
         title={t('validation.rejectTitle')}
         size="sm"
         footer={
           <>
-            <Button variant="outline" onClick={() => { setRejectModalOpen(false); setRejectComment(''); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectModalOpen(false);
+                setRejectComment('');
+              }}
+            >
               {t('common.cancel')}
             </Button>
             <Button
@@ -579,7 +646,9 @@ export default function ExpenseValidationPage() {
             </div>
           )}
           <div>
-            <label className="text-sm font-medium text-gray-700">{t('validation.commentRequired')}</label>
+            <label className="text-sm font-medium text-gray-700">
+              {t('validation.commentRequired')}
+            </label>
             <textarea
               value={rejectComment}
               onChange={(e) => setRejectComment(e.target.value)}

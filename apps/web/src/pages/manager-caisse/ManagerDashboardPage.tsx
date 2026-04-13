@@ -16,11 +16,15 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Badge, Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
-import { useOpenCashDays, useClosingHistory, useCashState, useAccountingEntries } from '@/hooks/useClosing';
+import {
+  useOpenCashDays,
+  useClosingHistory,
+  useCashState,
+  useAccountingEntries,
+} from '@/hooks/useClosing';
 import { useUsers } from '@/hooks/useAdmin';
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
 function timeSince(dateStr: string): string {
   const now = new Date();
@@ -65,7 +69,10 @@ export default function ManagerDashboardPage() {
 
   // Recent closings (last 5)
   const recentClosings = useMemo(() => {
-    return [...history].filter((c) => c.closedAt).sort((a, b) => new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime()).slice(0, 5);
+    return [...history]
+      .filter((c) => c.closedAt)
+      .sort((a, b) => new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime())
+      .slice(0, 5);
   }, [history]);
 
   // This month's closings
@@ -75,7 +82,10 @@ export default function ManagerDashboardPage() {
     const monthClosings = history.filter((c) => c.closedAt && new Date(c.closedAt) >= monthStart);
     const totalGap = monthClosings.reduce((s, c) => s + Math.abs(c.variance || 0), 0);
     const avgGap = monthClosings.length > 0 ? totalGap / monthClosings.length : 0;
-    const maxGap = monthClosings.length > 0 ? Math.max(...monthClosings.map((c) => Math.abs(c.variance || 0))) : 0;
+    const maxGap =
+      monthClosings.length > 0
+        ? Math.max(...monthClosings.map((c) => Math.abs(c.variance || 0)))
+        : 0;
     const totalMovements = monthClosings.length;
     return { count: monthClosings.length, avgGap, maxGap, totalMovements };
   }, [history]);
@@ -112,7 +122,9 @@ export default function ManagerDashboardPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold text-gray-900">{openCount}</span>
                 {pendingCloseCount > 0 && (
-                  <Badge variant="warning">{pendingCloseCount} {t('managerDashboard.pendingClose')}</Badge>
+                  <Badge variant="warning">
+                    {pendingCloseCount} {t('managerDashboard.pendingClose')}
+                  </Badge>
                 )}
               </div>
             </div>
@@ -150,7 +162,9 @@ export default function ManagerDashboardPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500">{t('managerDashboard.theoreticalBalance')}</p>
-              <span className="text-2xl font-bold text-blue-700">{fmt(totalTheoreticalBalance)}</span>
+              <span className="text-2xl font-bold text-blue-700">
+                {fmt(totalTheoreticalBalance)}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -162,12 +176,18 @@ export default function ManagerDashboardPage() {
           <CardContent className="flex items-center gap-3 py-4">
             <AlertTriangle className="h-6 w-6 text-red-600" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-red-800">{t('managerDashboard.alertLate.title')}</p>
+              <p className="text-sm font-semibold text-red-800">
+                {t('managerDashboard.alertLate.title')}
+              </p>
               <p className="text-xs text-red-600">
                 {t('managerDashboard.alertLate.description', { count: lateOpenDays.length })}
               </p>
             </div>
-            <Button size="sm" variant="destructive" onClick={() => navigate('/manager-caisse/closing')}>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => navigate('/manager-caisse/closing')}
+            >
               {t('managerDashboard.alertLate.action')}
             </Button>
           </CardContent>
@@ -208,23 +228,37 @@ export default function ManagerDashboardPage() {
                       className="flex cursor-pointer items-center gap-3 py-3 transition hover:bg-gray-50"
                       onClick={() => navigate(`/manager-caisse/closing/${day.id}`)}
                     >
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${isPending ? 'bg-orange-50' : isLate ? 'bg-red-50' : 'bg-green-50'}`}>
-                        {isPending ? <Lock className="h-4 w-4 text-orange-600" /> : <Vault className="h-4 w-4 text-green-600" />}
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-lg ${isPending ? 'bg-orange-50' : isLate ? 'bg-red-50' : 'bg-green-50'}`}
+                      >
+                        {isPending ? (
+                          <Lock className="h-4 w-4 text-orange-600" />
+                        ) : (
+                          <Vault className="h-4 w-4 text-green-600" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-xs text-brand-gold">{day.reference}</span>
-                          <Badge variant={isPending ? 'warning' : isLate ? 'destructive' : 'success'} className="text-[10px]">
+                          <Badge
+                            variant={isPending ? 'warning' : isLate ? 'destructive' : 'success'}
+                            className="text-[10px]"
+                          >
                             {isPending ? t('closing.statusPendingClose') : t('closing.statusOpen')}
                           </Badge>
                         </div>
                         <p className="truncate text-xs text-gray-500">
-                          {userMap.get(day.openedById) ?? day.openedById} · {timeSince(day.openedAt)}
+                          {userMap.get(day.openedById) ?? day.openedById} ·{' '}
+                          {timeSince(day.openedAt)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-900">{fmt(day.theoreticalBalance)}</p>
-                        <p className="text-[10px] text-gray-400">{t('closing.theoreticalBalance')}</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {fmt(day.theoreticalBalance)}
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          {t('closing.theoreticalBalance')}
+                        </p>
                       </div>
                       <Eye className="h-4 w-4 text-gray-400" />
                     </div>
@@ -243,7 +277,11 @@ export default function ManagerDashboardPage() {
                 <History className="h-4 w-4 text-gray-500" />
                 {t('managerDashboard.recentClosings')}
               </CardTitle>
-              <Button size="sm" variant="ghost" onClick={() => navigate('/manager-caisse/closing-history')}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => navigate('/manager-caisse/closing-history')}
+              >
                 {t('managerDashboard.seeAll')}
                 <ArrowUpRight className="ml-1 h-3 w-3" />
               </Button>
@@ -251,7 +289,9 @@ export default function ManagerDashboardPage() {
           </CardHeader>
           <CardContent>
             {recentClosings.length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-400">{t('managerDashboard.noClosings')}</p>
+              <p className="py-8 text-center text-sm text-gray-400">
+                {t('managerDashboard.noClosings')}
+              </p>
             ) : (
               <div className="divide-y">
                 {recentClosings.map((c) => (
@@ -262,14 +302,21 @@ export default function ManagerDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs text-brand-gold">{c.reference}</span>
-                        <span className="text-[10px] text-gray-400">{c.closedAt ? new Date(c.closedAt).toLocaleDateString('fr-FR') : '—'}</span>
+                        <span className="text-[10px] text-gray-400">
+                          {c.closedAt ? new Date(c.closedAt).toLocaleDateString('fr-FR') : '—'}
+                        </span>
                       </div>
                       <p className="truncate text-xs text-gray-500">
-                        {new Date(c.closedAt!).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(c.closedAt!).toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className={`text-sm font-semibold ${c.variance === 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <p
+                        className={`text-sm font-semibold ${c.variance === 0 ? 'text-green-600' : 'text-red-600'}`}
+                      >
                         {c.variance === 0 ? '0' : (c.variance > 0 ? '+' : '') + fmt(c.variance)}
                       </p>
                       <p className="text-[10px] text-gray-400">{t('managerDashboard.gap')}</p>
@@ -294,22 +341,34 @@ export default function ManagerDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-              <span className="text-xs text-gray-500">{t('managerDashboard.monthlyStats.closingsCount')}</span>
+              <span className="text-xs text-gray-500">
+                {t('managerDashboard.monthlyStats.closingsCount')}
+              </span>
               <span className="text-sm font-bold text-gray-900">{monthStats.count}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-              <span className="text-xs text-gray-500">{t('managerDashboard.monthlyStats.totalMovements')}</span>
+              <span className="text-xs text-gray-500">
+                {t('managerDashboard.monthlyStats.totalMovements')}
+              </span>
               <span className="text-sm font-bold text-gray-900">{monthStats.totalMovements}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-              <span className="text-xs text-gray-500">{t('managerDashboard.monthlyStats.avgGap')}</span>
-              <span className={`text-sm font-bold ${monthStats.avgGap === 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className="text-xs text-gray-500">
+                {t('managerDashboard.monthlyStats.avgGap')}
+              </span>
+              <span
+                className={`text-sm font-bold ${monthStats.avgGap === 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
                 {fmt(Math.round(monthStats.avgGap))}
               </span>
             </div>
             <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-              <span className="text-xs text-gray-500">{t('managerDashboard.monthlyStats.maxGap')}</span>
-              <span className={`text-sm font-bold ${monthStats.maxGap === 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className="text-xs text-gray-500">
+                {t('managerDashboard.monthlyStats.maxGap')}
+              </span>
+              <span
+                className={`text-sm font-bold ${monthStats.maxGap === 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
                 {fmt(monthStats.maxGap)}
               </span>
             </div>
@@ -331,26 +390,40 @@ export default function ManagerDashboardPage() {
             {accounting ? (
               <>
                 <div className="flex items-center justify-between rounded-lg bg-green-50 px-3 py-2">
-                  <span className="text-xs text-green-600">{t('managerDashboard.accounting.totalDebit')}</span>
-                  <span className="text-sm font-bold text-green-700">{fmt(accounting.totalDebit)}</span>
+                  <span className="text-xs text-green-600">
+                    {t('managerDashboard.accounting.totalDebit')}
+                  </span>
+                  <span className="text-sm font-bold text-green-700">
+                    {fmt(accounting.totalDebit)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-red-50 px-3 py-2">
-                  <span className="text-xs text-red-600">{t('managerDashboard.accounting.totalCredit')}</span>
-                  <span className="text-sm font-bold text-red-700">{fmt(accounting.totalCredit)}</span>
+                  <span className="text-xs text-red-600">
+                    {t('managerDashboard.accounting.totalCredit')}
+                  </span>
+                  <span className="text-sm font-bold text-red-700">
+                    {fmt(accounting.totalCredit)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                  <span className="text-xs text-gray-500">{t('managerDashboard.accounting.entries')}</span>
+                  <span className="text-xs text-gray-500">
+                    {t('managerDashboard.accounting.entries')}
+                  </span>
                   <span className="text-sm font-bold text-gray-900">{accounting.entriesCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">{t('managerDashboard.accounting.balanced')}</span>
+                  <span className="text-xs text-gray-500">
+                    {t('managerDashboard.accounting.balanced')}
+                  </span>
                   <Badge variant={accounting.isBalanced ? 'success' : 'destructive'}>
                     {accounting.isBalanced ? t('common.yes') : t('common.no')}
                   </Badge>
                 </div>
               </>
             ) : (
-              <p className="py-4 text-center text-sm text-gray-400">{t('managerDashboard.accounting.noData')}</p>
+              <p className="py-4 text-center text-sm text-gray-400">
+                {t('managerDashboard.accounting.noData')}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -363,15 +436,27 @@ export default function ManagerDashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Button variant="outline" className="justify-start gap-2" onClick={() => navigate('/manager-caisse/closing')}>
+            <Button
+              variant="outline"
+              className="justify-start gap-2"
+              onClick={() => navigate('/manager-caisse/closing')}
+            >
               <Lock className="h-4 w-4 text-amber-500" />
               {t('modules.manager-caisse.closing')}
             </Button>
-            <Button variant="outline" className="justify-start gap-2" onClick={() => navigate('/manager-caisse/closing-history')}>
+            <Button
+              variant="outline"
+              className="justify-start gap-2"
+              onClick={() => navigate('/manager-caisse/closing-history')}
+            >
               <History className="h-4 w-4 text-gray-500" />
               {t('modules.manager-caisse.closingHistory')}
             </Button>
-            <Button variant="outline" className="justify-start gap-2" onClick={() => navigate('/manager-caisse/settings')}>
+            <Button
+              variant="outline"
+              className="justify-start gap-2"
+              onClick={() => navigate('/manager-caisse/settings')}
+            >
               <BarChart3 className="h-4 w-4 text-indigo-500" />
               {t('modules.manager-caisse.settings')}
             </Button>

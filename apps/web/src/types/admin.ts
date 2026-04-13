@@ -171,10 +171,19 @@ export interface AppSettings {
 
 // ── Audit Log ────────────────────────────────────────────
 export type AuditAction =
-  | 'CREATE' | 'UPDATE' | 'DELETE'
-  | 'SUBMIT' | 'APPROVE' | 'REJECT' | 'PAY' | 'CANCEL'
-  | 'LOGIN' | 'LOGOUT' | 'EXPORT'
-  | 'CASH_CLOSING_OPEN' | 'CASH_CLOSING_CLOSE';
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'SUBMIT'
+  | 'APPROVE'
+  | 'REJECT'
+  | 'PAY'
+  | 'CANCEL'
+  | 'LOGIN'
+  | 'LOGOUT'
+  | 'EXPORT'
+  | 'CASH_CLOSING_OPEN'
+  | 'CASH_CLOSING_CLOSE';
 
 export interface AuditLogEntry {
   id: string;
@@ -236,15 +245,15 @@ export interface UpdateCategoryDto {
 export interface ApprovalCircuitStep {
   level: number;
   role: 'chef_comptable' | 'responsable_rh' | 'daf' | 'secretaire_general' | 'dg';
-  approverId: string;      // assigned user id
-  approverName: string;    // assigned user display name
+  approverId: string; // assigned user id
+  approverName: string; // assigned user display name
 }
 
 export interface ApprovalCircuit {
   id: string;
   name: string;
-  minAmount: number;        // threshold min (inclusive)
-  maxAmount: number | null;  // threshold max (inclusive), null = unlimited
+  minAmount: number; // threshold min (inclusive)
+  maxAmount: number | null; // threshold max (inclusive), null = unlimited
   steps: ApprovalCircuitStep[];
   isActive: boolean;
   createdAt: string;
@@ -391,14 +400,14 @@ export type AccountingEntryType = 'DEBIT' | 'CREDIT';
 export interface AccountingEntry {
   id: string;
   date: string;
-  journalCode: string;        // e.g. 'OD', 'BQ', 'CA'
-  accountNumber: string;       // e.g. '571000', '411000'
+  journalCode: string; // e.g. 'OD', 'BQ', 'CA'
+  accountNumber: string; // e.g. '571000', '411000'
   accountLabel: string;
   entryType: AccountingEntryType;
   debit: number;
   credit: number;
-  reference: string;           // operation ref e.g. 'VNT-2026-0201'
-  label: string;               // description of the entry
+  reference: string; // operation ref e.g. 'VNT-2026-0201'
+  label: string; // description of the entry
   operationType: 'SALE' | 'EXPENSE' | 'PAYMENT' | 'CLOSING_GAP';
 }
 

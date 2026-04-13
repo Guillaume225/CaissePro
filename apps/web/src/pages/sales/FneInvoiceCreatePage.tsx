@@ -112,7 +112,12 @@ function recalcLine(l: LineItem): LineItem {
   for (const t of l.taxes) rate += TAX_RATES[t] ?? 0;
   for (const ct of l.customTaxes ?? []) rate += ct.amount;
   const vat = ht * (rate / 100);
-  return { ...l, lineTotalHt: Math.round(ht * 100) / 100, lineVat: Math.round(vat * 100) / 100, lineTotalTtc: Math.round((ht + vat) * 100) / 100 };
+  return {
+    ...l,
+    lineTotalHt: Math.round(ht * 100) / 100,
+    lineVat: Math.round(vat * 100) / 100,
+    lineTotalTtc: Math.round((ht + vat) * 100) / 100,
+  };
 }
 
 /* ═══════════════ COMPONENT ═════════════════════════════ */
@@ -134,7 +139,11 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
   /* ── Step 1: Client ── */
   const [template, setTemplate] = useState<FneTemplate>(editInvoice?.template ?? 'B2C');
   const [invoiceType, setInvoiceType] = useState<FneInvoiceType>(
-    editInvoice?.invoiceType === 'estimate' ? 'estimate' : editInvoice?.invoiceType === 'sale' ? 'sale' : 'sale',
+    editInvoice?.invoiceType === 'estimate'
+      ? 'estimate'
+      : editInvoice?.invoiceType === 'sale'
+        ? 'sale'
+        : 'sale',
   );
   const [clientCompanyName, setClientCompanyName] = useState(editInvoice?.clientCompanyName ?? '');
   const [clientPhone, setClientPhone] = useState(editInvoice?.clientPhone ?? '');
@@ -198,7 +207,9 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
   const [commercialMessage, setCommercialMessage] = useState(editInvoice?.commercialMessage ?? '');
   const [footer, setFooter] = useState(editInvoice?.footer ?? '');
   const [foreignCurrency, setForeignCurrency] = useState(editInvoice?.foreignCurrency ?? '');
-  const [foreignCurrencyRate, setForeignCurrencyRate] = useState<number>(editInvoice?.foreignCurrencyRate ?? 0);
+  const [foreignCurrencyRate, setForeignCurrencyRate] = useState<number>(
+    editInvoice?.foreignCurrencyRate ?? 0,
+  );
 
   /* ── Establishment combobox state (declared first so POS can filter by it) ── */
   const [estSearch, setEstSearch] = useState('');
@@ -231,7 +242,11 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
   const posDropdownRef = useRef<HTMLDivElement>(null);
   const posSearchRef = useRef<HTMLInputElement>(null);
 
-  const { data: posData } = useFnePointsOfSale({ search: posSearch, perPage: 20, establishmentId: selectedEstId ?? undefined });
+  const { data: posData } = useFnePointsOfSale({
+    search: posSearch,
+    perPage: 20,
+    establishmentId: selectedEstId ?? undefined,
+  });
   const posOptions = posData?.data ?? [];
 
   useEffect(() => {
@@ -285,20 +300,22 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
   /* ── Step 3: Items ── */
   const [lines, setLines] = useState<LineItem[]>(() => {
     if (editInvoice?.items?.length) {
-      return editInvoice.items.map((it) => recalcLine({
-        _key: crypto.randomUUID(),
-        description: it.description,
-        quantity: it.quantity,
-        amount: it.amount,
-        discount: it.discount ?? 0,
-        measurementUnit: it.measurementUnit ?? '',
-        reference: it.reference ?? '',
-        taxes: it.taxes ?? ['TVA'],
-        customTaxes: it.customTaxes ?? [],
-        lineTotalHt: 0,
-        lineVat: 0,
-        lineTotalTtc: 0,
-      }));
+      return editInvoice.items.map((it) =>
+        recalcLine({
+          _key: crypto.randomUUID(),
+          description: it.description,
+          quantity: it.quantity,
+          amount: it.amount,
+          discount: it.discount ?? 0,
+          measurementUnit: it.measurementUnit ?? '',
+          reference: it.reference ?? '',
+          taxes: it.taxes ?? ['TVA'],
+          customTaxes: it.customTaxes ?? [],
+          lineTotalHt: 0,
+          lineVat: 0,
+          lineTotalTtc: 0,
+        }),
+      );
     }
     return [emptyLine()];
   });
@@ -333,9 +350,13 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
   }, []);
 
   /* ── Step 4: Payment ── */
-  const [paymentMethod, setPaymentMethod] = useState<FnePaymentMethod>(editInvoice?.paymentMethod ?? 'cash');
+  const [paymentMethod, setPaymentMethod] = useState<FnePaymentMethod>(
+    editInvoice?.paymentMethod ?? 'cash',
+  );
   const [globalDiscount, setGlobalDiscount] = useState(editInvoice?.discountPct ?? 0);
-  const [invoiceCustomTaxes, setInvoiceCustomTaxes] = useState<Array<{ name: string; amount: number }>>(editInvoice?.customTaxes ?? []);
+  const [invoiceCustomTaxes, setInvoiceCustomTaxes] = useState<
+    Array<{ name: string; amount: number }>
+  >(editInvoice?.customTaxes ?? []);
 
   /* ── Computed totals ── */
   const totals = useMemo(() => {
@@ -355,9 +376,7 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
 
   /* ── Line helpers ── */
   const updateLine = useCallback((key: string, patch: Partial<LineItem>) => {
-    setLines((prev) =>
-      prev.map((l) => (l._key === key ? recalcLine({ ...l, ...patch }) : l)),
-    );
+    setLines((prev) => prev.map((l) => (l._key === key ? recalcLine({ ...l, ...patch }) : l)));
   }, []);
   const addLine = () => setLines((p) => [...p, emptyLine()]);
   const removeLine = (key: string) => setLines((p) => p.filter((l) => l._key !== key));
@@ -383,7 +402,11 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
       ),
     );
   };
-  const updateCustomTax = (key: string, idx: number, patch: Partial<{ name: string; amount: number }>) => {
+  const updateCustomTax = (
+    key: string,
+    idx: number,
+    patch: Partial<{ name: string; amount: number }>,
+  ) => {
     setLines((prev) =>
       prev.map((l) => {
         if (l._key !== key) return l;
@@ -404,9 +427,15 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
   };
 
   /* ── Validation ── */
-  const step1Valid = clientCompanyName && clientPhone && clientEmail && (template !== 'B2B' || clientNcc) && (!isRne || rne);
+  const step1Valid =
+    clientCompanyName &&
+    clientPhone &&
+    clientEmail &&
+    (template !== 'B2B' || clientNcc) &&
+    (!isRne || rne);
   const step2Valid = pointOfSale && establishment && (!foreignCurrency || foreignCurrencyRate > 0);
-  const step3Valid = lines.length > 0 && lines.every((l) => l.description && l.quantity > 0 && l.amount > 0);
+  const step3Valid =
+    lines.length > 0 && lines.every((l) => l.description && l.quantity > 0 && l.amount > 0);
   const canSubmit = step1Valid && step2Valid && step3Valid;
 
   /* ── Submit ── */
@@ -430,16 +459,27 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
         ...(foreignCurrency && { foreignCurrency, foreignCurrencyRate }),
         discount: globalDiscount,
         ...(invoiceCustomTaxes.length && { customTaxes: invoiceCustomTaxes }),
-        items: lines.map(({ description, quantity, amount, discount, measurementUnit, taxes, reference, customTaxes }) => ({
-          description,
-          quantity,
-          amount,
-          ...(discount && { discount }),
-          ...(measurementUnit && { measurementUnit }),
-          ...(reference && { reference }),
-          taxes,
-          ...(customTaxes?.length && { customTaxes }),
-        })),
+        items: lines.map(
+          ({
+            description,
+            quantity,
+            amount,
+            discount,
+            measurementUnit,
+            taxes,
+            reference,
+            customTaxes,
+          }) => ({
+            description,
+            quantity,
+            amount,
+            ...(discount && { discount }),
+            ...(measurementUnit && { measurementUnit }),
+            ...(reference && { reference }),
+            taxes,
+            ...(customTaxes?.length && { customTaxes }),
+          }),
+        ),
       };
 
       let invoice;
@@ -461,8 +501,10 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
     <div className="mx-auto max-w-3xl space-y-6">
       {/* ── Header ── */}
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/fne/invoices')}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100">
+        <button
+          onClick={() => navigate('/fne/invoices')}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+        >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
@@ -487,18 +529,27 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
           const done = i < step;
           return (
             <div key={i} className="flex flex-1 items-center gap-2">
-              <div className={cn(
-                'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors',
-                active && 'bg-brand-gold text-white',
-                done && 'bg-green-500 text-white',
-                !active && !done && 'bg-gray-100 text-gray-400',
-              )}>
+              <div
+                className={cn(
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors',
+                  active && 'bg-brand-gold text-white',
+                  done && 'bg-green-500 text-white',
+                  !active && !done && 'bg-gray-100 text-gray-400',
+                )}
+              >
                 {done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
               </div>
-              <span className={cn('hidden sm:inline text-sm font-medium', active ? 'text-gray-900' : 'text-gray-400')}>
+              <span
+                className={cn(
+                  'hidden sm:inline text-sm font-medium',
+                  active ? 'text-gray-900' : 'text-gray-400',
+                )}
+              >
                 {s.label}
               </span>
-              {i < STEPS.length - 1 && <div className={cn('mx-2 h-px flex-1', done ? 'bg-green-300' : 'bg-gray-200')} />}
+              {i < STEPS.length - 1 && (
+                <div className={cn('mx-2 h-px flex-1', done ? 'bg-green-300' : 'bg-gray-200')} />
+              )}
             </div>
           );
         })}
@@ -509,16 +560,21 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
         {/* ─── STEP 0: Type de facturation ─── */}
         {step === 0 && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-gray-900">{t('fne.step0', 'Type de facturation')}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {t('fne.step0', 'Type de facturation')}
+            </h2>
             <div className="grid grid-cols-2 gap-4">
               {INVOICE_TYPES.map((it) => (
-                <button key={it.value} onClick={() => setInvoiceType(it.value)}
+                <button
+                  key={it.value}
+                  onClick={() => setInvoiceType(it.value)}
                   className={cn(
                     'rounded-lg border p-5 text-center transition-all',
                     invoiceType === it.value
                       ? 'border-brand-gold bg-brand-gold/10 text-brand-gold ring-1 ring-brand-gold'
                       : 'border-gray-300 text-gray-500 hover:border-gray-400',
-                  )}>
+                  )}
+                >
                   <div className="text-lg font-bold">{it.label}</div>
                   <div className="text-sm mt-1">{it.desc}</div>
                 </button>
@@ -530,7 +586,9 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
         {/* ─── STEP 1: Client ─── */}
         {step === 1 && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-gray-900">{t('fne.step1', 'Informations client')}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {t('fne.step1', 'Informations client')}
+            </h2>
 
             {/* Client combobox */}
             <div className="relative" ref={comboRef}>
@@ -559,13 +617,21 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                   {selectedClientId && (
                     <span
                       role="button"
-                      onClick={(e) => { e.stopPropagation(); clearSelectedClient(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearSelectedClient();
+                      }}
                       className="rounded p-0.5 hover:bg-red-50 hover:text-red-500 transition-colors"
                     >
                       <X className="h-4 w-4" />
                     </span>
                   )}
-                  <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', showClientDropdown && 'rotate-180')} />
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 text-gray-400 transition-transform',
+                      showClientDropdown && 'rotate-180',
+                    )}
+                  />
                 </span>
               </button>
 
@@ -583,7 +649,11 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                       className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
                     />
                     {clientSearch && (
-                      <button type="button" onClick={() => setClientSearch('')} className="text-gray-400 hover:text-gray-600">
+                      <button
+                        type="button"
+                        onClick={() => setClientSearch('')}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
                         <X className="h-3.5 w-3.5" />
                       </button>
                     )}
@@ -611,7 +681,10 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                         >
                           <div>
                             <div className="font-medium">{c.companyName}</div>
-                            <div className="text-xs text-gray-500">{c.phone}{c.email ? ` · ${c.email}` : ''}</div>
+                            <div className="text-xs text-gray-500">
+                              {c.phone}
+                              {c.email ? ` · ${c.email}` : ''}
+                            </div>
                           </div>
                           {selectedClientId === c.id && <Check className="h-4 w-4 shrink-0" />}
                         </button>
@@ -621,22 +694,32 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                 </div>
               )}
               {selectedClientId && (
-                <p className="mt-1.5 text-xs text-green-600">{t('fne.clientSelected', 'Client sélectionné — vous pouvez modifier les champs ci-dessous')}</p>
+                <p className="mt-1.5 text-xs text-green-600">
+                  {t(
+                    'fne.clientSelected',
+                    'Client sélectionné — vous pouvez modifier les champs ci-dessous',
+                  )}
+                </p>
               )}
             </div>
 
             {/* Template */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('fne.template', 'Modèle client')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('fne.template', 'Modèle client')}
+              </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {TEMPLATES.map((tpl) => (
-                  <button key={tpl.value} onClick={() => setTemplate(tpl.value)}
+                  <button
+                    key={tpl.value}
+                    onClick={() => setTemplate(tpl.value)}
                     className={cn(
                       'rounded-lg border p-3 text-center transition-all',
                       template === tpl.value
                         ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
                         : 'border-gray-300 text-gray-500 hover:border-gray-400',
-                    )}>
+                    )}
+                  >
                     <div className="font-bold">{tpl.label}</div>
                     <div className="text-xs">{tpl.desc}</div>
                   </button>
@@ -647,44 +730,78 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
             {/* Client fields */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{t('fne.clientName', 'Nom / Raison sociale')} *</label>
-                <input value={clientCompanyName} onChange={(e) => setClientCompanyName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('fne.clientName', 'Nom / Raison sociale')} *
+                </label>
+                <input
+                  value={clientCompanyName}
+                  onChange={(e) => setClientCompanyName(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{t('fne.clientPhone', 'Téléphone')} *</label>
-                <input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('fne.clientPhone', 'Téléphone')} *
+                </label>
+                <input
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{t('fne.clientEmail', 'Email')} *</label>
-                <input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('fne.clientEmail', 'Email')} *
+                </label>
+                <input
+                  type="email"
+                  value={clientEmail}
+                  onChange={(e) => setClientEmail(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                />
               </div>
               {template === 'B2B' && (
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">{t('fne.clientNcc', 'NCC Client')} *</label>
-                  <input value={clientNcc} onChange={(e) => setClientNcc(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t('fne.clientNcc', 'NCC Client')} *
+                  </label>
+                  <input
+                    value={clientNcc}
+                    onChange={(e) => setClientNcc(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                  />
                 </div>
               )}
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{t('fne.clientSeller', 'Vendeur')}</label>
-                <input value={clientSellerName} onChange={(e) => setClientSellerName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('fne.clientSeller', 'Vendeur')}
+                </label>
+                <input
+                  value={clientSellerName}
+                  onChange={(e) => setClientSellerName(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                />
               </div>
             </div>
 
             {/* RNE */}
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={isRne} onChange={(e) => setIsRne(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold" />
+                <input
+                  type="checkbox"
+                  checked={isRne}
+                  onChange={(e) => setIsRne(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
+                />
                 <span className="text-sm text-gray-700">{t('fne.isRne', 'Soumis au RNE')}</span>
               </label>
               {isRne && (
-                <input placeholder="Numéro RNE" value={rne} onChange={(e) => setRne(e.target.value)}
-                  className="flex-1 rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                <input
+                  placeholder="Numéro RNE"
+                  value={rne}
+                  onChange={(e) => setRne(e.target.value)}
+                  className="flex-1 rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                />
               )}
             </div>
           </div>
@@ -693,11 +810,15 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
         {/* ─── STEP 2: Establishment ─── */}
         {step === 2 && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-gray-900">{t('fne.step2', 'Établissement et paramètres')}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {t('fne.step2', 'Établissement et paramètres')}
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Establishment combobox (select first) */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{t('fne.establishment', 'Établissement')} *</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('fne.establishment', 'Établissement')} *
+                </label>
                 <div className="relative" ref={estDropdownRef}>
                   <button
                     type="button"
@@ -719,13 +840,21 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                       {selectedEstId && (
                         <span
                           role="button"
-                          onClick={(e) => { e.stopPropagation(); clearEst(); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            clearEst();
+                          }}
                           className="rounded p-0.5 hover:bg-red-50 hover:text-red-500 transition-colors"
                         >
                           <X className="h-4 w-4" />
                         </span>
                       )}
-                      <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', showEstDropdown && 'rotate-180')} />
+                      <ChevronDown
+                        className={cn(
+                          'h-4 w-4 text-gray-400 transition-transform',
+                          showEstDropdown && 'rotate-180',
+                        )}
+                      />
                     </span>
                   </button>
                   {showEstDropdown && (
@@ -740,7 +869,11 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                           className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
                         />
                         {estSearch && (
-                          <button type="button" onClick={() => setEstSearch('')} className="text-gray-400 hover:text-gray-600">
+                          <button
+                            type="button"
+                            onClick={() => setEstSearch('')}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
                             <X className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -767,7 +900,9 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                             >
                               <div>
                                 <div className="font-medium">{e.name}</div>
-                                {e.address && <div className="text-xs text-gray-500">{e.address}</div>}
+                                {e.address && (
+                                  <div className="text-xs text-gray-500">{e.address}</div>
+                                )}
                               </div>
                               {selectedEstId === e.id && <Check className="h-4 w-4 shrink-0" />}
                             </button>
@@ -781,7 +916,9 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
 
               {/* Point of Sale combobox (filtered by establishment) */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{t('fne.pointOfSale', 'Point de vente')} *</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('fne.pointOfSale', 'Point de vente')} *
+                </label>
                 <div className="relative" ref={posDropdownRef}>
                   <button
                     type="button"
@@ -801,19 +938,27 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                         ? pointOfSale
                         : selectedEstId
                           ? t('fne.selectPos', 'Sélectionner un point de vente...')
-                          : t('fne.selectEstFirst', 'Sélectionnez d\'abord un établissement')}
+                          : t('fne.selectEstFirst', "Sélectionnez d'abord un établissement")}
                     </span>
                     <span className="flex items-center gap-1 ml-2 shrink-0">
                       {selectedPosId && (
                         <span
                           role="button"
-                          onClick={(e) => { e.stopPropagation(); clearPos(); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            clearPos();
+                          }}
                           className="rounded p-0.5 hover:bg-red-50 hover:text-red-500 transition-colors"
                         >
                           <X className="h-4 w-4" />
                         </span>
                       )}
-                      <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', showPosDropdown && 'rotate-180')} />
+                      <ChevronDown
+                        className={cn(
+                          'h-4 w-4 text-gray-400 transition-transform',
+                          showPosDropdown && 'rotate-180',
+                        )}
+                      />
                     </span>
                   </button>
                   {showPosDropdown && (
@@ -828,7 +973,11 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                           className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
                         />
                         {posSearch && (
-                          <button type="button" onClick={() => setPosSearch('')} className="text-gray-400 hover:text-gray-600">
+                          <button
+                            type="button"
+                            onClick={() => setPosSearch('')}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
                             <X className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -855,7 +1004,9 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                             >
                               <div>
                                 <div className="font-medium">{p.name}</div>
-                                {p.address && <div className="text-xs text-gray-500">{p.address}</div>}
+                                {p.address && (
+                                  <div className="text-xs text-gray-500">{p.address}</div>
+                                )}
                               </div>
                               {selectedPosId === p.id && <Check className="h-4 w-4 shrink-0" />}
                             </button>
@@ -867,26 +1018,49 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                 </div>
               </div>
               <div className="sm:col-span-2 space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{t('fne.commercialMessage', 'Message commercial')}</label>
-                <textarea value={commercialMessage} onChange={(e) => setCommercialMessage(e.target.value)} rows={2}
-                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('fne.commercialMessage', 'Message commercial')}
+                </label>
+                <textarea
+                  value={commercialMessage}
+                  onChange={(e) => setCommercialMessage(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                />
               </div>
               <div className="sm:col-span-2 space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">{t('fne.footer', 'Pied de page')}</label>
-                <textarea value={footer} onChange={(e) => setFooter(e.target.value)} rows={2}
-                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('fne.footer', 'Pied de page')}
+                </label>
+                <textarea
+                  value={footer}
+                  onChange={(e) => setFooter(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                />
               </div>
             </div>
 
             {/* Foreign currency */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('fne.foreignCurrency', 'Devise étrangère (optionnel)')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('fne.foreignCurrency', 'Devise étrangère (optionnel)')}
+              </label>
               <div className="grid gap-4 sm:grid-cols-2">
-                <input placeholder="ex: USD, EUR" value={foreignCurrency} onChange={(e) => setForeignCurrency(e.target.value.toUpperCase())}
-                  className="rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                <input
+                  placeholder="ex: USD, EUR"
+                  value={foreignCurrency}
+                  onChange={(e) => setForeignCurrency(e.target.value.toUpperCase())}
+                  className="rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                />
                 {foreignCurrency && (
-                  <input type="number" placeholder="Taux de change" value={foreignCurrencyRate || ''} onChange={(e) => setForeignCurrencyRate(Number(e.target.value))}
-                    className="rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                  <input
+                    type="number"
+                    placeholder="Taux de change"
+                    value={foreignCurrencyRate || ''}
+                    onChange={(e) => setForeignCurrencyRate(Number(e.target.value))}
+                    className="rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                  />
                 )}
               </div>
             </div>
@@ -898,7 +1072,9 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
           <div className="space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">{t('fne.step3', 'Articles')}</h2>
-              <Button size="sm" onClick={addLine}><Plus className="h-4 w-4 mr-1" /> {t('fne.addLine', 'Ajouter')}</Button>
+              <Button size="sm" onClick={addLine}>
+                <Plus className="h-4 w-4 mr-1" /> {t('fne.addLine', 'Ajouter')}
+              </Button>
             </div>
 
             <div className="space-y-4">
@@ -907,14 +1083,20 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-500">Article #{idx + 1}</span>
                     {lines.length > 1 && (
-                      <button onClick={() => removeLine(line._key)} className="text-red-500 hover:text-red-600">
+                      <button
+                        onClick={() => removeLine(line._key)}
+                        className="text-red-500 hover:text-red-600"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     )}
                   </div>
 
                   {/* Product combobox */}
-                  <div className="relative" ref={productDropdownKey === line._key ? productDropdownRef : undefined}>
+                  <div
+                    className="relative"
+                    ref={productDropdownKey === line._key ? productDropdownRef : undefined}
+                  >
                     <button
                       type="button"
                       onClick={() => {
@@ -929,8 +1111,15 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                       )}
                     >
                       <Package className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{t('fne.selectProduct', 'Sélectionner un produit enregistré...')}</span>
-                      <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 transition-transform', productDropdownKey === line._key && 'rotate-180')} />
+                      <span className="truncate">
+                        {t('fne.selectProduct', 'Sélectionner un produit enregistré...')}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          'ml-auto h-4 w-4 shrink-0 transition-transform',
+                          productDropdownKey === line._key && 'rotate-180',
+                        )}
+                      />
                     </button>
                     {productDropdownKey === line._key && (
                       <div className="absolute z-30 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
@@ -944,7 +1133,11 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                             className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
                           />
                           {productSearch && (
-                            <button type="button" onClick={() => setProductSearch('')} className="text-gray-400 hover:text-gray-600">
+                            <button
+                              type="button"
+                              onClick={() => setProductSearch('')}
+                              className="text-gray-400 hover:text-gray-600"
+                            >
                               <X className="h-3.5 w-3.5" />
                             </button>
                           )}
@@ -967,7 +1160,9 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                                 <div>
                                   <div className="font-medium text-gray-900">{p.description}</div>
                                   <div className="text-xs text-gray-500">
-                                    {p.reference ? `${p.reference} · ` : ''}{formatCFA(p.unitPrice)}{p.measurementUnit ? ` / ${p.measurementUnit}` : ''}
+                                    {p.reference ? `${p.reference} · ` : ''}
+                                    {formatCFA(p.unitPrice)}
+                                    {p.measurementUnit ? ` / ${p.measurementUnit}` : ''}
                                   </div>
                                 </div>
                               </button>
@@ -980,54 +1175,85 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
 
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="sm:col-span-2">
-                      <input placeholder="Description *" value={line.description}
+                      <input
+                        placeholder="Description *"
+                        value={line.description}
                         onChange={(e) => updateLine(line._key, { description: e.target.value })}
-                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                      />
                     </div>
                     <div>
-                      <input placeholder="Réf. article" value={line.reference ?? ''}
+                      <input
+                        placeholder="Réf. article"
+                        value={line.reference ?? ''}
                         onChange={(e) => updateLine(line._key, { reference: e.target.value })}
-                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                      />
                     </div>
                     <div>
-                      <input placeholder="Unité" value={line.measurementUnit ?? ''}
+                      <input
+                        placeholder="Unité"
+                        value={line.measurementUnit ?? ''}
                         onChange={(e) => updateLine(line._key, { measurementUnit: e.target.value })}
-                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                      />
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-4">
                     <div className="space-y-1">
                       <label className="text-xs text-gray-500">Qté *</label>
-                      <input type="number" min={1} value={line.quantity}
-                        onChange={(e) => updateLine(line._key, { quantity: Number(e.target.value) })}
-                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                      <input
+                        type="number"
+                        min={1}
+                        value={line.quantity}
+                        onChange={(e) =>
+                          updateLine(line._key, { quantity: Number(e.target.value) })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                      />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-gray-500">Prix unit. HT *</label>
-                      <input type="number" min={0} value={line.amount}
+                      <input
+                        type="number"
+                        min={0}
+                        value={line.amount}
                         onChange={(e) => updateLine(line._key, { amount: Number(e.target.value) })}
-                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                      />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-gray-500">Remise %</label>
-                      <input type="number" min={0} max={100} value={line.discount ?? 0}
-                        onChange={(e) => updateLine(line._key, { discount: Number(e.target.value) })}
-                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={line.discount ?? 0}
+                        onChange={(e) =>
+                          updateLine(line._key, { discount: Number(e.target.value) })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                      />
                     </div>
                     <div className="flex items-end">
-                      <span className="text-sm font-semibold text-gray-900">{formatCFA(line.lineTotalTtc)}</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCFA(line.lineTotalTtc)}
+                      </span>
                     </div>
                   </div>
                   {/* Taxes */}
                   <div className="flex flex-wrap gap-2">
                     {TAX_OPTIONS.map((tax) => (
-                      <button key={tax.value} onClick={() => toggleTax(line._key, tax.value)}
+                      <button
+                        key={tax.value}
+                        onClick={() => toggleTax(line._key, tax.value)}
                         className={cn(
                           'rounded-md border px-3 py-1 text-xs font-medium transition-all',
                           line.taxes.includes(tax.value)
                             ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
                             : 'border-gray-300 text-gray-500 hover:border-gray-400',
-                        )}>
+                        )}
+                      >
                         {tax.label}
                       </button>
                     ))}
@@ -1037,23 +1263,42 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                   <div className="space-y-2">
                     {(line.customTaxes ?? []).map((ct, ctIdx) => (
                       <div key={ctIdx} className="flex items-center gap-2">
-                        <input placeholder="Nom de la taxe *" value={ct.name}
-                          onChange={(e) => updateCustomTax(line._key, ctIdx, { name: e.target.value })}
-                          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                        <input
+                          placeholder="Nom de la taxe *"
+                          value={ct.name}
+                          onChange={(e) =>
+                            updateCustomTax(line._key, ctIdx, { name: e.target.value })
+                          }
+                          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                        />
                         <div className="relative w-28">
-                          <input type="number" min={0} max={100} placeholder="Taux" value={ct.amount || ''}
-                            onChange={(e) => updateCustomTax(line._key, ctIdx, { amount: Number(e.target.value) })}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            placeholder="Taux"
+                            value={ct.amount || ''}
+                            onChange={(e) =>
+                              updateCustomTax(line._key, ctIdx, { amount: Number(e.target.value) })
+                            }
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                            %
+                          </span>
                         </div>
-                        <button onClick={() => removeCustomTax(line._key, ctIdx)}
-                          className="text-red-500 hover:text-red-600">
+                        <button
+                          onClick={() => removeCustomTax(line._key, ctIdx)}
+                          className="text-red-500 hover:text-red-600"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     ))}
-                    <button onClick={() => addCustomTax(line._key)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-brand-gold hover:text-brand-gold/80 transition-colors">
+                    <button
+                      onClick={() => addCustomTax(line._key)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-brand-gold hover:text-brand-gold/80 transition-colors"
+                    >
                       <Plus className="h-3.5 w-3.5" /> Ajouter une taxe personnalisée
                     </button>
                   </div>
@@ -1088,20 +1333,27 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
         {/* ─── STEP 4: Payment ─── */}
         {step === 4 && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-gray-900">{t('fne.step4', 'Mode de paiement & finalisation')}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {t('fne.step4', 'Mode de paiement & finalisation')}
+            </h2>
 
             {/* Payment method */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('fne.paymentMethod', 'Mode de paiement')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('fne.paymentMethod', 'Mode de paiement')}
+              </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {PAYMENT_METHODS.map((pm) => (
-                  <button key={pm.value} onClick={() => setPaymentMethod(pm.value)}
+                  <button
+                    key={pm.value}
+                    onClick={() => setPaymentMethod(pm.value)}
                     className={cn(
                       'rounded-lg border p-3 text-center text-sm transition-all',
                       paymentMethod === pm.value
                         ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
                         : 'border-gray-300 text-gray-500 hover:border-gray-400',
-                    )}>
+                    )}
+                  >
                     {pm.label}
                   </button>
                 ))}
@@ -1110,34 +1362,70 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
 
             {/* Global discount */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">{t('fne.globalDiscount', 'Remise globale %')}</label>
-              <input type="number" min={0} max={100} value={globalDiscount}
+              <label className="block text-sm font-medium text-gray-700">
+                {t('fne.globalDiscount', 'Remise globale %')}
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={globalDiscount}
                 onChange={(e) => setGlobalDiscount(Number(e.target.value))}
-                className="w-32 rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                className="w-32 rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+              />
             </div>
 
             {/* Invoice-level custom taxes */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">{t('fne.invoiceCustomTaxes', 'Taxes personnalisées (niveau facture)')}</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('fne.invoiceCustomTaxes', 'Taxes personnalisées (niveau facture)')}
+              </label>
               {invoiceCustomTaxes.map((ct, idx) => (
                 <div key={idx} className="flex items-center gap-2">
-                  <input placeholder="Nom de la taxe *" value={ct.name}
-                    onChange={(e) => setInvoiceCustomTaxes((prev) => prev.map((t, i) => i === idx ? { ...t, name: e.target.value } : t))}
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
+                  <input
+                    placeholder="Nom de la taxe *"
+                    value={ct.name}
+                    onChange={(e) =>
+                      setInvoiceCustomTaxes((prev) =>
+                        prev.map((t, i) => (i === idx ? { ...t, name: e.target.value } : t)),
+                      )
+                    }
+                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                  />
                   <div className="relative w-28">
-                    <input type="number" min={0} max={100} placeholder="Taux" value={ct.amount || ''}
-                      onChange={(e) => setInvoiceCustomTaxes((prev) => prev.map((t, i) => i === idx ? { ...t, amount: Number(e.target.value) } : t))}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder="Taux"
+                      value={ct.amount || ''}
+                      onChange={(e) =>
+                        setInvoiceCustomTaxes((prev) =>
+                          prev.map((t, i) =>
+                            i === idx ? { ...t, amount: Number(e.target.value) } : t,
+                          ),
+                        )
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      %
+                    </span>
                   </div>
-                  <button onClick={() => setInvoiceCustomTaxes((prev) => prev.filter((_, i) => i !== idx))}
-                    className="text-red-500 hover:text-red-600">
+                  <button
+                    onClick={() =>
+                      setInvoiceCustomTaxes((prev) => prev.filter((_, i) => i !== idx))
+                    }
+                    className="text-red-500 hover:text-red-600"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               ))}
-              <button onClick={() => setInvoiceCustomTaxes((prev) => [...prev, { name: '', amount: 0 }])}
-                className="flex items-center gap-1.5 text-xs font-medium text-brand-gold hover:text-brand-gold/80 transition-colors">
+              <button
+                onClick={() => setInvoiceCustomTaxes((prev) => [...prev, { name: '', amount: 0 }])}
+                className="flex items-center gap-1.5 text-xs font-medium text-brand-gold hover:text-brand-gold/80 transition-colors"
+              >
                 <Plus className="h-3.5 w-3.5" /> Ajouter une taxe personnalisée
               </button>
             </div>
@@ -1146,12 +1434,28 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
             <div className="rounded-lg border border-gray-200 divide-y divide-gray-100 p-6 space-y-3">
               <h3 className="text-base font-semibold text-gray-900">Récapitulatif</h3>
               <div className="grid gap-2 sm:grid-cols-2 text-sm pt-3">
-                <div className="text-gray-500">Type: <span className="text-gray-900">{template}</span></div>
-                <div className="text-gray-500">Paiement: <span className="text-gray-900">{PAYMENT_METHODS.find((p) => p.value === paymentMethod)?.label}</span></div>
-                <div className="text-gray-500">Client: <span className="text-gray-900">{clientCompanyName}</span></div>
-                <div className="text-gray-500">Établissement: <span className="text-gray-900">{establishment}</span></div>
-                <div className="text-gray-500">Articles: <span className="text-gray-900">{lines.length}</span></div>
-                <div className="text-gray-500">Total TTC: <span className="text-gray-900 font-bold">{formatCFA(totals.totalTtc)}</span></div>
+                <div className="text-gray-500">
+                  Type: <span className="text-gray-900">{template}</span>
+                </div>
+                <div className="text-gray-500">
+                  Paiement:{' '}
+                  <span className="text-gray-900">
+                    {PAYMENT_METHODS.find((p) => p.value === paymentMethod)?.label}
+                  </span>
+                </div>
+                <div className="text-gray-500">
+                  Client: <span className="text-gray-900">{clientCompanyName}</span>
+                </div>
+                <div className="text-gray-500">
+                  Établissement: <span className="text-gray-900">{establishment}</span>
+                </div>
+                <div className="text-gray-500">
+                  Articles: <span className="text-gray-900">{lines.length}</span>
+                </div>
+                <div className="text-gray-500">
+                  Total TTC:{' '}
+                  <span className="text-gray-900 font-bold">{formatCFA(totals.totalTtc)}</span>
+                </div>
               </div>
             </div>
 
@@ -1160,7 +1464,10 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
               <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
                 <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
                 <p className="text-sm text-amber-800">
-                  {t('fne.certifyWarning', 'La soumission enverra directement la facture \u00e0 l\'API FNE pour certification. Cette action est irr\u00e9versible.')}
+                  {t(
+                    'fne.certifyWarning',
+                    "La soumission enverra directement la facture \u00e0 l'API FNE pour certification. Cette action est irr\u00e9versible.",
+                  )}
                 </p>
               </div>
             )}
@@ -1168,7 +1475,10 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
               <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
                 <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
                 <p className="text-sm text-blue-800">
-                  {t('fne.draftInfo', 'Le devis sera enregistr\u00e9 en brouillon. Il pourra \u00eatre modifi\u00e9 ou converti en facture ult\u00e9rieurement.')}
+                  {t(
+                    'fne.draftInfo',
+                    'Le devis sera enregistr\u00e9 en brouillon. Il pourra \u00eatre modifi\u00e9 ou converti en facture ult\u00e9rieurement.',
+                  )}
                 </p>
               </div>
             )}
@@ -1189,16 +1499,40 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
               {t('common.next', 'Suivant')} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={!canSubmit || createMutation.isPending || updateMutation.isPending}
-              className={isEditMode ? 'bg-brand-gold hover:bg-brand-gold/90' : invoiceType === 'estimate' ? 'bg-gray-600 hover:bg-gray-700' : 'bg-green-600 hover:bg-green-700'}>
-              {(createMutation.isPending || updateMutation.isPending) ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditMode ? t('fne.saving', 'Enregistrement...') : invoiceType === 'estimate' ? t('fne.saving', 'Enregistrement...') : t('fne.certifying', 'Certification en cours...')}</>
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSubmit || createMutation.isPending || updateMutation.isPending}
+              className={
+                isEditMode
+                  ? 'bg-brand-gold hover:bg-brand-gold/90'
+                  : invoiceType === 'estimate'
+                    ? 'bg-gray-600 hover:bg-gray-700'
+                    : 'bg-green-600 hover:bg-green-700'
+              }
+            >
+              {createMutation.isPending || updateMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+                  {isEditMode
+                    ? t('fne.saving', 'Enregistrement...')
+                    : invoiceType === 'estimate'
+                      ? t('fne.saving', 'Enregistrement...')
+                      : t('fne.certifying', 'Certification en cours...')}
+                </>
               ) : isEditMode ? (
-                <><Save className="mr-2 h-4 w-4" /> {t('fne.saveChanges', 'Enregistrer les modifications')}</>
+                <>
+                  <Save className="mr-2 h-4 w-4" />{' '}
+                  {t('fne.saveChanges', 'Enregistrer les modifications')}
+                </>
               ) : invoiceType === 'estimate' ? (
-                <><Save className="mr-2 h-4 w-4" /> {t('fne.saveDraft', 'Enregistrer en brouillon')}</>
+                <>
+                  <Save className="mr-2 h-4 w-4" /> {t('fne.saveDraft', 'Enregistrer en brouillon')}
+                </>
               ) : (
-                <><Check className="mr-2 h-4 w-4" /> {t('fne.certifyAndSend', 'Certifier & envoyer')}</>
+                <>
+                  <Check className="mr-2 h-4 w-4" />{' '}
+                  {t('fne.certifyAndSend', 'Certifier & envoyer')}
+                </>
               )}
             </Button>
           )}
@@ -1207,7 +1541,8 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
         {/* Error */}
         {(createMutation.isError || updateMutation.isError) && (
           <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {((createMutation.error || updateMutation.error) as Error)?.message || t('fne.errorGeneric', 'Erreur lors de la certification')}
+            {((createMutation.error || updateMutation.error) as Error)?.message ||
+              t('fne.errorGeneric', 'Erreur lors de la certification')}
           </div>
         )}
       </Card>

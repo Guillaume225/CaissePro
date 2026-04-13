@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
 import { CashClosingService, CashClosingUser } from './cash-closing.service';
 import { Permissions, CurrentUser } from '../common/decorators';
 import { CASH_CLOSING_PERMISSIONS } from '../common/permissions';
@@ -41,7 +34,17 @@ export class CashClosingController {
 
   @Post('movements')
   @Permissions(CASH_CLOSING_PERMISSIONS.OPEN)
-  addMovement(@Body() dto: { type: string; category: string; amount: number; reference?: string; description: string }, @CurrentUser() user: CashClosingUser) {
+  addMovement(
+    @Body()
+    dto: {
+      type: string;
+      category: string;
+      amount: number;
+      reference?: string;
+      description: string;
+    },
+    @CurrentUser() user: CashClosingUser,
+  ) {
     return this.cashClosingService.addMovement(dto, user);
   }
 
