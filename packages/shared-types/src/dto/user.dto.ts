@@ -13,7 +13,7 @@ import {
   MaxLength,
   Matches,
 } from 'class-validator';
-import { UserRole } from '../../enums/index.js';
+import { UserRole } from '../enums/index.js';
 
 /* ─── Auth ─── */
 

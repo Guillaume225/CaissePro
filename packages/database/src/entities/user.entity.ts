@@ -11,11 +11,20 @@ import {
 } from 'typeorm';
 import { Department } from './department.entity';
 import { Role } from './role.entity';
+import { Tenant } from './tenant.entity';
 
 @Entity('users')
+@Index(['tenantId'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ type: 'uuid', name: 'tenant_id' })
+  tenantId!: string;
+
+  @ManyToOne(() => Tenant)
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: Tenant;
 
   @Index({ unique: true })
   @Column({ type: 'varchar', length: 255, unique: true })
@@ -44,21 +53,21 @@ export class User {
   @JoinColumn({ name: 'department_id' })
   department!: Department | null;
 
-  @Column({ type: 'boolean', name: 'is_active', default: true })
+  @Column({ type: 'bit', name: 'is_active', default: true })
   isActive!: boolean;
 
-  @Column({ type: 'boolean', name: 'mfa_enabled', default: false })
+  @Column({ type: 'bit', name: 'mfa_enabled', default: false })
   mfaEnabled!: boolean;
 
   @Column({ type: 'varchar', length: 255, name: 'mfa_secret', nullable: true })
   mfaSecret!: string | null;
 
-  @Column({ type: 'timestamptz', name: 'last_login', nullable: true })
+  @Column({ type: 'datetimeoffset', name: 'last_login', nullable: true })
   lastLogin!: Date | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

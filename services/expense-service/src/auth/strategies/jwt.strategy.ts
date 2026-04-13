@@ -25,6 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     email: string;
     roleName: string;
     permissions: string[];
+    tenantId: string;
     departmentId: string | null;
   }) {
     return {
@@ -32,6 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       roleName: payload.roleName,
       permissions: payload.permissions,
+      tenantId: payload.tenantId,
       departmentId: payload.departmentId,
     };
   }

@@ -28,7 +28,7 @@ export class Payment {
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   amount!: number;
 
-  @Column({ type: 'enum', enum: PaymentMethod })
+  @Column({ type: 'simple-enum', enum: PaymentMethod })
   method!: PaymentMethod;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
@@ -44,6 +44,6 @@ export class Payment {
   @JoinColumn({ name: 'received_by' })
   receivedBy!: User;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 }

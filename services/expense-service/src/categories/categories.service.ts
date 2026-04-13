@@ -54,6 +54,9 @@ export class CategoriesService {
       code: dto.code,
       parentId: dto.parentId || null,
       budgetLimit: dto.budgetLimit ?? null,
+      accountingDebitAccount: dto.accountingDebitAccount ?? null,
+      accountingCreditAccount: dto.accountingCreditAccount ?? null,
+      ...(dto.direction && { direction: dto.direction }),
     });
     const saved = await this.catRepo.save(cat);
 
@@ -90,6 +93,21 @@ export class CategoriesService {
       newValue.isActive = dto.isActive;
       cat.isActive = dto.isActive;
     }
+    if (dto.accountingDebitAccount !== undefined) {
+      oldValue.accountingDebitAccount = cat.accountingDebitAccount;
+      newValue.accountingDebitAccount = dto.accountingDebitAccount;
+      cat.accountingDebitAccount = dto.accountingDebitAccount;
+    }
+    if (dto.accountingCreditAccount !== undefined) {
+      oldValue.accountingCreditAccount = cat.accountingCreditAccount;
+      newValue.accountingCreditAccount = dto.accountingCreditAccount;
+      cat.accountingCreditAccount = dto.accountingCreditAccount;
+    }
+    if (dto.direction !== undefined) {
+      oldValue.direction = cat.direction;
+      newValue.direction = dto.direction;
+      cat.direction = dto.direction;
+    }
 
     await this.catRepo.save(cat);
 
@@ -118,6 +136,9 @@ export class CategoriesService {
       parentName: cat.parent?.name ?? null,
       budgetLimit: cat.budgetLimit ? Number(cat.budgetLimit) : null,
       isActive: cat.isActive,
+      direction: cat.direction,
+      accountingDebitAccount: cat.accountingDebitAccount ?? null,
+      accountingCreditAccount: cat.accountingCreditAccount ?? null,
       children,
       createdAt: cat.createdAt?.toISOString(),
       updatedAt: cat.updatedAt?.toISOString(),

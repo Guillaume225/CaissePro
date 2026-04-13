@@ -7,8 +7,8 @@ import {
   Param,
   Body,
   Query,
-  ParseUUIDPipe,
   UseInterceptors,
+  UseGuards,
   UploadedFiles,
   HttpCode,
   HttpStatus,
@@ -21,16 +21,22 @@ import { ConfigService } from '@nestjs/config';
 import { ExpensesService } from './expenses.service';
 import { Permissions } from '../common/decorators';
 import { CurrentUser } from '../common/decorators';
+import { SkipCashClosingCheck } from '../common/decorators';
 import { EXPENSE_PERMISSIONS } from '../common/permissions';
 import {
   CreateExpenseDto,
   UpdateExpenseDto,
   ApproveExpenseDto,
   RejectExpenseDto,
+  CancelExpenseDto,
   ListExpensesQueryDto,
 } from './dto';
+import { WorkflowUser } from './expenses.service';
+import { CashClosingRequiredGuard } from '../cash-closing/guards/cash-closing-required.guard';
+import { ParseLooseUUIDPipe } from '../common/pipes/parse-loose-uuid.pipe';
 
 @Controller('expenses')
+@UseGuards(CashClosingRequiredGuard)
 export class ExpensesController {
   constructor(
     private readonly expensesService: ExpensesService,
@@ -55,20 +61,20 @@ export class ExpensesController {
 
   @Get(':id')
   @Permissions(EXPENSE_PERMISSIONS.READ)
-  findById(@Param('id', ParseUUIDPipe) id: string) {
+  findById(@Param('id', ParseLooseUUIDPipe) id: string) {
     return this.expensesService.findById(id);
   }
 
   @Post()
   @Permissions(EXPENSE_PERMISSIONS.CREATE)
-  create(@Body() dto: CreateExpenseDto, @CurrentUser('id') userId: string) {
-    return this.expensesService.create(dto, userId);
+  create(@Body() dto: CreateExpenseDto, @CurrentUser() user: WorkflowUser) {
+    return this.expensesService.create(dto, user);
   }
 
   @Patch(':id')
   @Permissions(EXPENSE_PERMISSIONS.UPDATE)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseLooseUUIDPipe) id: string,
     @Body() dto: UpdateExpenseDto,
     @CurrentUser('id') userId: string,
   ) {
@@ -78,50 +84,55 @@ export class ExpensesController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Permissions(EXPENSE_PERMISSIONS.DELETE)
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+  remove(@Param('id', ParseLooseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.expensesService.remove(id, userId);
   }
 
   @Post(':id/submit')
   @Permissions(EXPENSE_PERMISSIONS.CREATE)
-  submit(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+  submit(@Param('id', ParseLooseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.expensesService.submit(id, userId);
   }
 
-  @Post(':id/approve/l1')
+  @Post(':id/approve')
   @Permissions(EXPENSE_PERMISSIONS.APPROVE_L1)
-  approveL1(
-    @Param('id', ParseUUIDPipe) id: string,
+  approve(
+    @Param('id', ParseLooseUUIDPipe) id: string,
     @Body() dto: ApproveExpenseDto,
-    @CurrentUser('id') approverId: string,
+    @CurrentUser() user: WorkflowUser,
   ) {
-    return this.expensesService.approve(id, 1, dto, approverId);
-  }
-
-  @Post(':id/approve/l2')
-  @Permissions(EXPENSE_PERMISSIONS.APPROVE_L2)
-  approveL2(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: ApproveExpenseDto,
-    @CurrentUser('id') approverId: string,
-  ) {
-    return this.expensesService.approve(id, 2, dto, approverId);
+    return this.expensesService.approve(id, dto, user);
   }
 
   @Post(':id/reject')
   @Permissions(EXPENSE_PERMISSIONS.APPROVE_L1)
   reject(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseLooseUUIDPipe) id: string,
     @Body() dto: RejectExpenseDto,
-    @CurrentUser('id') approverId: string,
+    @CurrentUser() user: WorkflowUser,
   ) {
-    return this.expensesService.reject(id, 1, dto, approverId);
+    return this.expensesService.reject(id, dto, user);
   }
 
   @Post(':id/pay')
-  @Permissions(EXPENSE_PERMISSIONS.UPDATE)
-  markPaid(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
-    return this.expensesService.markPaid(id, userId);
+  @SkipCashClosingCheck()
+  @Permissions(EXPENSE_PERMISSIONS.PAY)
+  markPaid(
+    @Param('id', ParseLooseUUIDPipe) id: string,
+    @CurrentUser() user: WorkflowUser,
+  ) {
+    return this.expensesService.markPaid(id, user);
+  }
+
+  @Post(':id/cancel')
+  @SkipCashClosingCheck()
+  @Permissions(EXPENSE_PERMISSIONS.CANCEL)
+  cancel(
+    @Param('id', ParseLooseUUIDPipe) id: string,
+    @Body() dto: CancelExpenseDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.expensesService.cancel(id, dto, userId);
   }
 
   @Post(':id/attachments')
@@ -152,7 +163,7 @@ export class ExpensesController {
     }),
   )
   uploadAttachments(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseLooseUUIDPipe) id: string,
     @UploadedFiles() files: Express.Multer.File[],
     @CurrentUser('id') userId: string,
   ) {

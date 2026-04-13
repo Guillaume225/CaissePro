@@ -26,12 +26,12 @@ export class ExpenseAttachment {
   @Column({ type: 'varchar', length: 50, name: 'file_type' })
   fileType!: string;
 
-  @Column({ type: 'jsonb', name: 'ocr_data', nullable: true })
+  @Column({ type: 'simple-json', name: 'ocr_data', nullable: true })
   ocrData!: Record<string, unknown> | null;
 
   @Column({ type: 'varchar', length: 255, name: 'original_filename' })
   originalFilename!: string;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 }

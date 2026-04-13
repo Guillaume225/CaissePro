@@ -91,6 +91,31 @@ export enum CashClosingStatus {
   VALIDATED = 'VALIDATED',
 }
 
+/* ─── Journée de caisse ─── */
+
+export enum CashType {
+  EXPENSE = 'EXPENSE',
+  SALES = 'SALES',
+}
+
+export enum CashDayStatus {
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+}
+
+export enum CashMovementType {
+  ENTRY = 'ENTRY',
+  EXIT = 'EXIT',
+}
+
+export enum CashMovementCategory {
+  SALE = 'SALE',
+  EXPENSE = 'EXPENSE',
+  PAYMENT = 'PAYMENT',
+  ADJUSTMENT = 'ADJUSTMENT',
+  OTHER = 'OTHER',
+}
+
 export enum NotificationType {
   APPROVAL_REQUEST = 'APPROVAL_REQUEST',
   EXPENSE_APPROVED = 'EXPENSE_APPROVED',
@@ -99,4 +124,33 @@ export enum NotificationType {
   PAYMENT_RECEIVED = 'PAYMENT_RECEIVED',
   ADVANCE_OVERDUE = 'ADVANCE_OVERDUE',
   SYSTEM = 'SYSTEM',
+}
+
+/* ─── Demandes de décaissement ─── */
+
+export enum DisbursementRequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  PROCESSED = 'PROCESSED',
+}
+
+/* ─── Circuits de validation ─── */
+
+export enum ApprovalCircuitStepRole {
+  CHEF_COMPTABLE = 'CHEF_COMPTABLE',
+  DAF = 'DAF',
+  DG = 'DG',
+}
+
+/* ─── Historique de validation ─── */
+
+export enum ValidationAction {
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export enum ValidationTargetType {
+  EXPENSE = 'EXPENSE',
+  DISBURSEMENT_REQUEST = 'DISBURSEMENT_REQUEST',
 }

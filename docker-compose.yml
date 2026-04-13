@@ -1,17 +1,8 @@
-﻿version: "3.9"
+version: "3.9"
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: caisseflow-postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-caisseflow}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-caisseflow}
-      POSTGRES_DB: ${POSTGRES_DB:-caisseflow}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  # SQL Server is expected to run locally (sa / Toi&MoiSaFait1)
+  # No Docker container needed for the database.
 
   redis:
     image: redis:7-alpine
@@ -19,5 +10,18 @@ services:
     ports:
       - "${REDIS_PORT:-6379}:6379"
 
+  minio:
+    image: minio/minio:latest
+    container_name: caisseflow-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-caisseflow}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-caisseflow-secret}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+
 volumes:
-  postgres_data:
+  minio_data:

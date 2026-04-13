@@ -1,8 +1,12 @@
-﻿export function App() {
+﻿import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/query-client';
+import { AppRouter } from '@/router';
+import '@/i18n';
+
+export function App() {
   return (
-    <main className="app">
-      <h1>CaisseFlow Pro</h1>
-      <p>Enterprise POS management platform monorepo initialized successfully.</p>
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <AppRouter />
+    </QueryClientProvider>
   );
 }

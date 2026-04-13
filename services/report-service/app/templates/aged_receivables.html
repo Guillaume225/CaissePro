@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="report-header">
+  <div class="company-info">
+    <div class="company-name">{{ company_name }}</div>
+    <div class="company-details">
+      {% if company_address %}{{ company_address }}<br>{% endif %}
+      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
+      {% if company_email %} — {{ company_email }}{% endif %}
+    </div>
+  </div>
+  <div class="report-meta">
+    <div class="report-title">Balance Âgée des Créances</div>
+    <div class="report-subtitle">Au {{ as_of_date }}</div>
+    <div class="report-date">Généré le {{ generated_at }}</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-grid">
+  <div class="summary-box primary">
+    <div class="summary-label">Total Créances</div>
+    <div class="summary-value">{{ total_receivables }}</div>
+  </div>
+  <div class="summary-box success">
+    <div class="summary-label">0-30 jours</div>
+    <div class="summary-value">{{ bracket_0_30 }}</div>
+  </div>
+  <div class="summary-box warning">
+    <div class="summary-label">31-60 jours</div>
+    <div class="summary-value">{{ bracket_31_60 }}</div>
+  </div>
+  <div class="summary-box danger">
+    <div class="summary-label">61-90 / 90+ jours</div>
+    <div class="summary-value">{{ bracket_61_plus }}</div>
+  </div>
+</div>
+
+<!-- Détail par client -->
+<div class="section">
+  <div class="section-title">Créances par Client</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>Téléphone</th>
+        <th class="text-right">0-30 j</th>
+        <th class="text-right">31-60 j</th>
+        <th class="text-right">61-90 j</th>
+        <th class="text-right">90+ j</th>
+        <th class="text-right">Total</th>
+        <th class="text-center">Risque</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for client in clients %}
+      <tr>
+        <td class="font-bold">{{ client.name }}</td>
+        <td>{{ client.phone }}</td>
+        <td class="text-right">{{ client.bracket_0_30 }}</td>
+        <td class="text-right">{{ client.bracket_31_60 }}</td>
+        <td class="text-right">{{ client.bracket_61_90 }}</td>
+        <td class="text-right">{{ client.bracket_90_plus }}</td>
+        <td class="text-right font-bold">{{ client.total }}</td>
+        <td class="text-center">
+          {% if client.max_age > 90 %}
+            <span class="badge badge-danger">ÉLEVÉ</span>
+          {% elif client.max_age > 60 %}
+            <span class="badge badge-warning">MOYEN</span>
+          {% else %}
+            <span class="badge badge-success">FAIBLE</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td colspan="2">TOTAL</td>
+        <td class="text-right">{{ bracket_0_30 }}</td>
+        <td class="text-right">{{ bracket_31_60 }}</td>
+        <td class="text-right">{{ bracket_61_90 }}</td>
+        <td class="text-right">{{ bracket_90_plus }}</td>
+        <td class="text-right">{{ total_receivables }}</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Détail des factures impayées -->
+<div class="section">
+  <div class="section-title">Factures Impayées</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Référence</th>
+        <th>Client</th>
+        <th>Date Échéance</th>
+        <th class="text-center">Jours de retard</th>
+        <th class="text-right">Montant Dû</th>
+        <th class="text-right">Déjà Payé</th>
+        <th class="text-right">Reste</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inv in invoices %}
+      <tr>
+        <td>{{ inv.reference }}</td>
+        <td>{{ inv.client_name }}</td>
+        <td>{{ inv.due_date }}</td>
+        <td class="text-center">
+          <span class="badge badge-{% if inv.days_overdue > 90 %}danger{% elif inv.days_overdue > 60 %}warning{% else %}info{% endif %}">
+            {{ inv.days_overdue }}j
+          </span>
+        </td>
+        <td class="text-right">{{ inv.total_amount }}</td>
+        <td class="text-right">{{ inv.paid_amount }}</td>
+        <td class="text-right font-bold">{{ inv.remaining }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

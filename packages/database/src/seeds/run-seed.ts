@@ -1,17 +1,13 @@
-import 'reflect-metadata';
-import { AppDataSource } from '../data-source';
-import { seedAll } from './seed-data';
+// Seed data has been removed.
+// To re-populate, implement seedAll() in seed-data.ts and uncomment below.
 
-async function run() {
-  console.log('Connecting to database...');
-  const ds = await AppDataSource.initialize();
-  console.log('Running seed...');
-  await seedAll(ds);
-  console.log('Seed complete.');
-  await ds.destroy();
-}
-
-run().catch((err) => {
-  console.error('Seed failed:', err);
-  process.exit(1);
-});
+// import 'reflect-metadata';
+// import { AppDataSource } from '../data-source';
+// import { seedAll } from './seed-data';
+//
+// async function run() {
+//   const ds = await AppDataSource.initialize();
+//   await seedAll(ds);
+//   await ds.destroy();
+// }
+// run().catch((err) => { console.error(err); process.exit(1); });

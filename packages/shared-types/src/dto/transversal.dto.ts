@@ -17,7 +17,7 @@ import {
   CashClosingStatus,
   Module,
   NotificationType,
-} from '../../enums/index.js';
+} from '../enums/index.js';
 
 /* ─── Notification ─── */
 

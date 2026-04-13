@@ -9,6 +9,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CategoryDirection } from './enums';
 
 @Entity('expense_categories')
 @Index(['code'], { unique: true })
@@ -35,12 +36,21 @@ export class ExpenseCategory {
   @Column({ type: 'decimal', precision: 15, scale: 2, name: 'budget_limit', nullable: true })
   budgetLimit!: number | null;
 
-  @Column({ type: 'boolean', name: 'is_active', default: true })
+  @Column({ type: 'varchar', length: 10, default: CategoryDirection.EXIT })
+  direction!: CategoryDirection;
+
+  @Column({ type: 'bit', name: 'is_active', default: true })
   isActive!: boolean;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @Column({ type: 'varchar', length: 20, name: 'accounting_debit_account', nullable: true })
+  accountingDebitAccount!: string | null;
+
+  @Column({ type: 'varchar', length: 20, name: 'accounting_credit_account', nullable: true })
+  accountingCreditAccount!: string | null;
+
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

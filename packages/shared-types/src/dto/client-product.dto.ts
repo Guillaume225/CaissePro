@@ -13,7 +13,7 @@ import {
   Max,
   MaxLength,
 } from 'class-validator';
-import { ClientType, RiskClass } from '../../enums/index.js';
+import { ClientType, RiskClass } from '../enums/index.js';
 
 /* ─── Client ─── */
 

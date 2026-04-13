@@ -2,23 +2,34 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  ManyToOne,
+  JoinColumn,
   Index,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ClientType, RiskClass } from './enums';
+import { Tenant } from './tenant.entity';
 
 @Entity('clients')
 @Index(['name'])
 @Index(['email'])
+@Index(['tenantId'])
 export class Client {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ type: 'uuid', name: 'tenant_id' })
+  tenantId!: string;
+
+  @ManyToOne(() => Tenant)
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: Tenant;
+
   @Column({ type: 'varchar', length: 200 })
   name!: string;
 
-  @Column({ type: 'enum', enum: ClientType })
+  @Column({ type: 'simple-enum', enum: ClientType })
   type!: ClientType;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -39,15 +50,15 @@ export class Client {
   @Column({ type: 'smallint', default: 50 })
   score!: number; // 0-100
 
-  @Column({ type: 'enum', enum: RiskClass, name: 'risk_class', default: RiskClass.B })
+  @Column({ type: 'simple-enum', enum: RiskClass, name: 'risk_class', default: RiskClass.B })
   riskClass!: RiskClass;
 
-  @Column({ type: 'boolean', name: 'is_active', default: true })
+  @Column({ type: 'bit', name: 'is_active', default: true })
   isActive!: boolean;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

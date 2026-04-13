@@ -6,14 +6,17 @@ import { Expense } from '../entities/expense.entity';
 import { ExpenseApproval } from '../entities/expense-approval.entity';
 import { ExpenseAttachment } from '../entities/expense-attachment.entity';
 import { ExpenseCategory } from '../entities/expense-category.entity';
+import { CashDay } from '../entities/cash-day.entity';
+import { DisbursementRequest } from '../entities/disbursement-request.entity';
+import { User } from '../entities/user.entity';
 import { AuditModule } from '../audit/audit.module';
-import { BudgetsModule } from '../budgets/budgets.module';
+import { CashClosingModule } from '../cash-closing/cash-closing.module';
 import { ExpensesService } from './expenses.service';
 import { ExpensesController } from './expenses.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Expense, ExpenseApproval, ExpenseAttachment, ExpenseCategory]),
+    TypeOrmModule.forFeature([Expense, ExpenseApproval, ExpenseAttachment, ExpenseCategory, CashDay, User, DisbursementRequest]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (cfg: ConfigService) => ({
@@ -25,7 +28,7 @@ import { ExpensesController } from './expenses.controller';
       inject: [ConfigService],
     }),
     AuditModule,
-    BudgetsModule,
+    CashClosingModule,
   ],
   controllers: [ExpensesController],
   providers: [ExpensesService],

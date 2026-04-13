@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="report-header">
+  <div class="company-info">
+    <div class="company-name">{{ company_name }}</div>
+    <div class="company-details">
+      {% if company_address %}{{ company_address }}<br>{% endif %}
+      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
+      {% if company_email %} — {{ company_email }}{% endif %}
+    </div>
+  </div>
+  <div class="report-meta">
+    <div class="report-title">Rapport Mensuel Consolidé</div>
+    <div class="report-subtitle">{{ month_label }}</div>
+    <div class="report-date">Généré le {{ generated_at }}</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-grid">
+  <div class="summary-box primary">
+    <div class="summary-label">Chiffre d'Affaires</div>
+    <div class="summary-value">{{ total_revenue }}</div>
+  </div>
+  <div class="summary-box warning">
+    <div class="summary-label">Total Dépenses</div>
+    <div class="summary-value">{{ total_expenses }}</div>
+  </div>
+  <div class="summary-box {% if net_result_raw >= 0 %}success{% else %}danger{% endif %}">
+    <div class="summary-label">Résultat Net</div>
+    <div class="summary-value">{{ net_result }}</div>
+  </div>
+  <div class="summary-box primary">
+    <div class="summary-label">Marge Nette</div>
+    <div class="summary-value">{{ net_margin }}%</div>
+  </div>
+</div>
+
+<!-- Ventes par catégorie -->
+<div class="section">
+  <div class="section-title">Ventes par Catégorie</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Catégorie</th>
+        <th class="text-right">Nombre Ventes</th>
+        <th class="text-right">Montant HT</th>
+        <th class="text-right">TVA</th>
+        <th class="text-right">Montant TTC</th>
+        <th class="text-center">% CA</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cat in sales_by_category %}
+      <tr>
+        <td class="font-bold">{{ cat.category }}</td>
+        <td class="text-right">{{ cat.count }}</td>
+        <td class="text-right">{{ cat.amount_ht }}</td>
+        <td class="text-right">{{ cat.tva }}</td>
+        <td class="text-right font-bold">{{ cat.amount_ttc }}</td>
+        <td class="text-center">{{ cat.percentage }}%</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td>TOTAL</td>
+        <td class="text-right">{{ total_sales_count }}</td>
+        <td class="text-right">{{ total_revenue_ht }}</td>
+        <td class="text-right">{{ total_revenue_tva }}</td>
+        <td class="text-right">{{ total_revenue }}</td>
+        <td class="text-center">100%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Dépenses par catégorie -->
+<div class="section">
+  <div class="section-title">Dépenses par Catégorie</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Catégorie</th>
+        <th>Département</th>
+        <th class="text-right">Budget</th>
+        <th class="text-right">Dépensé</th>
+        <th class="text-center">Taux</th>
+        <th class="text-right">Nombre</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cat in expenses_by_category %}
+      <tr>
+        <td class="font-bold">{{ cat.category }}</td>
+        <td>{{ cat.department }}</td>
+        <td class="text-right">{{ cat.budget }}</td>
+        <td class="text-right">{{ cat.spent }}</td>
+        <td class="text-center">
+          <span class="badge badge-{% if cat.rate > 90 %}danger{% elif cat.rate > 75 %}warning{% else %}success{% endif %}">{{ cat.rate }}%</span>
+        </td>
+        <td class="text-right">{{ cat.count }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td colspan="2">TOTAL DÉPENSES</td>
+        <td class="text-right">{{ total_budget }}</td>
+        <td class="text-right">{{ total_expenses }}</td>
+        <td class="text-center">{{ budget_rate }}%</td>
+        <td class="text-right">{{ total_expenses_count }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Indicateurs clés -->
+<div class="section">
+  <div class="section-title">Indicateurs Clés du Mois</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Indicateur</th>
+        <th class="text-right">Valeur</th>
+        <th>Évolution</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for kpi in kpis %}
+      <tr>
+        <td class="font-bold">{{ kpi.label }}</td>
+        <td class="text-right">{{ kpi.value }}</td>
+        <td>
+          {% if kpi.trend == "up" %}<span style="color:#16a34a">▲ {{ kpi.change }}</span>
+          {% elif kpi.trend == "down" %}<span style="color:#E87017">▼ {{ kpi.change }}</span>
+          {% else %}<span style="color:#4884BD">● {{ kpi.change }}</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

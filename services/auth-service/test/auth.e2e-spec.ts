@@ -60,7 +60,7 @@ describe('Auth Service (e2e)', () => {
     it('should login with valid seeded admin credentials', () => {
       return request(app.getHttpServer())
         .post('/api/v1/auth/login')
-        .send({ email: 'admin@caisseflow.com', password: 'Admin@CaisseFlow2025' })
+        .send({ email: 'admin@caisseflow.com', password: 'CaisseFlow2026!' })
         .expect(201)
         .then((res) => {
           expect(res.body.success).toBe(true);

@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsUUID,
   IsNumber,
   IsEnum,
   IsDateString,
@@ -10,6 +9,7 @@ import {
   Max,
   MaxLength,
 } from 'class-validator';
+import { IsUUID } from '../../is-uuid-loose';
 import { Type, Transform } from 'class-transformer';
 import { PaymentMethod, ExpenseStatus } from '../../entities/enums';
 
@@ -49,6 +49,10 @@ export class CreateExpenseDto {
   @IsOptional()
   @IsUUID()
   projectId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  disbursementRequestId?: string;
 }
 
 export class UpdateExpenseDto {
@@ -106,6 +110,12 @@ export class RejectExpenseDto {
   comment!: string;
 }
 
+export class CancelExpenseDto {
+  @IsString()
+  @MaxLength(2000)
+  reason!: string;
+}
+
 export class ListExpensesQueryDto {
   @IsOptional()
   @Type(() => Number)
@@ -125,8 +135,8 @@ export class ListExpensesQueryDto {
   search?: string;
 
   @IsOptional()
-  @IsEnum(ExpenseStatus)
-  status?: ExpenseStatus;
+  @IsString()
+  status?: string;
 
   @IsOptional()
   @IsEnum(PaymentMethod)
@@ -163,6 +173,10 @@ export class ListExpensesQueryDto {
   @IsNumber()
   @Min(0)
   amountMax?: number;
+
+  @IsOptional()
+  @IsString()
+  cashDayId?: string;
 
   @IsOptional()
   @IsString()

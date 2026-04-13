@@ -15,15 +15,24 @@ import { User } from './user.entity';
 import { SaleItem } from './sale-item.entity';
 import { Payment } from './payment.entity';
 import { Receivable } from './receivable.entity';
+import { Tenant } from './tenant.entity';
 
 @Entity('sales')
 @Index(['reference'], { unique: true })
 @Index(['status'])
 @Index(['date'])
 @Index(['clientId'])
+@Index(['tenantId'])
 export class Sale {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ type: 'uuid', name: 'tenant_id' })
+  tenantId!: string;
+
+  @ManyToOne(() => Tenant)
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: Tenant;
 
   @Column({ type: 'varchar', length: 20, unique: true })
   reference!: string;
@@ -50,7 +59,7 @@ export class Sale {
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   total!: number;
 
-  @Column({ type: 'enum', enum: SaleStatus, default: SaleStatus.DRAFT })
+  @Column({ type: 'simple-enum', enum: SaleStatus, default: SaleStatus.DRAFT })
   status!: SaleStatus;
 
   @Column({ type: 'uuid', name: 'seller_id' })
@@ -69,9 +78,9 @@ export class Sale {
   @OneToMany(() => Receivable, (r) => r.sale)
   receivables!: Receivable[];
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

@@ -49,6 +49,8 @@ export interface JwtPayload {
   email: string;
   roleName: string;
   permissions: string[];
+  tenantId: string;
+  companyId: string | null;
   departmentId: string | null;
 }
 

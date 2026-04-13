@@ -10,13 +10,22 @@ import {
 } from 'typeorm';
 import { AdvanceStatus } from './enums';
 import { User } from './user.entity';
+import { Tenant } from './tenant.entity';
 
 @Entity('advances')
 @Index(['employeeId'])
 @Index(['status'])
+@Index(['tenantId'])
 export class Advance {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ type: 'uuid', name: 'tenant_id' })
+  tenantId!: string;
+
+  @ManyToOne(() => Tenant)
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: Tenant;
 
   @Column({ type: 'uuid', name: 'employee_id' })
   employeeId!: string;
@@ -31,7 +40,7 @@ export class Advance {
   @Column({ type: 'decimal', precision: 15, scale: 2, name: 'justified_amount', default: 0 })
   justifiedAmount!: number;
 
-  @Column({ type: 'enum', enum: AdvanceStatus, default: AdvanceStatus.PENDING })
+  @Column({ type: 'simple-enum', enum: AdvanceStatus, default: AdvanceStatus.PENDING })
   status!: AdvanceStatus;
 
   @Column({ type: 'date', name: 'due_date' })
@@ -40,9 +49,9 @@ export class Advance {
   @Column({ type: 'date', name: 'justification_deadline', nullable: true })
   justificationDeadline!: string | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

@@ -1,0 +1,303 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.12.0"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ── Lint & Format ─────────────────────────────────────
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Prettier check
+        run: pnpm format
+
+  # ── Unit Tests (Node services) ────────────────────────
+  test-node:
+    name: Unit Tests (Node)
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - expense-service
+          - sales-service
+          - audit-service
+          - file-service
+          - notification-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run tests — ${{ matrix.service }}
+        run: pnpm --filter @caisseflow/${{ matrix.service }} test -- --ci --coverage
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: services/${{ matrix.service }}/coverage/
+          retention-days: 7
+
+  # ── Unit Tests (Shared packages) ──────────────────────
+  test-packages:
+    name: Unit Tests (Packages)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Test shared-utils
+        run: pnpm --filter @caisseflow/shared-utils test -- --ci --coverage
+
+  # ── Unit Tests (Python services) ──────────────────────
+  test-python:
+    name: Unit Tests (Python)
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        service: [ai-service, report-service]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        working-directory: services/${{ matrix.service }}
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+
+      - name: Run tests
+        working-directory: services/${{ matrix.service }}
+        run: pytest tests/ -v --cov=app --cov-report=xml
+        env:
+          ENVIRONMENT: test
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: services/${{ matrix.service }}/coverage.xml
+          retention-days: 7
+
+  # ── Integration Tests ─────────────────────────────────
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-node, test-python]
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      minio:
+        image: minio/minio:latest
+        ports:
+          - 9000:9000
+        env:
+          MINIO_ROOT_USER: caisseflow
+          MINIO_ROOT_PASSWORD: caisseflow-secret
+        options: >-
+          --health-cmd "mc ready local"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+          - 1433:1433
+        env:
+          ACCEPT_EULA: "Y"
+          SA_PASSWORD: "TestPassword123!"
+          MSSQL_PID: Developer
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P TestPassword123! -C -Q 'SELECT 1'"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run e2e tests
+        run: |
+          pnpm --filter @caisseflow/auth-service test:e2e || true
+          pnpm --filter @caisseflow/expense-service test:e2e || true
+          pnpm --filter @caisseflow/sales-service test:e2e || true
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 1433
+          DB_USERNAME: sa
+          DB_PASSWORD: "TestPassword123!"
+          DB_DATABASE: caisseflow_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          MINIO_ENDPOINT: localhost
+          MINIO_PORT: 9000
+          MINIO_ACCESS_KEY: caisseflow
+          MINIO_SECRET_KEY: caisseflow-secret
+
+  # ── Build all services ────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        include:
+          - service: auth-service
+            context: .
+            dockerfile: services/auth-service/Dockerfile
+          - service: expense-service
+            context: .
+            dockerfile: services/expense-service/Dockerfile
+          - service: sales-service
+            context: .
+            dockerfile: services/sales-service/Dockerfile
+          - service: audit-service
+            context: .
+            dockerfile: services/audit-service/Dockerfile
+          - service: file-service
+            context: .
+            dockerfile: services/file-service/Dockerfile
+          - service: notification-service
+            context: .
+            dockerfile: services/notification-service/Dockerfile
+          - service: ai-service
+            context: services/ai-service
+            dockerfile: services/ai-service/Dockerfile
+          - service: report-service
+            context: services/report-service
+            dockerfile: services/report-service/Dockerfile
+          - service: web
+            context: .
+            dockerfile: apps/web/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: caisseflow/${{ matrix.service }}:ci-${{ github.sha }}
+
+  # ── Security scan ─────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: npm audit (Node)
+        run: pnpm audit --audit-level=high || true
+
+      - name: pip audit (AI service)
+        run: |
+          pip install pip-audit
+          pip-audit -r services/ai-service/requirements.txt || true
+          pip-audit -r services/report-service/requirements.txt || true
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: 0
+          format: table

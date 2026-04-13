@@ -1,0 +1,38 @@
+# ── ConfigMap: shared app config ─────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  labels:
+    app.kubernetes.io/part-of: caisseflow
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  MINIO_ENDPOINT: "minio"
+  MINIO_PORT: "9000"
+  MINIO_USE_SSL: "false"
+  RABBITMQ_URL: "amqp://rabbitmq:5672"
+  AI_SERVICE_URL: "http://ai-service:8000"
+  REPORT_SERVICE_URL: "http://report-service:8001"
+  AUTH_SERVICE_URL: "http://auth-service:3001"
+  EXPENSE_SERVICE_URL: "http://expense-service:3002"
+  SALES_SERVICE_URL: "http://sales-service:3003"
+  FILE_SERVICE_URL: "http://file-service:3005"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:3006"
+  AUDIT_SERVICE_URL: "http://audit-service:3004"
+---
+# ── ConfigMap: database config ───────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  labels:
+    app.kubernetes.io/part-of: caisseflow
+data:
+  DB_HOST: "mssql"
+  DB_PORT: "1433"
+  DB_DATABASE: "caisseflow"
+  DB_SYNCHRONIZE: "false"
+  DB_LOGGING: "false"

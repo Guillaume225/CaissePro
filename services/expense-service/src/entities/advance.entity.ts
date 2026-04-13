@@ -27,7 +27,7 @@ export class Advance {
   @Column({ type: 'text', nullable: true })
   reason!: string | null;
 
-  @Column({ type: 'enum', enum: AdvanceStatus, default: AdvanceStatus.PENDING })
+  @Column({ type: 'simple-enum', enum: AdvanceStatus, default: AdvanceStatus.PENDING })
   status!: AdvanceStatus;
 
   @Column({ type: 'date', name: 'due_date', nullable: true })
@@ -36,9 +36,9 @@ export class Advance {
   @Column({ type: 'date', name: 'justification_deadline', nullable: true })
   justificationDeadline!: string | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

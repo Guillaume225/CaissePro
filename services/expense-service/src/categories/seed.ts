@@ -16,14 +16,15 @@ const SEED_CATEGORIES = [
 
 async function seed() {
   const ds = new DataSource({
-    type: 'postgres',
-    host: process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-    username: process.env.POSTGRES_USER || 'caisseflow',
-    password: process.env.POSTGRES_PASSWORD || 'caisseflow',
-    database: process.env.POSTGRES_DB || 'caisseflow',
+    type: 'mssql',
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '1433', 10),
+    username: process.env.DB_USER || 'sa',
+    password: process.env.DB_PASSWORD || 'Toi&MoiSaFait1',
+    database: process.env.DB_NAME || 'caisseflow',
     entities: [ExpenseCategory],
     synchronize: false,
+    options: { encrypt: false, trustServerCertificate: true },
   });
 
   await ds.initialize();

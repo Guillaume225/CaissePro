@@ -4,9 +4,10 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
+import { Repository, ILike, In } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
+import { Company } from '../entities/company.entity';
 import { AuthService } from '../auth/auth.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
@@ -24,6 +25,8 @@ export class UsersService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
+    @InjectRepository(Company)
+    private readonly companyRepo: Repository<Company>,
     private readonly authService: AuthService,
     private readonly auditService: AuditService,
   ) {}
@@ -44,6 +47,8 @@ export class UsersService {
     const qb = this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
+      .leftJoinAndSelect('user.company', 'company')
+      .leftJoinAndSelect('user.companies', 'companies')
       .skip(skip)
       .take(perPage)
       .orderBy('user.createdAt', 'DESC');
@@ -77,7 +82,7 @@ export class UsersService {
   async findById(id: string): Promise<UserResponseDto> {
     const user = await this.userRepo.findOne({
       where: { id },
-      relations: ['role'],
+      relations: ['role', 'company', 'companies'],
     });
     if (!user) throw new NotFoundException('User not found');
     return this.toResponseDto(user);
@@ -94,6 +99,10 @@ export class UsersService {
     const role = await this.roleRepo.findOne({ where: { id: dto.roleId } });
     if (!role) throw new NotFoundException('Role not found');
 
+    // Inherit tenantId from the actor (the admin creating this user)
+    const actor = await this.userRepo.findOne({ where: { id: actorId } });
+    if (!actor) throw new NotFoundException('Actor not found');
+
     const passwordHash = await this.authService.hashPassword(dto.password);
 
     const user = this.userRepo.create({
@@ -102,13 +111,28 @@ export class UsersService {
       firstName: dto.firstName,
       lastName: dto.lastName,
       roleId: dto.roleId,
+      tenantId: actor.tenantId,
       departmentId: dto.departmentId || null,
+      companyId: dto.companyId || null,
+      allowedModules: dto.allowedModules ? JSON.stringify(dto.allowedModules) : null,
     });
 
     const saved = await this.userRepo.save(user);
+
+    // Assign companies (many-to-many)
+    if (dto.companyIds && dto.companyIds.length > 0) {
+      const companies = await this.companyRepo.find({ where: { id: In(dto.companyIds) } });
+      saved.companies = companies;
+      // Set active company to first if not specified
+      if (!saved.companyId && companies.length > 0) {
+        saved.companyId = companies[0].id;
+      }
+      await this.userRepo.save(saved);
+    }
+
     const full = await this.userRepo.findOneOrFail({
       where: { id: saved.id },
-      relations: ['role'],
+      relations: ['role', 'company', 'companies'],
     });
 
     await this.auditService.log({
@@ -131,7 +155,7 @@ export class UsersService {
   ): Promise<UserResponseDto> {
     const user = await this.userRepo.findOne({
       where: { id },
-      relations: ['role'],
+      relations: ['role', 'company', 'companies'],
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -147,12 +171,50 @@ export class UsersService {
       newValue.roleId = dto.roleId;
     }
     if (dto.departmentId !== undefined) { oldValue.departmentId = user.departmentId; newValue.departmentId = dto.departmentId; }
+    if (dto.companyId !== undefined) { oldValue.companyId = user.companyId; newValue.companyId = dto.companyId; }
+    if (dto.companyIds !== undefined) {
+      oldValue.companyIds = (user.companies || []).map((c) => c.id);
+      newValue.companyIds = dto.companyIds;
+    }
     if (dto.isActive !== undefined) { oldValue.isActive = user.isActive; newValue.isActive = dto.isActive; }
+    if (dto.mfaEnabled !== undefined) { oldValue.mfaEnabled = user.mfaEnabled; newValue.mfaEnabled = dto.mfaEnabled; }
+    if (dto.allowedModules !== undefined) {
+      oldValue.allowedModules = user.allowedModules;
+      newValue.allowedModules = dto.allowedModules;
+    }
 
-    await this.userRepo.update(id, dto);
+    const updatePayload: Record<string, unknown> = { ...dto };
+    delete updatePayload.companyIds; // handled separately
+    delete updatePayload.mfaConfigured; // derived field, not a column
+    if (dto.allowedModules !== undefined) {
+      updatePayload.allowedModules = JSON.stringify(dto.allowedModules);
+    }
+    // When disabling MFA or resetting configuration, clear the secret
+    if (dto.mfaEnabled === false || dto.mfaConfigured === false) {
+      updatePayload.mfaSecret = null;
+    }
+    await this.userRepo.update(id, updatePayload);
+
+    // Update many-to-many company assignments
+    if (dto.companyIds !== undefined) {
+      const companies = dto.companyIds.length > 0
+        ? await this.companyRepo.find({ where: { id: In(dto.companyIds) } })
+        : [];
+      const userToSave = await this.userRepo.findOneOrFail({ where: { id }, relations: ['companies'] });
+      userToSave.companies = companies;
+      // If active company is not in the new list, reset to first
+      if (companies.length > 0 && !companies.find((c) => c.id === userToSave.companyId)) {
+        userToSave.companyId = companies[0].id;
+        await this.userRepo.update(id, { companyId: companies[0].id });
+      } else if (companies.length === 0) {
+        userToSave.companyId = null;
+        await this.userRepo.update(id, { companyId: null });
+      }
+      await this.userRepo.save(userToSave);
+    }
     const updated = await this.userRepo.findOneOrFail({
       where: { id },
-      relations: ['role'],
+      relations: ['role', 'company', 'companies'],
     });
 
     await this.auditService.log({
@@ -194,11 +256,18 @@ export class UsersService {
       roleId: user.roleId,
       roleName: user.role?.name || '',
       permissions: user.role?.permissions || [],
+      tenantId: user.tenantId,
       departmentId: user.departmentId,
+      companyId: user.companyId,
+      companyName: user.company?.name ?? null,
+      companyIds: (user.companies || []).map((c) => c.id),
+      companyNames: (user.companies || []).map((c) => c.name),
       isActive: user.isActive,
       mfaEnabled: user.mfaEnabled,
+      mfaConfigured: user.mfaEnabled && !!user.mfaSecret,
       lastLogin: user.lastLogin?.toISOString() || null,
       createdAt: user.createdAt.toISOString(),
+      allowedModules: user.allowedModules ? JSON.parse(user.allowedModules) : [],
     };
   }
 }

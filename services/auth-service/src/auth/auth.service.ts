@@ -306,6 +306,8 @@ export class AuthService {
       email: user.email,
       roleName: user.role.name,
       permissions: user.role.permissions,
+      tenantId: user.tenantId,
+      companyId: user.companyId,
       departmentId: user.departmentId,
     };
 
@@ -316,7 +318,7 @@ export class AuthService {
       expiresIn: this.configService.get<string>('jwt.accessExpiration') || '15m',
       ...(useRS256
         ? { algorithm: 'RS256', privateKey }
-        : { secret: 'caisseflow-dev-secret-change-me' }),
+        : { algorithm: 'HS256', secret: 'caisseflow-dev-secret-change-me' }),
     };
 
     const accessToken = this.jwtService.sign(payload, signOptions as any);

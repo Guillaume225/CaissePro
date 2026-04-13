@@ -1,0 +1,38 @@
+# Core
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.8.0
+pydantic-settings>=2.5.0
+
+# OCR
+pytesseract>=0.3.13
+Pillow>=10.4.0
+PyMuPDF>=1.24.0
+
+# Image processing
+opencv-python-headless>=4.10.0
+numpy>=1.26.0
+
+# ML / Data Science
+pandas>=2.2.0
+scikit-learn>=1.5.0
+scipy>=1.13.0
+spacy>=3.7.0
+joblib>=1.4.0
+torch>=2.3.0
+transformers>=4.42.0
+prophet>=1.1.5
+xgboost>=2.0.0
+shap>=0.45.0
+
+# LLM / Templates
+openai>=1.30.0
+jinja2>=3.1.0
+
+# Testing
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+httpx>=0.27.0
+
+# Linting
+ruff>=0.6.0

@@ -10,12 +10,21 @@ import {
 } from 'typeorm';
 import { ExpenseCategory } from './expense-category.entity';
 import { Department } from './department.entity';
+import { Tenant } from './tenant.entity';
 
 @Entity('budgets')
 @Index(['categoryId', 'departmentId', 'periodStart', 'periodEnd'], { unique: true })
+@Index(['tenantId'])
 export class Budget {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ type: 'uuid', name: 'tenant_id' })
+  tenantId!: string;
+
+  @ManyToOne(() => Tenant)
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: Tenant;
 
   @Column({ type: 'uuid', name: 'category_id' })
   categoryId!: string;
@@ -44,15 +53,15 @@ export class Budget {
   consumedAmount!: number;
 
   @Column({
-    type: 'jsonb',
+    type: 'simple-json',
     name: 'alert_thresholds',
     default: JSON.stringify([50, 75, 90, 100]),
   })
   alertThresholds!: number[];
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

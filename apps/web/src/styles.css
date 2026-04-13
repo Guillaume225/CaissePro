@@ -1,22 +1,85 @@
-﻿:root {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.5;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: theme('colors.gray.200');
+  }
+
+  body {
+    @apply bg-surface font-sans antialiased;
+    color: #1f2937;
+    margin: 0;
+  }
 }
 
-* {
-  box-sizing: border-box;
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+  }
 }
 
-body {
-  margin: 0;
-  background: #f3f5f7;
-  color: #1f2937;
-}
+/* ═══ Print styles ═══ */
+.print-only { display: none !important; }
+@media print {
+  /* Hide everything that isn't the print view */
+  body { background: white !important; margin: 0 !important; padding: 0 !important; }
+  .no-print, nav, aside, header, footer, [data-no-print] { display: none !important; }
 
-.app {
-  min-height: 100vh;
-  display: grid;
-  place-content: center;
-  padding: 2rem;
-  text-align: center;
+  /* Reset all layout wrappers: remove sidebar margin, padding, flex, overflow */
+  body > #root,
+  body > #root > *,
+  body > #root > * > *,
+  body > #root > * > * > * {
+    margin: 0 !important;
+    margin-left: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Show the print-only block as fixed full-page overlay */
+  .print-only {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999;
+    background: white !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    box-sizing: border-box !important;
+  }
+  .print-only,
+  .print-only *,
+  .print-only img {
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    -webkit-filter: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  @page { size: A4 portrait; margin: 10mm; }
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  thead { display: table-header-group; }
 }

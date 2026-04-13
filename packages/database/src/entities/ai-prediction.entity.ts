@@ -21,7 +21,7 @@ export class AIPrediction {
   @Column({ type: 'uuid', name: 'entity_id', nullable: true })
   entityId!: string | null;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'simple-json' })
   prediction!: Record<string, unknown>;
 
   @Column({ type: 'decimal', precision: 5, scale: 4 })
@@ -30,6 +30,6 @@ export class AIPrediction {
   @Column({ type: 'varchar', length: 50, name: 'user_feedback', nullable: true })
   userFeedback!: string | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 }

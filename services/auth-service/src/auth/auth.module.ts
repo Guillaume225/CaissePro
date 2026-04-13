@@ -24,7 +24,7 @@ import { AuditModule } from '../audit/audit.module';
         return {
           ...(useRS256
             ? { privateKey, publicKey, signOptions: { algorithm: 'RS256' as const } }
-            : { secret: 'caisseflow-dev-secret-change-me' }),
+            : { secret: 'caisseflow-dev-secret-change-me', signOptions: { algorithm: 'HS256' as const } }),
         };
       },
     }),

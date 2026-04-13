@@ -10,10 +10,16 @@ export enum AuditAction {
   CREATE = 'CREATE',
   UPDATE = 'UPDATE',
   DELETE = 'DELETE',
+  SUBMIT = 'SUBMIT',
   APPROVE = 'APPROVE',
   REJECT = 'REJECT',
+  PAY = 'PAY',
+  CANCEL = 'CANCEL',
   EXPORT = 'EXPORT',
   BUDGET_ALERT = 'BUDGET_ALERT',
+  CASH_CLOSING_OPEN = 'CASH_CLOSING_OPEN',
+  CASH_CLOSING_LOCK = 'CASH_CLOSING_LOCK',
+  CASH_CLOSING_CLOSE = 'CASH_CLOSING_CLOSE',
 }
 
 @Entity('audit_logs')
@@ -26,7 +32,7 @@ export class AuditLog {
   @Column({ type: 'uuid', name: 'user_id', nullable: true })
   userId!: string | null;
 
-  @Column({ type: 'enum', enum: AuditAction })
+  @Column({ type: 'simple-enum', enum: AuditAction })
   action!: AuditAction;
 
   @Column({ type: 'varchar', length: 100, name: 'entity_type' })
@@ -35,18 +41,18 @@ export class AuditLog {
   @Column({ type: 'uuid', name: 'entity_id', nullable: true })
   entityId!: string | null;
 
-  @Column({ type: 'jsonb', name: 'old_value', nullable: true })
+  @Column({ type: 'simple-json', name: 'old_value', nullable: true })
   oldValue!: Record<string, unknown> | null;
 
-  @Column({ type: 'jsonb', name: 'new_value', nullable: true })
+  @Column({ type: 'simple-json', name: 'new_value', nullable: true })
   newValue!: Record<string, unknown> | null;
 
-  @Column({ type: 'inet', name: 'ip_address', nullable: true })
+  @Column({ type: 'varchar', length: 45, name: 'ip_address', nullable: true })
   ipAddress!: string | null;
 
   @Column({ type: 'text', name: 'user_agent', nullable: true })
   userAgent!: string | null;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'datetimeoffset' })
   timestamp!: Date;
 }

@@ -1,0 +1,188 @@
+# ═══════════════════════════════════════════════════════════
+# Prometheus Alert Rules — CaisseFlow Pro
+# ═══════════════════════════════════════════════════════════
+
+groups:
+  # ── Infrastructure alerts ──────────────────────────────
+  - name: infrastructure
+    rules:
+      - alert: HighCpuUsage
+        expr: (100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage > 80% on {{ $labels.instance }}"
+          description: "CPU usage is {{ printf \"%.1f\" $value }}% on {{ $labels.instance }}"
+
+      - alert: CriticalCpuUsage
+        expr: (100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CPU usage > 95% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage > 85% on {{ $labels.instance }}"
+          description: "Memory usage is {{ printf \"%.1f\" $value }}%"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage > 85% on {{ $labels.instance }}"
+
+      - alert: PodRestarting
+        expr: increase(kube_pod_container_status_restarts_total[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod {{ $labels.pod }} restarting frequently"
+          description: "{{ $labels.pod }} has restarted {{ printf \"%.0f\" $value }} times in the last hour"
+
+  # ── Application alerts ─────────────────────────────────
+  - name: application
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+            /
+            sum(rate(http_requests_total[5m])) by (service)
+          ) * 100 > 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "5xx error rate > 1% on {{ $labels.service }}"
+          description: "Error rate is {{ printf \"%.2f\" $value }}% on {{ $labels.service }}"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 latency > 2s on {{ $labels.service }}"
+          description: "P95 latency is {{ printf \"%.2f\" $value }}s on {{ $labels.service }}"
+
+      - alert: CriticalLatency
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)) > 5
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "P99 latency > 5s on {{ $labels.service }}"
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is DOWN"
+          description: "{{ $labels.instance }} has been unreachable for more than 1 minute"
+
+      - alert: HighRequestRate
+        expr: sum(rate(http_requests_total[1m])) by (service) > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Unusually high request rate on {{ $labels.service }}"
+
+  # ── Database alerts ────────────────────────────────────
+  - name: database
+    rules:
+      - alert: DatabaseConnectionPoolExhausted
+        expr: db_pool_active_connections / db_pool_max_connections > 0.9
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DB connection pool > 90% used on {{ $labels.service }}"
+
+      - alert: SlowQueries
+        expr: rate(db_query_duration_seconds_sum[5m]) / rate(db_query_duration_seconds_count[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Average query time > 1s on {{ $labels.service }}"
+
+  # ── Redis alerts ───────────────────────────────────────
+  - name: redis
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is DOWN"
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage > 85%"
+
+  # ── AI Service alerts ──────────────────────────────────
+  - name: ai-service
+    rules:
+      - alert: AIModelLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(ai_prediction_duration_seconds_bucket[5m])) by (le, model)) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI model {{ $labels.model }} P95 latency > 3s"
+
+      - alert: AIModelDrift
+        expr: ai_model_drift_score > 0.3
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Model drift detected for {{ $labels.model }}"
+          description: "Drift score: {{ printf \"%.3f\" $value }} (threshold: 0.3)"
+
+      - alert: AIPredictionErrorRate
+        expr: rate(ai_prediction_errors_total[10m]) / rate(ai_predictions_total[10m]) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI prediction error rate > 5%"
+
+  # ── Business alerts ────────────────────────────────────
+  - name: business
+    rules:
+      - alert: NoExpensesCreated
+        expr: increase(business_expenses_created_total[4h]) == 0
+        for: 4h
+        labels:
+          severity: info
+        annotations:
+          summary: "No expenses created in the last 4 hours during business hours"
+
+      - alert: UnusualExpenseVolume
+        expr: |
+          increase(business_expenses_created_total[1h])
+          > 3 * avg_over_time(increase(business_expenses_created_total[1h])[7d:1h])
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Unusual expense creation volume detected"

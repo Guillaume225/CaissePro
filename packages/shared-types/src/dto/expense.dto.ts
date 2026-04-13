@@ -13,7 +13,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ExpenseStatus, PaymentMethod } from '../../enums/index.js';
+import { ExpenseStatus, PaymentMethod } from '../enums/index.js';
 
 /* ─── Create ─── */
 

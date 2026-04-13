@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="report-header">
+  <div class="company-info">
+    <div class="company-name">{{ company_name }}</div>
+    <div class="company-details">
+      {% if company_address %}{{ company_address }}<br>{% endif %}
+      {% if company_phone %}Tél: {{ company_phone }}{% endif %}
+      {% if company_email %} — {{ company_email }}{% endif %}
+      {% if company_rccm %}<br>RCCM: {{ company_rccm }}{% endif %}
+      {% if company_cc %} — CC: {{ company_cc }}{% endif %}
+    </div>
+  </div>
+  <div class="report-meta">
+    <div class="report-title">Journal de Caisse</div>
+    <div class="report-subtitle">{{ date }}</div>
+    <div class="report-date">Généré le {{ generated_at }}</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-grid">
+  <div class="summary-box primary">
+    <div class="summary-label">Total Ventes</div>
+    <div class="summary-value">{{ total_sales }}</div>
+  </div>
+  <div class="summary-box success">
+    <div class="summary-label">Total Encaissé</div>
+    <div class="summary-value">{{ total_collected }}</div>
+  </div>
+  <div class="summary-box warning">
+    <div class="summary-label">Total Dépenses</div>
+    <div class="summary-value">{{ total_expenses }}</div>
+  </div>
+  <div class="summary-box danger">
+    <div class="summary-label">Solde Net</div>
+    <div class="summary-value">{{ net_balance }}</div>
+  </div>
+</div>
+
+<!-- Ventes -->
+<div class="section">
+  <div class="section-title">Détail des Ventes</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Référence</th>
+        <th>Client</th>
+        <th>Mode paiement</th>
+        <th class="text-right">Montant HT</th>
+        <th class="text-right">TVA</th>
+        <th class="text-right">Montant TTC</th>
+        <th class="text-center">Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr>
+        <td>{{ sale.reference }}</td>
+        <td>{{ sale.client_name }}</td>
+        <td>{{ sale.payment_method }}</td>
+        <td class="text-right">{{ sale.amount_ht }}</td>
+        <td class="text-right">{{ sale.tva }}</td>
+        <td class="text-right font-bold">{{ sale.amount_ttc }}</td>
+        <td class="text-center"><span class="badge badge-{{ sale.status_class }}">{{ sale.status }}</span></td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td colspan="3">TOTAL VENTES</td>
+        <td class="text-right">{{ total_sales_ht }}</td>
+        <td class="text-right">{{ total_sales_tva }}</td>
+        <td class="text-right">{{ total_sales }}</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Dépenses -->
+<div class="section">
+  <div class="section-title">Détail des Dépenses</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Référence</th>
+        <th>Catégorie</th>
+        <th>Description</th>
+        <th class="text-right">Montant</th>
+        <th class="text-center">Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for expense in expenses %}
+      <tr>
+        <td>{{ expense.reference }}</td>
+        <td>{{ expense.category }}</td>
+        <td>{{ expense.description }}</td>
+        <td class="text-right font-bold">{{ expense.amount }}</td>
+        <td class="text-center"><span class="badge badge-{{ expense.status_class }}">{{ expense.status }}</span></td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td colspan="3">TOTAL DÉPENSES</td>
+        <td class="text-right">{{ total_expenses }}</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

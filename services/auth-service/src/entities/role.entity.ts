@@ -16,18 +16,18 @@ export class Role {
   @Column({ type: 'varchar', length: 50, unique: true })
   name!: string;
 
-  @Column({ type: 'jsonb', default: [] })
+  @Column({ type: 'simple-json', default: [] })
   permissions!: string[];
 
-  @Column({ type: 'boolean', name: 'is_system', default: false })
+  @Column({ type: 'bit', name: 'is_system', default: false })
   isSystem!: boolean;
 
   @OneToMany(() => User, (user) => user.role)
   users!: User[];
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

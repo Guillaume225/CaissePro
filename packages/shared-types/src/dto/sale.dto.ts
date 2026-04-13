@@ -15,7 +15,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PaymentMethod, SaleStatus } from '../../enums/index.js';
+import { PaymentMethod, SaleStatus } from '../enums/index.js';
 
 /* ─── Sale Item (nested) ─── */
 

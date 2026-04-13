@@ -1,0 +1,200 @@
+# ═══════════════════════════════════════════════════════════
+# CronJobs
+# ═══════════════════════════════════════════════════════════
+
+# ── Aging buckets update (daily at 02:00) ────────────────
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: aging-buckets-update
+  labels:
+    app.kubernetes.io/part-of: caisseflow
+    job-type: maintenance
+spec:
+  schedule: "0 2 * * *"
+  timeZone: "Africa/Bamako"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: aging-buckets-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: aging-buckets
+              image: ghcr.io/OWNER/caisseflow/sales-service:latest
+              command: ["node", "dist/jobs/update-aging-buckets.js"]
+              envFrom:
+                - configMapRef:
+                    name: app-config
+                - configMapRef:
+                    name: db-config
+                - secretRef:
+                    name: app-secrets
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+---
+# ── Daily report generation (daily at 06:00) ─────────────
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: daily-report
+  labels:
+    app.kubernetes.io/part-of: caisseflow
+    job-type: reporting
+spec:
+  schedule: "0 6 * * *"
+  timeZone: "Africa/Bamako"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app: daily-report-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: daily-report
+              image: ghcr.io/OWNER/caisseflow/report-service:latest
+              command: ["python", "-m", "app.jobs.daily_report"]
+              envFrom:
+                - configMapRef:
+                    name: app-config
+                - configMapRef:
+                    name: db-config
+                - secretRef:
+                    name: app-secrets
+              env:
+                - name: ENVIRONMENT
+                  value: "production"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+---
+# ── AI model retraining (weekly on Sunday at 03:00) ──────
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ai-model-retrain
+  labels:
+    app.kubernetes.io/part-of: caisseflow
+    job-type: ai
+spec:
+  schedule: "0 3 * * 0"
+  timeZone: "Africa/Bamako"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: ai-retrain-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: ai-retrain
+              image: ghcr.io/OWNER/caisseflow/ai-service:latest
+              command: ["python", "-m", "ml.retrain"]
+              envFrom:
+                - configMapRef:
+                    name: app-config
+                - configMapRef:
+                    name: db-config
+                - secretRef:
+                    name: app-secrets
+              env:
+                - name: ENVIRONMENT
+                  value: "production"
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1Gi
+                limits:
+                  cpu: "2"
+                  memory: 2Gi
+              volumeMounts:
+                - name: ml-models
+                  mountPath: /app/ml/models
+          volumes:
+            - name: ml-models
+              persistentVolumeClaim:
+                claimName: ml-models-pvc
+---
+# ── Database backup (daily at 01:00) ─────────────────────
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-backup
+  labels:
+    app.kubernetes.io/part-of: caisseflow
+    job-type: maintenance
+spec:
+  schedule: "0 1 * * *"
+  timeZone: "Africa/Bamako"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: db-backup-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: db-backup
+              image: mcr.microsoft.com/mssql-tools:latest
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  /opt/mssql-tools/bin/sqlcmd -S $DB_HOST -U $DB_USERNAME -P $DB_PASSWORD \
+                    -Q "BACKUP DATABASE [$DB_DATABASE] TO DISK='/backups/caisseflow_${TIMESTAMP}.bak' WITH COMPRESSION"
+                  echo "Backup completed: caisseflow_${TIMESTAMP}.bak"
+              envFrom:
+                - configMapRef:
+                    name: db-config
+                - secretRef:
+                    name: app-secrets
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backups
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: mssql-data-pvc

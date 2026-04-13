@@ -7,9 +7,16 @@ export const EXPENSE_EXCHANGE = 'expense.events';
 
 export enum ExpenseEvent {
   CREATED = 'expense.created',
+  SUBMITTED = 'expense.submitted',
   APPROVED = 'expense.approved',
+  REJECTED = 'expense.rejected',
   PAID = 'expense.paid',
+  CANCELLED = 'expense.cancelled',
   BUDGET_ALERT = 'budget.alert',
+  CASH_CLOSING_OPENED = 'cash_closing.opened',
+  CASH_CLOSING_CLOSED = 'cash_closing.closed',
+  CASH_CLOSING_VARIANCE_ALERT = 'cash_closing.variance_alert',
+  CASH_CLOSING_REMINDER = 'cash_closing.reminder',
 }
 
 @Injectable()
@@ -50,12 +57,16 @@ export class EventsService implements OnModuleInit, OnModuleDestroy {
       return;
     }
     try {
-      await this.channel.publish(
+      const publishPromise = this.channel.publish(
         EXPENSE_EXCHANGE,
         routingKey,
         Buffer.from(JSON.stringify({ event: routingKey, data: payload, timestamp: new Date().toISOString() })),
         { deliveryMode: 2, contentType: 'application/json' },
       );
+      const timeout = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('RabbitMQ publish timeout')), 3000),
+      );
+      await Promise.race([publishPromise, timeout]);
       this.logger.debug(`Published ${routingKey}`);
     } catch (err) {
       this.logger.error(`Failed to publish ${routingKey}`, err);

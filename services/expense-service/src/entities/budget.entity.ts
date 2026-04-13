@@ -39,15 +39,15 @@ export class Budget {
   consumedAmount!: number;
 
   @Column({
-    type: 'jsonb',
+    type: 'simple-json',
     name: 'alert_thresholds',
     default: JSON.stringify([50, 75, 90, 100]),
   })
   alertThresholds!: number[];
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

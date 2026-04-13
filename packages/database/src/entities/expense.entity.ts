@@ -15,15 +15,24 @@ import { ExpenseCategory } from './expense-category.entity';
 import { User } from './user.entity';
 import { ExpenseApproval } from './expense-approval.entity';
 import { ExpenseAttachment } from './expense-attachment.entity';
+import { Tenant } from './tenant.entity';
 
 @Entity('expenses')
 @Index(['status'])
 @Index(['createdById'])
 @Index(['date'])
 @Index(['reference'], { unique: true })
+@Index(['tenantId'])
 export class Expense {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ type: 'uuid', name: 'tenant_id' })
+  tenantId!: string;
+
+  @ManyToOne(() => Tenant)
+  @JoinColumn({ name: 'tenant_id' })
+  tenant!: Tenant;
 
   @Column({ type: 'varchar', length: 20, unique: true })
   reference!: string;
@@ -40,10 +49,10 @@ export class Expense {
   @Column({ type: 'varchar', length: 255, nullable: true })
   beneficiary!: string | null;
 
-  @Column({ type: 'enum', enum: PaymentMethod, name: 'payment_method' })
+  @Column({ type: 'simple-enum', enum: PaymentMethod, name: 'payment_method' })
   paymentMethod!: PaymentMethod;
 
-  @Column({ type: 'enum', enum: ExpenseStatus, default: ExpenseStatus.DRAFT })
+  @Column({ type: 'simple-enum', enum: ExpenseStatus, default: ExpenseStatus.DRAFT })
   status!: ExpenseStatus;
 
   @Column({ type: 'text', nullable: true })
@@ -75,12 +84,12 @@ export class Expense {
   @OneToMany(() => ExpenseAttachment, (a) => a.expense)
   attachments!: ExpenseAttachment[];
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  @DeleteDateColumn({ name: 'deleted_at', type: 'datetimeoffset', nullable: true })
   deletedAt!: Date | null;
 }

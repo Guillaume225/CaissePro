@@ -1,0 +1,426 @@
+================================================================================
+                    CAISSEFLOW PRO — FONCTIONNALITÉS PAR MODULE
+================================================================================
+
+API Gateway (Kong) :
+  auth-service     → /auth
+  sales-service    → /sales
+  expense-service  → /expenses
+
+================================================================================
+  1. MODULE EXPENSE (Caisse dépenses)
+================================================================================
+
+FRONTEND — Pages :
+  /                        → DashboardPage             Tableau de bord clôture caisse
+  /pending-requests        → PendingRequestsPage       Demandes de décaissement en attente
+  /expenses                → ExpenseListPage            Liste des dépenses
+  /expenses/new            → ExpenseCreatePage          Créer une dépense
+  /expenses/:id            → ExpenseDetailPage          Détail d'une dépense
+  /expenses/cash-reports   → CashReportsPage            Rapports de caisse
+  /notifications           → NotificationsPage          Notifications
+
+BACKEND — expense-service (port 3002) :
+
+  Controller: expenses
+    GET    /expenses/stats                      Statistiques des dépenses
+    GET    /expenses                            Lister (filtres/pagination)
+    GET    /expenses/:id                        Obtenir une dépense
+    POST   /expenses                            Créer une dépense
+    PATCH  /expenses/:id                        Modifier une dépense
+    DELETE /expenses/:id                        Supprimer une dépense
+    POST   /expenses/:id/submit                 Soumettre pour validation
+    POST   /expenses/:id/approve                Approuver
+    POST   /expenses/:id/reject                 Rejeter
+    POST   /expenses/:id/pay                    Marquer payée
+    POST   /expenses/:id/cancel                 Annuler
+    POST   /expenses/:id/attachments            Upload pièces jointes
+
+  Controller: cash-closing
+    POST   /cash-closing/open                   Ouvrir une journée de caisse
+    GET    /cash-closing/current                Journée en cours
+    GET    /cash-closing/state                  État de la caisse
+    GET    /cash-closing/operations             Opérations du jour
+    POST   /cash-closing/movements              Ajouter un mouvement
+    POST   /cash-closing/lock                   Verrouiller pour clôture
+    POST   /cash-closing/unlock                 Déverrouiller
+    GET    /cash-closing/accounting-entries      Écritures comptables
+    POST   /cash-closing/accounting-entries/process   Traiter les écritures
+    POST   /cash-closing/accounting-entries/cancel    Annuler le traitement
+    POST   /cash-closing/close                  Clôturer la journée
+    GET    /cash-closing/history                Historique
+    GET    /cash-closing/:id                    Détail d'une journée
+    GET    /cash-closing/:id/operations         Opérations d'une journée
+
+  Controller: dashboard
+    GET    /dashboard/kpis                      KPIs principaux
+    GET    /dashboard/treasury                  Trésorerie
+    GET    /dashboard/monthly-comparison        Comparaison mensuelle
+    GET    /dashboard/expense-categories        Catégories de dépenses
+    GET    /dashboard/top-clients               Top clients
+    GET    /dashboard/expense/kpis              KPIs dépenses
+    GET    /dashboard/expense/monthly-trend     Tendance mensuelle
+    GET    /dashboard/expense/recent            Dépenses récentes
+
+  Controller: notifications
+    GET    /notifications                       Liste des notifications
+    GET    /notifications/unread-count          Compteur non lues
+    PATCH  /notifications/read-all              Tout marquer lu
+    PATCH  /notifications/:id/read             Marquer une comme lue
+
+  Controller: disbursement-requests
+    GET    /disbursement-requests               Lister les demandes
+    GET    /disbursement-requests/pending       Demandes en attente
+    GET    /disbursement-requests/track/:ref    Suivi public par référence
+    GET    /disbursement-requests/my/:matricule Demandes d'un employé (public)
+    GET    /disbursement-requests/:id           Détail
+    POST   /disbursement-requests               Créer (portail employé)
+    PATCH  /disbursement-requests/:id/approve   Approuver
+    PATCH  /disbursement-requests/:id/reject    Rejeter
+    PATCH  /disbursement-requests/:id/process   Marquer traitée
+
+  Controller: advances
+    GET    /advances                            Lister les avances
+    GET    /advances/:id                        Détail
+    POST   /advances                            Créer une avance
+    PATCH  /advances/:id                        Modifier
+    POST   /advances/:id/justify               Justifier une avance
+
+
+================================================================================
+  2. MODULE FNE (Facture Normalisée Électronique)
+================================================================================
+
+FRONTEND — Pages :
+  /fne                     → FneDashboardPage          Dashboard FNE
+  /fne/invoices            → FneInvoiceListPage         Liste des factures
+  /fne/invoices/new        → FneInvoiceCreatePage       Créer une facture
+  /fne/invoices/:id        → FneInvoiceDetailPage       Détail facture
+  /fne/invoices/:id/edit   → FneInvoiceEditPage         Modifier facture
+  /fne/clients             → FneClientListPage          Liste clients FNE
+  /fne/products            → FneProductListPage         Liste produits FNE
+  /fne/accounting          → FneAccountingPage          Comptabilité FNE
+
+BACKEND — sales-service (port 3003) :
+
+  Controller: fne-invoices
+    GET    /fne-invoices                        Lister les factures FNE
+    GET    /fne-invoices/sticker-balance        Solde vignettes
+    GET    /fne-invoices/:id                    Détail facture
+    POST   /fne-invoices                        Créer et certifier
+    POST   /fne-invoices/bulk-certify           Certification en masse
+    POST   /fne-invoices/bulk-delete            Suppression en masse
+    POST   /fne-invoices/import                 Import en masse
+    PATCH  /fne-invoices/:id                    Modifier facture
+    PATCH  /fne-invoices/:id/decision-comment   Commentaire décisionnel
+    POST   /fne-invoices/:id/certify            Certifier une facture
+    POST   /fne-invoices/:id/credit-note        Créer un avoir
+    DELETE /fne-invoices/:id                    Supprimer facture
+
+  Controller: fne-clients
+    GET    /fne-clients                         Lister les clients
+    GET    /fne-clients/:id                     Détail client
+    POST   /fne-clients                         Créer client
+    PUT    /fne-clients/:id                     Modifier client
+    DELETE /fne-clients/:id                     Supprimer client
+
+  Controller: fne-products
+    GET    /fne-products                        Lister les produits
+    GET    /fne-products/:id                    Détail produit
+    POST   /fne-products                        Créer produit
+    PUT    /fne-products/:id                    Modifier produit
+    DELETE /fne-products/:id                    Supprimer produit
+
+  Controller: fne-accounting
+    GET    /fne-accounting                      Lister les écritures
+    POST   /fne-accounting/generate             Générer les écritures
+    POST   /fne-accounting/processed-ids        IDs déjà traités
+    DELETE /fne-accounting/:invoiceId           Supprimer par facture
+    DELETE /fne-accounting                      Supprimer toutes
+
+  Controller: fne-settings
+    GET    /fne-settings?companyId=             Paramètres FNE par société
+    POST   /fne-settings                        Créer/modifier paramètres
+    PUT    /fne-settings?companyId=             Mettre à jour paramètres
+
+  Controller: fne-establishments
+    GET    /fne-establishments                  Lister les établissements
+    GET    /fne-establishments/:id              Détail
+    POST   /fne-establishments                  Créer
+    PUT    /fne-establishments/:id              Modifier
+    DELETE /fne-establishments/:id              Supprimer
+
+  Controller: fne-points-of-sale
+    GET    /fne-points-of-sale                  Lister les points de vente
+    GET    /fne-points-of-sale/:id              Détail
+    POST   /fne-points-of-sale                  Créer
+    PUT    /fne-points-of-sale/:id              Modifier
+    DELETE /fne-points-of-sale/:id              Supprimer
+
+  Controller: dashboard (FNE)
+    GET    /dashboard/fne/kpis                  KPIs FNE
+    GET    /dashboard/fne/monthly-trend         Tendance mensuelle FNE
+    GET    /dashboard/fne/top-clients           Top clients FNE
+    GET    /dashboard/fne/status-breakdown      Répartition par statut
+
+
+================================================================================
+  3. MODULE ADMIN (Administration)
+================================================================================
+
+FRONTEND — Pages (requiredRole="manager") :
+  /                          → DashboardPage             Tableau de bord admin
+  /admin/users               → UserManagementPage        Gestion des utilisateurs
+  /admin/roles               → RoleManagementPage        Gestion des rôles/permissions
+  /admin/employees           → EmployeeManagementPage    Gestion des employés
+  /admin/security            → SecurityPage              Paramètres de sécurité
+  /admin/companies           → CompanyManagementPage     Gestion des sociétés
+  /admin/fne-config          → FneConfigPage             Configuration FNE
+  /admin/approval-circuits   → ApprovalCircuitPage       Circuits de validation
+  /admin/audit               → AuditLogPage              Journaux d'audit
+  /admin/report-designer     → ReportDesignerPage        Concepteur de rapports
+
+BACKEND — auth-service (port 3001) :
+
+  Controller: users
+    GET    /users/me                            Profil utilisateur courant
+    GET    /users                               Lister les utilisateurs
+    GET    /users/:id                           Détail utilisateur
+    POST   /users                               Créer utilisateur
+    PATCH  /users/:id                           Modifier utilisateur
+    DELETE /users/:id                           Supprimer utilisateur
+
+  Controller: roles
+    GET    /roles                               Lister les rôles
+    GET    /roles/:id                           Détail rôle
+    POST   /roles                               Créer rôle
+    PATCH  /roles/:id                           Modifier rôle
+
+  Controller: companies
+    GET    /companies                           Lister les sociétés
+    GET    /companies/:id                       Détail société
+    POST   /companies                           Créer société
+    PATCH  /companies/:id                       Modifier société
+    POST   /companies/:id/logo                  Upload logo
+    POST   /companies/:id/switch                Changer de société
+
+  Controller: settings
+    GET    /settings                            Paramètres globaux
+    PUT    /settings                            Modifier paramètres
+
+  Controller: permissions
+    GET    /permissions                         Liste de toutes les permissions
+
+  Controller: audit/logs
+    GET    /audit/logs                          Journaux d'audit (paginé)
+
+  Controller: dashboard (admin)
+    GET    /dashboard/admin/kpis                KPIs admin
+    GET    /dashboard/admin/recent-logs         Actions récentes
+    GET    /dashboard/admin/role-distribution   Répartition des rôles
+    GET    /dashboard/admin/hourly-activity     Activité horaire
+
+BACKEND — hr-service (port 3004) :
+
+  Controller: employees
+    GET    /employees/disbursement-limit        Limite de décaissement (public)
+    POST   /employees/login                     Connexion employé (public)
+    GET    /employees/all                       Lister les employés
+    GET    /employees/:id                       Détail employé
+    POST   /employees                           Créer employé
+    PATCH  /employees/:id                       Modifier employé
+    DELETE /employees/:id                       Supprimer employé
+
+BACKEND — audit-service (port 3005) :
+
+  Controller: audit
+    GET    /audit/logs                          Journal d'audit (paginé, filtres)
+    GET    /audit/logs/export                   Export CSV/JSON
+    GET    /audit/entity/:type/:id              Historique d'une entité
+
+BACKEND — expense-service :
+
+  Controller: approval-circuits
+    GET    /approval-circuits                   Lister les circuits
+    POST   /approval-circuits                   Créer circuit
+    PUT    /approval-circuits/:id               Modifier circuit
+    DELETE /approval-circuits/:id               Supprimer circuit
+
+  Controller: report-configs
+    GET    /report-configs                      Lister configs de rapports
+    PUT    /report-configs/bulk                 Sauvegarde en masse
+    PUT    /report-configs/:reportId            Créer/modifier une config
+    DELETE /report-configs/:reportId            Supprimer config
+
+  Controller: admin-query
+    GET    /admin-query/search                  Recherche globale d'entités
+    PATCH  /admin-query/update-status           Maj en masse des statuts
+
+
+================================================================================
+  4. MODULE MANAGER-CAISSE (Manager Caisse)
+================================================================================
+
+FRONTEND — Pages (requiredRole="manager") :
+  /manager-caisse/dashboard           → ManagerDashboardPage      Dashboard manager
+  /manager-caisse/closing             → ManagerClosingListPage    Liste des clôtures
+  /manager-caisse/closing/:id         → CashDayDetailPage         Détail journée caisse
+  /manager-caisse/closing-history     → ClosingHistoryPage        Historique des clôtures
+  /manager-caisse/accounting-entries  → AccountingEntriesPage     Écritures comptables
+  /manager-caisse/period-reports      → ManagerCashReportsPage    Rapports par période
+  /manager-caisse/categories          → CategoryManagementPage    Gestion des catégories
+  /manager-caisse/accounting          → AccountingConfigPage      Configuration comptable
+  /manager-caisse/settings            → CashSettingsPage          Paramètres de caisse
+
+BACKEND — expense-service (port 3002) :
+
+  Controller: cash-closing (complet)
+    POST   /cash-closing/open                   Ouvrir journée
+    GET    /cash-closing/current                Journée en cours
+    GET    /cash-closing/state                  État caisse
+    GET    /cash-closing/operations             Opérations du jour
+    POST   /cash-closing/movements              Ajouter mouvement
+    POST   /cash-closing/lock                   Verrouiller
+    POST   /cash-closing/unlock                 Déverrouiller
+    GET    /cash-closing/accounting-entries      Écritures comptables
+    POST   /cash-closing/accounting-entries/process   Traiter écritures
+    POST   /cash-closing/accounting-entries/cancel    Annuler traitement
+    POST   /cash-closing/close                  Clôturer
+    GET    /cash-closing/history                Historique
+    GET    /cash-closing/:id                    Détail journée
+    GET    /cash-closing/:id/operations         Opérations par jour
+
+  Controller: categories
+    GET    /categories                          Lister les catégories
+    GET    /categories/:id                      Détail catégorie
+    POST   /categories                          Créer catégorie
+    PATCH  /categories/:id                      Modifier catégorie
+
+  Controller: dashboard
+    GET    /dashboard/kpis                      KPIs principaux
+    GET    /dashboard/treasury                  Trésorerie
+
+
+================================================================================
+  5. MODULE DECISION (Décisionnaire)
+================================================================================
+
+FRONTEND — Pages :
+  /                → DecisionDashboard        Dashboard exécutif (KPIs, graphiques, alertes IA)
+  /validation      → ExpenseValidationPage    Validation des dépenses (approuver/rejeter)
+  /month-expenses  → MonthExpensesPage         Vue des dépenses du mois en cours
+  /devis           → DevisListPage             Liste des devis avec commentaires décisionnels
+
+  Note: Les pages FNE (/fne/invoices, /fne/invoices/:id) sont accessibles
+        en mode LECTURE SEULE (pas de boutons Modifier/Certifier/Supprimer/Importer)
+
+BACKEND — expense-service (port 3002) :
+
+  Controller: expenses (validation)
+    GET    /expenses                            Lister (filtrées status=PENDING)
+    POST   /expenses/:id/approve                Approuver
+    POST   /expenses/:id/reject                 Rejeter
+    POST   /expenses/:id/pay                    Marquer payée
+
+  Controller: disbursement-requests (validation)
+    GET    /disbursement-requests/pending       Demandes en attente
+    PATCH  /disbursement-requests/:id/approve   Approuver
+    PATCH  /disbursement-requests/:id/reject    Rejeter
+
+  Controller: dashboard
+    GET    /dashboard/kpis                      KPIs principaux
+
+BACKEND — sales-service (port 3003) :
+
+  Controller: fne-invoices (consultation)
+    GET    /fne-invoices                        Lister les factures FNE
+    GET    /fne-invoices/:id                    Détail facture
+    PATCH  /fne-invoices/:id/decision-comment   Commentaire décisionnel
+
+
+================================================================================
+  6. SERVICES TRANSVERSAUX (utilisés par tous les modules)
+================================================================================
+
+AUTH-SERVICE (port 3001) :
+
+  Controller: auth
+    POST   /auth/login                          Connexion
+    POST   /auth/refresh                        Renouveler le token
+    POST   /auth/logout                         Déconnexion
+    POST   /auth/mfa/setup                      Configurer MFA
+    POST   /auth/mfa/verify                     Vérifier MFA
+    POST   /auth/forgot-password                Mot de passe oublié
+    POST   /auth/reset-password                 Réinitialiser mot de passe
+
+FILE-SERVICE (port 3007) :
+
+  Controller: files
+    POST   /files/upload                        Upload fichier
+    GET    /files/:id                           Métadonnées fichier
+    GET    /files/:id/download                  Télécharger
+    DELETE /files/:id                           Supprimer
+
+NOTIFICATION-SERVICE (port 3006) :
+
+  Controller: notifications
+    GET    /notifications                       Lister
+    GET    /notifications/unread-count          Compteur non lues
+    PATCH  /notifications/read-all              Tout marquer lu
+    PATCH  /notifications/:id/read             Marquer une lue
+
+REPORT-SERVICE (Python/FastAPI — port 8001) :
+
+    POST   /reports/generate                    Lancer génération async
+    GET    /reports/{job_id}/status              Vérifier statut
+    GET    /reports/{job_id}/download            Télécharger rapport
+    POST   /reports/schedule                    Programmer rapport récurrent
+    GET    /reports/templates                   Lister les modèles
+
+AI-SERVICE (Python/FastAPI — port 8000) :
+
+    POST   /anomaly/detect                      Détection d'anomalie
+    POST   /categorize                          Catégorisation automatique
+    POST   /categorize/feedback                 Feedback correction
+    POST   /chatbot/ask                         Assistant IA
+    GET    /forecast/sales                      Prévision des ventes (Prophet)
+    POST   /narrative/generate                  Rapport narratif (Claude API)
+    POST   /ocr/extract                         OCR sur facture/reçu
+    POST   /score/client                        Scoring client (XGBoost)
+    POST   /score/client/features               Scoring avec features
+
+SALES-SERVICE — Contrôleurs génériques (hors FNE) :
+
+  Controller: sales
+    GET    /sales                               Lister ventes
+    GET    /sales/:id                           Détail vente
+    POST   /sales                               Créer vente
+    PATCH  /sales/:id                           Modifier
+    POST   /sales/:id/confirm                   Confirmer
+    DELETE /sales/:id                           Supprimer
+
+  Controller: clients
+    GET    /clients                             Lister
+    GET    /clients/:id                         Détail
+    GET    /clients/:id/statement               Relevé client
+    POST   /clients                             Créer
+    PATCH  /clients/:id                         Modifier
+    DELETE /clients/:id                         Supprimer
+
+  Controller: products
+    GET    /products                            Lister
+    GET    /products/:id                        Détail
+    POST   /products                            Créer
+    PATCH  /products/:id                        Modifier
+    PATCH  /products/:id/toggle-active          Activer/désactiver
+    DELETE /products/:id                        Supprimer
+
+  Controller: payments
+    GET    /payments                            Lister
+    GET    /payments/:id                        Détail
+    POST   /payments                            Créer paiement
+
+  Controller: receivables
+    GET    /receivables/aging-report            Rapport d'ancienneté
+    GET    /receivables                         Lister créances
+    GET    /receivables/:id                     Détail

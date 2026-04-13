@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -9,11 +9,15 @@ import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
+import { CompaniesModule } from './companies/companies.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 import { User } from './entities/user.entity';
 import { Role } from './entities/role.entity';
+import { Company } from './entities/company.entity';
 import { AuditLog } from './audit/audit-log.entity';
 
 @Module({
@@ -25,15 +29,16 @@ import { AuditLog } from './audit/audit-log.entity';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        type: 'postgres' as const,
+        type: 'mssql' as const,
         host: config.get<string>('database.host'),
         port: config.get<number>('database.port'),
         username: config.get<string>('database.username'),
         password: config.get<string>('database.password'),
         database: config.get<string>('database.database'),
-        entities: [User, Role, AuditLog],
+        entities: [User, Role, Company, AuditLog],
         synchronize: false,
         logging: config.get<string>('app.nodeEnv') !== 'production',
+        options: { encrypt: false, trustServerCertificate: true },
       }),
     }),
     ThrottlerModule.forRootAsync({
@@ -52,6 +57,9 @@ import { AuditLog } from './audit/audit-log.entity';
     AuthModule,
     UsersModule,
     RolesModule,
+    CompaniesModule,
+    DashboardModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

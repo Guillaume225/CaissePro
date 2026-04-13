@@ -1,0 +1,172 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Dépenses créées / jour",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "increase(business_expenses_created_total[1d])",
+          "legendFormat": "Dépenses créées"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "displayName": "Dépenses / jour" }
+      }
+    },
+    {
+      "title": "CA journalier (FCFA)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "increase(business_sales_amount_total[1d])",
+          "legendFormat": "Chiffre d'affaires"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyXOF" }
+      }
+    },
+    {
+      "title": "Montant total dépenses (jour)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "increase(business_expenses_amount_total[1d])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyXOF" }
+      }
+    },
+    {
+      "title": "Ventes du jour",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "targets": [
+        {
+          "expr": "increase(business_sales_created_total[1d])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      }
+    },
+    {
+      "title": "Clôtures de caisse (jour)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "increase(business_closings_total[1d])"
+        }
+      ]
+    },
+    {
+      "title": "Écart moyen clôture (FCFA)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 8 },
+      "targets": [
+        {
+          "expr": "avg(business_closing_gap_amount)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyXOF",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5000 },
+              { "color": "red", "value": 50000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Dépenses par catégorie (semaine)",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "increase(business_expenses_amount_by_category[7d])",
+          "legendFormat": "{{ category }}"
+        }
+      ]
+    },
+    {
+      "title": "Dépenses par statut",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "business_expenses_by_status",
+          "legendFormat": "{{ status }}"
+        }
+      ]
+    },
+    {
+      "title": "Taux d'approbation",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "(increase(business_expenses_approved_total[7d]) / increase(business_expenses_submitted_total[7d])) * 100"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "green", "value": 80 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Consommation budget par catégorie (%)",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 20 },
+      "targets": [
+        {
+          "expr": "(business_budget_consumed / business_budget_allocated) * 100",
+          "legendFormat": "{{ category }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["caisseflow", "business"],
+  "templating": { "list": [] },
+  "time": { "from": "now-7d", "to": "now" },
+  "title": "CaisseFlow — Métier",
+  "uid": "caisseflow-business"
+}

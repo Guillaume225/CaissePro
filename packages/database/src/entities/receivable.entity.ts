@@ -43,15 +43,15 @@ export class Receivable {
   @Column({ type: 'date', name: 'due_date' })
   dueDate!: string;
 
-  @Column({ type: 'enum', enum: ReceivableStatus, default: ReceivableStatus.OPEN })
+  @Column({ type: 'simple-enum', enum: ReceivableStatus, default: ReceivableStatus.OPEN })
   status!: ReceivableStatus;
 
-  @Column({ type: 'enum', enum: AgingBucket, name: 'aging_bucket', default: AgingBucket.CURRENT })
+  @Column({ type: 'simple-enum', enum: AgingBucket, name: 'aging_bucket', default: AgingBucket.CURRENT })
   agingBucket!: AgingBucket;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetimeoffset' })
   updatedAt!: Date;
 }

@@ -34,15 +34,15 @@ export class ExpenseApproval {
   @Column({ type: 'smallint' })
   level!: number; // 1 or 2
 
-  @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING })
+  @Column({ type: 'simple-enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING })
   status!: ApprovalStatus;
 
   @Column({ type: 'text', nullable: true })
   comment!: string | null;
 
-  @Column({ type: 'timestamptz', name: 'approved_at', nullable: true })
+  @Column({ type: 'datetimeoffset', name: 'approved_at', nullable: true })
   approvedAt!: Date | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 }

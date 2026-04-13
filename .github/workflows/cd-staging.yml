@@ -1,0 +1,138 @@
+name: CD — Staging
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: cd-staging
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/caisseflow
+  K8S_NAMESPACE: caisseflow-staging
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-push:
+    name: Build & Push — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: auth-service
+            context: .
+            dockerfile: services/auth-service/Dockerfile
+          - service: expense-service
+            context: .
+            dockerfile: services/expense-service/Dockerfile
+          - service: sales-service
+            context: .
+            dockerfile: services/sales-service/Dockerfile
+          - service: audit-service
+            context: .
+            dockerfile: services/audit-service/Dockerfile
+          - service: file-service
+            context: .
+            dockerfile: services/file-service/Dockerfile
+          - service: notification-service
+            context: .
+            dockerfile: services/notification-service/Dockerfile
+          - service: ai-service
+            context: services/ai-service
+            dockerfile: services/ai-service/Dockerfile
+          - service: report-service
+            context: services/report-service
+            dockerfile: services/report-service/Dockerfile
+          - service: api-gateway
+            context: apps/api-gateway
+            dockerfile: apps/api-gateway/Dockerfile
+          - service: web
+            context: .
+            dockerfile: apps/web/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          tags: |
+            type=sha,prefix=staging-
+            type=raw,value=staging-latest
+
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-push
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+
+      - name: Update image tags
+        run: |
+          SHA_SHORT=$(echo "${{ github.sha }}" | head -c 7)
+          SERVICES=(auth-service expense-service sales-service audit-service file-service notification-service ai-service report-service api-gateway web)
+          for SVC in "${SERVICES[@]}"; do
+            kubectl set image deployment/${SVC} \
+              ${SVC}=${{ env.IMAGE_PREFIX }}/${SVC}:staging-sha-${SHA_SHORT} \
+              -n ${{ env.K8S_NAMESPACE }} \
+              --record || echo "Skipping ${SVC} (not found)"
+          done
+
+      - name: Wait for rollout
+        run: |
+          SERVICES=(auth-service expense-service sales-service audit-service file-service notification-service ai-service report-service web)
+          for SVC in "${SERVICES[@]}"; do
+            kubectl rollout status deployment/${SVC} \
+              -n ${{ env.K8S_NAMESPACE }} \
+              --timeout=300s || echo "Warning: ${SVC} rollout not ready"
+          done
+
+      - name: Smoke test
+        run: |
+          STAGING_URL="${{ secrets.STAGING_URL }}"
+          echo "Checking ${STAGING_URL}/api/health..."
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${STAGING_URL}/api/health" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS, retrying in 10s..."
+            sleep 10
+          done
+          echo "Smoke test failed"
+          exit 1
