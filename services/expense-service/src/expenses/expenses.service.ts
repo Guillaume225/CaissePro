@@ -525,6 +525,12 @@ export class ExpensesService {
     }
 
     // Check disbursement limit from company settings
+    const cashierRole =
+      this.configService.get<string>('workflow.cashierRole') ?? 'CAISSIER_DEPENSES';
+    if (user.roleName !== cashierRole) {
+      throw new ForbiddenException('Seul le caissier peut marquer une dépense comme payée.');
+    }
+
     const amount = Number(expense.amount);
     const [company] = await this.dataSource.query(
       `SELECT TOP 1 max_disbursement_amount FROM companies`,

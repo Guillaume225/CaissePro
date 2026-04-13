@@ -12,6 +12,8 @@ import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { EventsService, ExpenseEvent } from '../events/events.service';
 import { DataSource } from 'typeorm';
+import { CashDay } from '../entities/cash-day.entity';
+import { DisbursementRequest } from '../entities/disbursement-request.entity';
 
 /* ─── Helpers ─── */
 
@@ -127,6 +129,8 @@ describe('ExpensesService', () => {
         { provide: getRepositoryToken(ExpenseAttachment), useValue: attachRepo },
         { provide: getRepositoryToken(ExpenseApproval), useValue: approvalRepo },
         { provide: getRepositoryToken(ExpenseCategory), useValue: catRepo },
+        { provide: getRepositoryToken(CashDay), useValue: mockRepo() },
+        { provide: getRepositoryToken(DisbursementRequest), useValue: mockRepo() },
         { provide: AuditService, useValue: audit },
         { provide: EventsService, useValue: events },
         { provide: DataSource, useValue: dataSource },
@@ -135,6 +139,11 @@ describe('ExpensesService', () => {
     }).compile();
 
     service = module.get<ExpensesService>(ExpensesService);
+
+    // findById now uses createQueryBuilder internally; spy it for all write-method tests
+    jest
+      .spyOn(service, 'findById')
+      .mockImplementation(async (id: string) => ({ id, ...makeExpense({ id }) }) as never);
   });
 
   it('should be defined', () => {
@@ -158,15 +167,21 @@ describe('ExpensesService', () => {
   /* ═══════════════════════════ findById ═══════════════════════════ */
 
   describe('findById', () => {
+    beforeEach(() => {
+      (service.findById as jest.Mock).mockRestore();
+    });
+
     it('should return expense', async () => {
-      expenseRepo.findOne.mockResolvedValue(makeExpense());
+      const qb = createMockQb(makeExpense());
+      expenseRepo.createQueryBuilder.mockReturnValue(qb);
       const result = await service.findById('exp-1');
       expect(result.id).toBe('exp-1');
       expect(result.reference).toBe('DEP-2024-00001');
     });
 
     it('should throw NotFoundException if not found', async () => {
-      expenseRepo.findOne.mockResolvedValue(null);
+      const qb = createMockQb(null);
+      expenseRepo.createQueryBuilder.mockReturnValue(qb);
       await expect(service.findById('not-found')).rejects.toThrow(NotFoundException);
     });
   });
@@ -179,7 +194,6 @@ describe('ExpensesService', () => {
       const qb = createMockQb(null);
       expenseRepo.createQueryBuilder.mockReturnValue(qb);
       expenseRepo.save.mockResolvedValue({ id: 'exp-1' });
-      expenseRepo.findOne.mockResolvedValue(makeExpense());
 
       const user = makeUser({ id: 'user-1', departmentId: 'dept-1' });
       await service.create(
@@ -210,7 +224,7 @@ describe('ExpensesService', () => {
   describe('update', () => {
     it('should update DRAFT expense', async () => {
       const exp = makeExpense({ status: ExpenseStatus.DRAFT });
-      expenseRepo.findOne.mockResolvedValueOnce(exp).mockResolvedValueOnce({ ...exp, amount: 200 });
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       await service.update('exp-1', { amount: 200 }, 'user-1');
       expect(expenseRepo.save).toHaveBeenCalled();
@@ -244,9 +258,7 @@ describe('ExpensesService', () => {
   describe('submit', () => {
     it('should change status DRAFT → PENDING', async () => {
       const exp = makeExpense({ status: ExpenseStatus.DRAFT, createdById: 'user-1' });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp)
-        .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.PENDING });
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       await service.submit('exp-1', 'user-1');
       expect(expenseRepo.save).toHaveBeenCalled();
@@ -280,9 +292,7 @@ describe('ExpensesService', () => {
         amount: 600000,
         departmentId: 'dept-1',
       });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp) // approve lookup
-        .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.APPROVED_L1 }); // findById
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       const user = makeUser({ id: 'approver-1', departmentId: 'dept-1' });
       await service.approve('exp-1', { comment: 'ok' }, user);
@@ -303,9 +313,7 @@ describe('ExpensesService', () => {
         amount: 300000,
         departmentId: 'dept-1',
       });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp)
-        .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.APPROVED_L2 });
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       const user = makeUser({ id: 'approver-1', departmentId: 'dept-1' });
       await service.approve('exp-1', {}, user);
@@ -346,9 +354,7 @@ describe('ExpensesService', () => {
 
     it('should approve L2 when APPROVED_L1 + DAF role + budget OK', async () => {
       const exp = makeExpense({ status: ExpenseStatus.APPROVED_L1, amount: 800000 });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp)
-        .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.APPROVED_L2 });
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       const user = makeUser({ id: 'daf-1', roleName: 'DAF', departmentId: 'dept-finance' });
       await service.approve('exp-1', { comment: 'approved by DAF' }, user);
@@ -394,9 +400,7 @@ describe('ExpensesService', () => {
   describe('reject', () => {
     it('should reject a PENDING expense at L1 (same dept)', async () => {
       const exp = makeExpense({ status: ExpenseStatus.PENDING, departmentId: 'dept-1' });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp)
-        .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.REJECTED });
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       const user = makeUser({ id: 'approver-1', departmentId: 'dept-1' });
       await service.reject('exp-1', { comment: 'Missing receipt' }, user);
@@ -419,9 +423,7 @@ describe('ExpensesService', () => {
 
     it('should reject an APPROVED_L1 expense at L2 (DAF role)', async () => {
       const exp = makeExpense({ status: ExpenseStatus.APPROVED_L1 });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp)
-        .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.REJECTED });
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       const user = makeUser({ id: 'daf-1', roleName: 'DAF' });
       await service.reject('exp-1', { comment: 'Budget exceeded' }, user);
@@ -474,9 +476,7 @@ describe('ExpensesService', () => {
   describe('markPaid', () => {
     it('should mark APPROVED_L2 as PAID when cashier role', async () => {
       const exp = makeExpense({ status: ExpenseStatus.APPROVED_L2 });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp)
-        .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.PAID });
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       const user = makeUser({ id: 'cashier-1', roleName: 'CAISSIER_DEPENSES' });
       await service.markPaid('exp-1', user);
@@ -505,9 +505,7 @@ describe('ExpensesService', () => {
   describe('cancel', () => {
     it('should cancel a PAID expense with reason', async () => {
       const exp = makeExpense({ status: ExpenseStatus.PAID });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(exp)
-        .mockResolvedValueOnce({ ...exp, status: ExpenseStatus.CANCELLED });
+      expenseRepo.findOne.mockResolvedValueOnce(exp);
 
       await service.cancel('exp-1', { reason: 'Duplicate payment' }, 'user-1');
 
@@ -551,9 +549,7 @@ describe('ExpensesService', () => {
         createdById: 'creator-1',
         amount: 800000,
       });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(draft)
-        .mockResolvedValueOnce({ ...draft, status: ExpenseStatus.PENDING });
+      expenseRepo.findOne.mockResolvedValueOnce(draft);
       await service.submit('exp-1', 'creator-1');
       expect(audit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: AuditAction.SUBMIT }),
@@ -565,25 +561,19 @@ describe('ExpensesService', () => {
         amount: 800000,
         departmentId: 'dept-1',
       });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(pending)
-        .mockResolvedValueOnce({ ...pending, status: ExpenseStatus.APPROVED_L1 });
+      expenseRepo.findOne.mockResolvedValueOnce(pending);
       const l1User = makeUser({ id: 'manager-1', departmentId: 'dept-1' });
       await service.approve('exp-1', { comment: 'L1 ok' }, l1User);
       expect(approvalRepo.save).toHaveBeenCalled();
 
       // 3. Approve L2
       const l1Approved = makeExpense({ status: ExpenseStatus.APPROVED_L1, amount: 800000 });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(l1Approved)
-        .mockResolvedValueOnce({ ...l1Approved, status: ExpenseStatus.APPROVED_L2 });
+      expenseRepo.findOne.mockResolvedValueOnce(l1Approved);
       const l2User = makeUser({ id: 'daf-1', roleName: 'DAF' });
       await service.approve('exp-1', { comment: 'L2 ok' }, l2User);
       // 4. Pay
       const l2Approved = makeExpense({ status: ExpenseStatus.APPROVED_L2 });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(l2Approved)
-        .mockResolvedValueOnce({ ...l2Approved, status: ExpenseStatus.PAID });
+      expenseRepo.findOne.mockResolvedValueOnce(l2Approved);
       const cashier = makeUser({ id: 'cashier-1', roleName: 'CAISSIER_DEPENSES' });
       await service.markPaid('exp-1', cashier);
       expect(events.publish).toHaveBeenCalledWith(ExpenseEvent.PAID, expect.any(Object));
@@ -598,9 +588,7 @@ describe('ExpensesService', () => {
         createdById: 'creator-1',
         amount: 200000,
       });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(draft)
-        .mockResolvedValueOnce({ ...draft, status: ExpenseStatus.PENDING });
+      expenseRepo.findOne.mockResolvedValueOnce(draft);
       await service.submit('exp-1', 'creator-1');
 
       // 2. Approve L1 (auto-skip L2)
@@ -609,18 +597,14 @@ describe('ExpensesService', () => {
         amount: 200000,
         departmentId: 'dept-1',
       });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(pending)
-        .mockResolvedValueOnce({ ...pending, status: ExpenseStatus.APPROVED_L2 });
+      expenseRepo.findOne.mockResolvedValueOnce(pending);
       const l1User = makeUser({ id: 'manager-1', departmentId: 'dept-1' });
       await service.approve('exp-1', {}, l1User);
       // L2 auto-approved → 2 approval saves
       expect(approvalRepo.save).toHaveBeenCalledTimes(2);
       // 3. Pay
       const approved = makeExpense({ status: ExpenseStatus.APPROVED_L2 });
-      expenseRepo.findOne
-        .mockResolvedValueOnce(approved)
-        .mockResolvedValueOnce({ ...approved, status: ExpenseStatus.PAID });
+      expenseRepo.findOne.mockResolvedValueOnce(approved);
       const cashier = makeUser({ id: 'cashier-1', roleName: 'CAISSIER_DEPENSES' });
       await service.markPaid('exp-1', cashier);
       expect(events.publish).toHaveBeenCalledWith(ExpenseEvent.PAID, expect.any(Object));

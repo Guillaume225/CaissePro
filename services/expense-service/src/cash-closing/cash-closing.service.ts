@@ -566,7 +566,7 @@ export class CashClosingService {
     const entryDate = (cashDay.closedAt ?? cashDay.openedAt ?? new Date())
       .toISOString()
       .slice(0, 10);
-    const entries: Record<string, unknown>[] = [];
+    const entries: Array<{ debit: number; credit: number; [key: string]: unknown }> = [];
 
     // ── Expense entries: JOIN with categories to get real accounting accounts ──
     const expenses = await this.dataSource.query(

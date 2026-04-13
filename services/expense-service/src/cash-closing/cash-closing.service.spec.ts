@@ -8,6 +8,7 @@ import { Expense } from '../entities/expense.entity';
 import { CashDayStatus } from '../entities/enums';
 import { AuditService } from '../audit/audit.service';
 import { EventsService } from '../events/events.service';
+import { DataSource } from 'typeorm';
 
 const mockUser = {
   id: 'user-1',
@@ -44,6 +45,7 @@ describe('CashClosingService (expense)', () => {
   let service: CashClosingService;
   let closingRepo: {
     findOne: jest.Mock;
+    find: jest.Mock;
     create: jest.Mock;
     save: jest.Mock;
     createQueryBuilder: jest.Mock;
@@ -51,6 +53,7 @@ describe('CashClosingService (expense)', () => {
   let expenseRepo: { createQueryBuilder: jest.Mock };
   let auditService: { log: jest.Mock };
   let eventsService: { publish: jest.Mock };
+  let dataSourceMock: { query: jest.Mock };
 
   const mockQb = {
     where: jest.fn().mockReturnThis(),
@@ -64,20 +67,32 @@ describe('CashClosingService (expense)', () => {
     getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
   };
 
+  const mockUpdateQb = {
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    execute: jest.fn().mockResolvedValue({ affected: 0 }),
+  };
+
   beforeEach(async () => {
     closingRepo = {
       findOne: jest.fn(),
+      find: jest.fn().mockResolvedValue([]),
       create: jest.fn((data) => ({ ...makeMockClosing(), ...data })),
       save: jest.fn((entity) => Promise.resolve(entity)),
       createQueryBuilder: jest.fn(() => ({ ...mockQb })),
     };
 
     expenseRepo = {
-      createQueryBuilder: jest.fn(() => ({ ...mockQb })),
+      createQueryBuilder: jest.fn(() => ({ ...mockUpdateQb })),
     };
 
     auditService = { log: jest.fn().mockResolvedValue(undefined) };
     eventsService = { publish: jest.fn().mockResolvedValue(undefined) };
+    dataSourceMock = {
+      query: jest.fn().mockResolvedValue([{ totalExits: '0', totalEntries: '0' }]),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -97,6 +112,11 @@ describe('CashClosingService (expense)', () => {
               return c[key];
             }),
           },
+        },
+        { provide: DataSource, useValue: dataSourceMock },
+        {
+          provide: DataSource,
+          useValue: { query: jest.fn().mockResolvedValue([]) },
         },
       ],
     }).compile();
@@ -150,14 +170,9 @@ describe('CashClosingService (expense)', () => {
   describe('getCurrent', () => {
     it('should return the current open register with live totals', async () => {
       closingRepo.findOne.mockResolvedValue(makeMockClosing());
-
-      const expQb = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '25000' }),
-      };
-      expenseRepo.createQueryBuilder.mockReturnValue(expQb);
+      jest
+        .spyOn(service as never, 'calculateTotals' as never)
+        .mockResolvedValue({ totalEntries: 0, totalExits: 25000 } as never);
 
       const result = await service.getCurrent();
 
@@ -175,15 +190,12 @@ describe('CashClosingService (expense)', () => {
   /* ─── CLOSE ─── */
   describe('close', () => {
     it('should close the register with matching balance', async () => {
-      closingRepo.findOne.mockResolvedValue(makeMockClosing());
-
-      const expQb = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '20000' }),
-      };
-      expenseRepo.createQueryBuilder.mockReturnValue(expQb);
+      closingRepo.findOne.mockResolvedValue(
+        makeMockClosing({ status: CashDayStatus.PENDING_CLOSE }),
+      );
+      jest
+        .spyOn(service as never, 'calculateTotals' as never)
+        .mockResolvedValue({ totalEntries: 0, totalExits: 20000 } as never);
 
       const result = await service.close({ actualBalance: 80000 }, mockUser);
 
@@ -195,32 +207,26 @@ describe('CashClosingService (expense)', () => {
     });
 
     it('should compute variance correctly', async () => {
-      closingRepo.findOne.mockResolvedValue(makeMockClosing());
-
-      const expQb = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '30000' }),
-      };
-      expenseRepo.createQueryBuilder.mockReturnValue(expQb);
+      closingRepo.findOne.mockResolvedValue(
+        makeMockClosing({ status: CashDayStatus.PENDING_CLOSE }),
+      );
+      jest
+        .spyOn(service as never, 'calculateTotals' as never)
+        .mockResolvedValue({ totalEntries: 0, totalExits: 30000 } as never);
 
       // theoretical = 100000 - 30000 = 70000, actual = 68000, variance = -2000
-      const result = await service.close({ actualBalance: 68000 }, mockUser);
+      const result = await service.close({ actualBalance: 68000, comment: 'small diff' }, mockUser);
 
       expect(result.variance).toBe(-2000);
     });
 
     it('should require comment when variance exceeds threshold', async () => {
-      closingRepo.findOne.mockResolvedValue(makeMockClosing());
-
-      const expQb = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '10000' }),
-      };
-      expenseRepo.createQueryBuilder.mockReturnValue(expQb);
+      closingRepo.findOne.mockResolvedValue(
+        makeMockClosing({ status: CashDayStatus.PENDING_CLOSE }),
+      );
+      jest
+        .spyOn(service as never, 'calculateTotals' as never)
+        .mockResolvedValue({ totalEntries: 0, totalExits: 10000 } as never);
 
       // theoretical = 100000 - 10000 = 90000, actual = 82000, variance = -8000 > 5000 threshold
       await expect(service.close({ actualBalance: 82000 }, mockUser)).rejects.toThrow(
@@ -229,15 +235,12 @@ describe('CashClosingService (expense)', () => {
     });
 
     it('should accept large variance with comment', async () => {
-      closingRepo.findOne.mockResolvedValue(makeMockClosing());
-
-      const expQb = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '10000' }),
-      };
-      expenseRepo.createQueryBuilder.mockReturnValue(expQb);
+      closingRepo.findOne.mockResolvedValue(
+        makeMockClosing({ status: CashDayStatus.PENDING_CLOSE }),
+      );
+      jest
+        .spyOn(service as never, 'calculateTotals' as never)
+        .mockResolvedValue({ totalEntries: 0, totalExits: 10000 } as never);
 
       const result = await service.close(
         { actualBalance: 82000, comment: 'Billet manquant' },
@@ -250,26 +253,23 @@ describe('CashClosingService (expense)', () => {
     });
 
     it('should send DAF alert event when variance exceeds threshold', async () => {
-      closingRepo.findOne.mockResolvedValue(makeMockClosing());
-
-      const expQb = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '10000' }),
-      };
-      expenseRepo.createQueryBuilder.mockReturnValue(expQb);
+      closingRepo.findOne.mockResolvedValue(
+        makeMockClosing({ status: CashDayStatus.PENDING_CLOSE }),
+      );
+      jest
+        .spyOn(service as never, 'calculateTotals' as never)
+        .mockResolvedValue({ totalEntries: 0, totalExits: 10000 } as never);
 
       await service.close({ actualBalance: 82000, comment: 'Explication' }, mockUser);
 
-      // 3 publish calls: CLOSED + VARIANCE_ALERT
+      // 2 publish calls: CLOSED + VARIANCE_ALERT
       expect(eventsService.publish).toHaveBeenCalledTimes(2);
     });
 
     it('should throw if no register is open', async () => {
       closingRepo.findOne.mockResolvedValue(null);
       await expect(service.close({ actualBalance: 50000 }, mockUser)).rejects.toThrow(
-        NotFoundException,
+        BadRequestException,
       );
     });
   });
