@@ -20,7 +20,7 @@ permissions:
 jobs:
   build-push:
     name: Build & Push — ${{ matrix.service }}
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     strategy:
       matrix:
         include:
@@ -87,7 +87,7 @@ jobs:
 
   deploy-staging:
     name: Deploy to Staging
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: build-push
     environment: staging
     steps:
@@ -97,42 +97,53 @@ jobs:
         uses: azure/setup-kubectl@v3
 
       - name: Configure kubeconfig
+        shell: pwsh
         run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+          $kubeDir = "$env:USERPROFILE\.kube"
+          if (-not (Test-Path $kubeDir)) { New-Item -ItemType Directory -Path $kubeDir -Force }
+          [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.KUBE_CONFIG_STAGING }}")) | Out-File "$kubeDir\config" -Encoding utf8
 
       - name: Update image tags
+        shell: pwsh
         run: |
-          SHA_SHORT=$(echo "${{ github.sha }}" | head -c 7)
-          SERVICES=(auth-service expense-service sales-service audit-service file-service notification-service ai-service report-service api-gateway web)
-          for SVC in "${SERVICES[@]}"; do
-            kubectl set image deployment/${SVC} \
-              ${SVC}=${{ env.IMAGE_PREFIX }}/${SVC}:staging-sha-${SHA_SHORT} \
-              -n ${{ env.K8S_NAMESPACE }} \
-              --record || echo "Skipping ${SVC} (not found)"
-          done
+          $shaShort = "${{ github.sha }}".Substring(0, 7)
+          $services = @("auth-service","expense-service","sales-service","audit-service","file-service","notification-service","ai-service","report-service","api-gateway","web")
+          foreach ($svc in $services) {
+            kubectl set image deployment/$svc `
+              "${svc}=${{ env.IMAGE_PREFIX }}/${svc}:staging-sha-${shaShort}" `
+              -n ${{ env.K8S_NAMESPACE }} --record 2>$null
+            if ($LASTEXITCODE -ne 0) { Write-Host "Skipping $svc (not found)" }
+          }
 
       - name: Wait for rollout
+        shell: pwsh
         run: |
-          SERVICES=(auth-service expense-service sales-service audit-service file-service notification-service ai-service report-service web)
-          for SVC in "${SERVICES[@]}"; do
-            kubectl rollout status deployment/${SVC} \
-              -n ${{ env.K8S_NAMESPACE }} \
-              --timeout=300s || echo "Warning: ${SVC} rollout not ready"
-          done
+          $services = @("auth-service","expense-service","sales-service","audit-service","file-service","notification-service","ai-service","report-service","web")
+          foreach ($svc in $services) {
+            kubectl rollout status deployment/$svc -n ${{ env.K8S_NAMESPACE }} --timeout=300s 2>$null
+            if ($LASTEXITCODE -ne 0) { Write-Host "Warning: $svc rollout not ready" }
+          }
 
       - name: Smoke test
+        shell: pwsh
         run: |
-          STAGING_URL="${{ secrets.STAGING_URL }}"
-          echo "Checking ${STAGING_URL}/api/health..."
-          for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${STAGING_URL}/api/health" || echo "000")
-            if [ "$STATUS" = "200" ]; then
-              echo "Health check passed!"
-              exit 0
-            fi
-            echo "Attempt $i: status=$STATUS, retrying in 10s..."
-            sleep 10
-          done
-          echo "Smoke test failed"
-          exit 1
+          $stagingUrl = "${{ secrets.STAGING_URL }}"
+          Write-Host "Checking ${stagingUrl}/api/health..."
+          $passed = $false
+          for ($i = 1; $i -le 10; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri "${stagingUrl}/api/health" -UseBasicParsing -TimeoutSec 10
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Health check passed!"
+                $passed = $true
+                break
+              }
+            } catch {
+              Write-Host "Attempt ${i}: failed, retrying in 10s..."
+            }
+            Start-Sleep -Seconds 10
+          }
+          if (-not $passed) {
+            Write-Host "Smoke test failed"
+            exit 1
+          }

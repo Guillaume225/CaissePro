@@ -21,7 +21,7 @@ jobs:
   # ── Build & push tagged images ────────────────────────
   build-push:
     name: Build & Push — ${{ matrix.service }}
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     strategy:
       matrix:
         include:
@@ -90,7 +90,7 @@ jobs:
   # ── Blue-green deployment ─────────────────────────────
   deploy-production:
     name: Deploy to Production (Blue-Green)
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: build-push
     environment: production
     steps:
@@ -100,125 +100,129 @@ jobs:
         uses: azure/setup-kubectl@v3
 
       - name: Configure kubeconfig
+        shell: pwsh
         run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_PROD }}" | base64 -d > $HOME/.kube/config
+          $kubeDir = "$env:USERPROFILE\.kube"
+          if (-not (Test-Path $kubeDir)) { New-Item -ItemType Directory -Path $kubeDir -Force }
+          [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.KUBE_CONFIG_PROD }}")) | Out-File "$kubeDir\config" -Encoding utf8
 
       - name: Extract version
         id: version
-        run: echo "tag=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref }}" -replace '^refs/tags/v', ''
+          "tag=$tag" | Out-File -Append $env:GITHUB_OUTPUT
 
       - name: Determine active slot
         id: slot
+        shell: pwsh
         run: |
-          ACTIVE=$(kubectl get svc web -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.spec.selector.slot}' 2>/dev/null || echo "blue")
-          if [ "$ACTIVE" = "blue" ]; then
-            echo "target=green" >> $GITHUB_OUTPUT
-            echo "current=blue" >> $GITHUB_OUTPUT
-          else
-            echo "target=blue" >> $GITHUB_OUTPUT
-            echo "current=green" >> $GITHUB_OUTPUT
-          fi
-          echo "Active slot: $ACTIVE → deploying to $([ "$ACTIVE" = "blue" ] && echo green || echo blue)"
+          $active = kubectl get svc web -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.spec.selector.slot}' 2>$null
+          if (-not $active -or $LASTEXITCODE -ne 0) { $active = "blue" }
+          if ($active -eq "blue") {
+            "target=green" | Out-File -Append $env:GITHUB_OUTPUT
+            "current=blue" | Out-File -Append $env:GITHUB_OUTPUT
+          } else {
+            "target=blue" | Out-File -Append $env:GITHUB_OUTPUT
+            "current=green" | Out-File -Append $env:GITHUB_OUTPUT
+          }
+          $targetSlot = if ($active -eq "blue") { "green" } else { "blue" }
+          Write-Host "Active slot: $active -> deploying to $targetSlot"
 
       - name: Deploy to ${{ steps.slot.outputs.target }} slot
+        shell: pwsh
         run: |
-          VERSION="${{ steps.version.outputs.tag }}"
-          SLOT="${{ steps.slot.outputs.target }}"
-          SERVICES=(auth-service expense-service sales-service audit-service file-service notification-service ai-service report-service api-gateway web)
-
-          for SVC in "${SERVICES[@]}"; do
-            # Update the inactive deployment
-            DEPLOY_NAME="${SVC}-${SLOT}"
-            IMAGE="${{ env.IMAGE_PREFIX }}/${SVC}:${VERSION}"
-
-            kubectl set image deployment/${DEPLOY_NAME} \
-              ${SVC}=${IMAGE} \
-              -n ${{ env.K8S_NAMESPACE }} \
-              --record 2>/dev/null || \
-            echo "No blue-green deployment for ${SVC}, updating main deployment" && \
-            kubectl set image deployment/${SVC} \
-              ${SVC}=${IMAGE} \
-              -n ${{ env.K8S_NAMESPACE }} \
-              --record || true
-          done
+          $version = "${{ steps.version.outputs.tag }}"
+          $slot = "${{ steps.slot.outputs.target }}"
+          $services = @("auth-service","expense-service","sales-service","audit-service","file-service","notification-service","ai-service","report-service","api-gateway","web")
+          foreach ($svc in $services) {
+            $deployName = "${svc}-${slot}"
+            $image = "${{ env.IMAGE_PREFIX }}/${svc}:${version}"
+            kubectl set image deployment/$deployName "${svc}=${image}" -n ${{ env.K8S_NAMESPACE }} --record 2>$null
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "No blue-green deployment for $svc, updating main deployment"
+              kubectl set image deployment/$svc "${svc}=${image}" -n ${{ env.K8S_NAMESPACE }} --record 2>$null
+            }
+          }
 
       - name: Wait for ${{ steps.slot.outputs.target }} rollout
+        shell: pwsh
         run: |
-          SLOT="${{ steps.slot.outputs.target }}"
-          SERVICES=(auth-service expense-service sales-service audit-service file-service notification-service ai-service report-service web)
-          for SVC in "${SERVICES[@]}"; do
-            kubectl rollout status deployment/${SVC}-${SLOT} \
-              -n ${{ env.K8S_NAMESPACE }} \
-              --timeout=300s 2>/dev/null || \
-            kubectl rollout status deployment/${SVC} \
-              -n ${{ env.K8S_NAMESPACE }} \
-              --timeout=300s || true
-          done
+          $slot = "${{ steps.slot.outputs.target }}"
+          $services = @("auth-service","expense-service","sales-service","audit-service","file-service","notification-service","ai-service","report-service","web")
+          foreach ($svc in $services) {
+            kubectl rollout status deployment/"${svc}-${slot}" -n ${{ env.K8S_NAMESPACE }} --timeout=300s 2>$null
+            if ($LASTEXITCODE -ne 0) {
+              kubectl rollout status deployment/$svc -n ${{ env.K8S_NAMESPACE }} --timeout=300s 2>$null
+            }
+          }
 
       - name: Smoke tests
         id: smoke
+        shell: pwsh
         run: |
-          PROD_URL="${{ secrets.PRODUCTION_URL }}"
-          ENDPOINTS=("/api/health" "/api/auth/health" "/api/expenses/health")
-          FAILED=0
-
-          for EP in "${ENDPOINTS[@]}"; do
-            echo "Testing ${PROD_URL}${EP}..."
-            for i in {1..5}; do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${PROD_URL}${EP}" --max-time 10 || echo "000")
-              if [ "$STATUS" = "200" ]; then
-                echo "  ✓ ${EP} — OK"
-                break
-              fi
-              if [ "$i" = "5" ]; then
-                echo "  ✗ ${EP} — FAILED (status: ${STATUS})"
-                FAILED=1
-              fi
-              sleep 5
-            done
-          done
-
-          if [ "$FAILED" = "1" ]; then
-            echo "smoke_passed=false" >> $GITHUB_OUTPUT
+          $prodUrl = "${{ secrets.PRODUCTION_URL }}"
+          $endpoints = @("/api/health", "/api/auth/health", "/api/expenses/health")
+          $failed = 0
+          foreach ($ep in $endpoints) {
+            Write-Host "Testing ${prodUrl}${ep}..."
+            $ok = $false
+            for ($i = 1; $i -le 5; $i++) {
+              try {
+                $resp = Invoke-WebRequest -Uri "${prodUrl}${ep}" -UseBasicParsing -TimeoutSec 10
+                if ($resp.StatusCode -eq 200) {
+                  Write-Host "  OK - ${ep}"
+                  $ok = $true
+                  break
+                }
+              } catch { }
+              if ($i -eq 5) {
+                Write-Host "  FAILED - ${ep}"
+                $failed = 1
+              }
+              Start-Sleep -Seconds 5
+            }
+          }
+          if ($failed -eq 1) {
+            "smoke_passed=false" | Out-File -Append $env:GITHUB_OUTPUT
             exit 1
-          fi
-          echo "smoke_passed=true" >> $GITHUB_OUTPUT
+          }
+          "smoke_passed=true" | Out-File -Append $env:GITHUB_OUTPUT
 
       - name: Switch traffic to ${{ steps.slot.outputs.target }}
         if: steps.smoke.outputs.smoke_passed == 'true'
+        shell: pwsh
         run: |
-          SLOT="${{ steps.slot.outputs.target }}"
-          # Patch all services to point to the new slot
-          kubectl patch svc web -n ${{ env.K8S_NAMESPACE }} \
-            -p "{\"spec\":{\"selector\":{\"slot\":\"${SLOT}\"}}}" || true
-          kubectl patch svc api-gateway -n ${{ env.K8S_NAMESPACE }} \
-            -p "{\"spec\":{\"selector\":{\"slot\":\"${SLOT}\"}}}" || true
-          echo "Traffic switched to ${SLOT}"
+          $slot = "${{ steps.slot.outputs.target }}"
+          kubectl patch svc web -n ${{ env.K8S_NAMESPACE }} -p "{`"spec`":{`"selector`":{`"slot`":`"${slot}`"}}}" 2>$null
+          kubectl patch svc api-gateway -n ${{ env.K8S_NAMESPACE }} -p "{`"spec`":{`"selector`":{`"slot`":`"${slot}`"}}}" 2>$null
+          Write-Host "Traffic switched to $slot"
 
       - name: Rollback on failure
         if: failure() && steps.smoke.outputs.smoke_passed == 'false'
+        shell: pwsh
         run: |
-          CURRENT="${{ steps.slot.outputs.current }}"
-          echo "Rolling back — keeping traffic on ${CURRENT} slot"
-          SERVICES=(auth-service expense-service sales-service audit-service file-service notification-service ai-service report-service web)
-          for SVC in "${SERVICES[@]}"; do
-            kubectl rollout undo deployment/${SVC}-${{ steps.slot.outputs.target }} \
-              -n ${{ env.K8S_NAMESPACE }} 2>/dev/null || true
-          done
-          echo "::error::Deployment failed smoke tests. Traffic remains on ${CURRENT} slot."
+          $current = "${{ steps.slot.outputs.current }}"
+          $target = "${{ steps.slot.outputs.target }}"
+          Write-Host "Rolling back - keeping traffic on $current slot"
+          $services = @("auth-service","expense-service","sales-service","audit-service","file-service","notification-service","ai-service","report-service","web")
+          foreach ($svc in $services) {
+            kubectl rollout undo deployment/"${svc}-${target}" -n ${{ env.K8S_NAMESPACE }} 2>$null
+          }
+          Write-Host "::error::Deployment failed smoke tests. Traffic remains on $current slot."
 
   # ── Post-deploy notification ──────────────────────────
   notify:
     name: Notify
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: deploy-production
     if: always()
     steps:
       - name: Notify result
+        shell: pwsh
         run: |
-          if [ "${{ needs.deploy-production.result }}" = "success" ]; then
-            echo "✅ Production deployment ${{ github.ref_name }} successful"
-          else
-            echo "❌ Production deployment ${{ github.ref_name }} failed — rolled back"
-          fi
+          if ("${{ needs.deploy-production.result }}" -eq "success") {
+            Write-Host "Production deployment ${{ github.ref_name }} successful"
+          } else {
+            Write-Host "Production deployment ${{ github.ref_name }} failed - rolled back"
+          }
