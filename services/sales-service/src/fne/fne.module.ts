@@ -25,6 +25,7 @@ import { FneSettingsController } from './fne-settings.controller';
 import { FneAccountingService } from './fne-accounting.service';
 import { FneAccountingController } from './fne-accounting.controller';
 import { AuditModule } from '../audit/audit.module';
+import { ErpModule } from '../erp/erp.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AuditModule } from '../audit/audit.module';
       FneAccountingEntry,
     ]),
     AuditModule,
+    ErpModule,
   ],
   controllers: [
     FneInvoicesController,

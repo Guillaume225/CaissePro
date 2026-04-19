@@ -16,9 +16,10 @@ export class CreateCategoryDto {
   @MaxLength(100)
   name!: string;
 
+  @IsOptional()
   @IsString()
   @MaxLength(20)
-  code!: string;
+  code?: string;
 
   @IsOptional()
   @IsUUID()

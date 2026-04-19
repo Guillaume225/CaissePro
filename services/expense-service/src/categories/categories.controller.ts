@@ -24,8 +24,12 @@ export class CategoriesController {
 
   @Post()
   @Permissions(PERMISSIONS.EXPENSE_CREATE)
-  async create(@Body() dto: CreateCategoryDto, @CurrentUser('id') userId: string) {
-    const data = await this.categoriesService.create(dto, userId);
+  async create(
+    @Body() dto: CreateCategoryDto,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    const data = await this.categoriesService.create(dto, userId, tenantId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 

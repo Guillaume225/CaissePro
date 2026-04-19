@@ -31,7 +31,7 @@ export class RolesService {
     return this.toResponseDto(role);
   }
 
-  async create(dto: CreateRoleDto, actorId: string, ip?: string): Promise<RoleResponseDto> {
+  async create(dto: CreateRoleDto, actorId: string, ip?: string, tenantId?: string): Promise<RoleResponseDto> {
     const existing = await this.roleRepo.findOne({ where: { name: dto.name } });
     if (existing) throw new ConflictException('Role name already exists');
 
@@ -46,6 +46,7 @@ export class RolesService {
       name: dto.name,
       permissions,
       isSystem: false,
+      tenantId: tenantId || actorId,
     });
 
     const saved = await this.roleRepo.save(role);

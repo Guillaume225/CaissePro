@@ -21,6 +21,18 @@ import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { JwtPayload, AuthTokens, LoginDto, MfaSetupResponse } from './dto';
 
+const MFA_LOGIN_PREFIX = 'mfa_login:';
+const MFA_SETUP_LOGIN_PREFIX = 'mfa_login_setup:';
+
+export interface MfaChallengeResponse {
+  requiresMfa?: boolean;
+  requiresMfaSetup?: boolean;
+  mfaToken?: string;
+  setupToken?: string;
+  secret?: string;
+  qrCodeDataUrl?: string;
+}
+
 const BCRYPT_ROUNDS = 12;
 const REFRESH_PREFIX = 'refresh:';
 const BLACKLIST_PREFIX = 'bl:';
@@ -43,7 +55,7 @@ export class AuthService {
     private readonly auditService: AuditService,
   ) {}
 
-  async login(dto: LoginDto, ip: string, userAgent: string): Promise<AuthTokens> {
+  async login(dto: LoginDto, ip: string, userAgent: string): Promise<AuthTokens | MfaChallengeResponse> {
     // Check rate limiting
     const attemptsKey = `${LOGIN_ATTEMPTS_PREFIX}${dto.email}`;
     const attempts = await this.redis.get(attemptsKey);
@@ -89,13 +101,51 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // If MFA enabled, verify code
+    // If MFA enabled, handle challenge or verify code
     if (user.mfaEnabled) {
       if (!dto.mfaCode) {
-        throw new UnauthorizedException('MFA code required');
+        // No MFA code provided → return challenge
+        if (!user.mfaSecret) {
+          // MFA enabled by admin but user hasn't configured yet → setup flow
+          const secret = authenticator.generateSecret();
+          const appName = this.configService.get<string>('app.mfaAppName') || 'CaisseFlowPro';
+          const otpauthUrl = authenticator.keyuri(user.email, appName, secret);
+          const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+          const setupToken = uuidv4();
+          await this.redis.set(
+            `${MFA_SETUP_LOGIN_PREFIX}${setupToken}`,
+            JSON.stringify({ userId: user.id, secret }),
+            'EX', 600,
+          );
+
+          this.logger.log(`MFA setup required for user ${user.email}`);
+          return {
+            requiresMfaSetup: true,
+            setupToken,
+            secret,
+            qrCodeDataUrl,
+          };
+        }
+
+        // MFA already configured → ask for code
+        const mfaToken = uuidv4();
+        await this.redis.set(
+          `${MFA_LOGIN_PREFIX}${mfaToken}`,
+          user.id,
+          'EX', 300,
+        );
+
+        this.logger.log(`MFA verification required for user ${user.email}`);
+        return {
+          requiresMfa: true,
+          mfaToken,
+        };
       }
+
+      // MFA code provided → verify
       if (!user.mfaSecret) {
-        throw new BadRequestException('MFA is enabled but secret is missing');
+        throw new BadRequestException('MFA is enabled but secret is missing. Complete MFA setup first.');
       }
       const isValid = authenticator.verify({
         token: dto.mfaCode,
@@ -184,6 +234,53 @@ export class AuthService {
       ipAddress: ip,
       userAgent,
     });
+  }
+
+  async setupVerifyMfa(setupToken: string, code: string): Promise<AuthTokens> {
+    const raw = await this.redis.get(`${MFA_SETUP_LOGIN_PREFIX}${setupToken}`);
+    if (!raw) {
+      throw new BadRequestException('Invalid or expired setup token. Please restart the login process.');
+    }
+
+    let parsed: { userId: string; secret: string };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new BadRequestException('Corrupted setup token data');
+    }
+
+    const isValid = authenticator.verify({ token: code, secret: parsed.secret });
+    if (!isValid) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
+    // Save the MFA secret on the user
+    await this.userRepo.update(parsed.userId, {
+      mfaEnabled: true,
+      mfaSecret: parsed.secret,
+    });
+    await this.redis.del(`${MFA_SETUP_LOGIN_PREFIX}${setupToken}`);
+
+    const user = await this.userRepo.findOne({
+      where: { id: parsed.userId },
+      relations: ['role'],
+    });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    await this.auditService.log({
+      userId: user.id,
+      action: AuditAction.MFA_VERIFY,
+      entityType: 'user',
+      entityId: user.id,
+      newValue: { mfaEnabled: true, setupDuringLogin: true },
+    });
+
+    // Update last login
+    await this.userRepo.update(user.id, { lastLogin: new Date() });
+
+    return this.generateTokens(user);
   }
 
   async setupMfa(userId: string): Promise<MfaSetupResponse> {
@@ -313,7 +410,7 @@ export class AuthService {
       expiresIn: this.configService.get<string>('jwt.accessExpiration') || '15m',
       ...(useRS256
         ? { algorithm: 'RS256', privateKey }
-        : { algorithm: 'HS256', secret: 'caisseflow-dev-secret-change-me' }),
+        : { algorithm: 'HS256', secret: this.configService.get<string>('jwt.secret') || 'dev-secret-change-in-production' }),
     };
 
     const accessToken = this.jwtService.sign(payload, signOptions as unknown as JwtSignOptions);

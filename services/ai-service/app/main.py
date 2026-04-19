@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import anomaly, categorization, chatbot, forecast, narrative, ocr, scoring
+from app.routers import alerts, anomaly, categorization, chatbot, forecast, narrative, ocr, scoring
 from app.routers import module_chat
 
 settings = get_settings()
@@ -32,6 +32,7 @@ app.add_middleware(
 )
 
 # ── Routers ──────────────────────────────────────────────
+app.include_router(alerts.router, prefix=settings.api_prefix)
 app.include_router(ocr.router, prefix=settings.api_prefix)
 app.include_router(categorization.router, prefix=settings.api_prefix)
 app.include_router(anomaly.router, prefix=settings.api_prefix)

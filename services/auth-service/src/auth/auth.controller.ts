@@ -7,6 +7,7 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
   VerifyMfaDto,
+  SetupVerifyDto,
 } from './dto';
 import { Public, CurrentUser } from '../common/decorators';
 
@@ -77,6 +78,18 @@ export class AuthController {
     return {
       success: true,
       data: result,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Public()
+  @Post('mfa/setup-verify')
+  @HttpCode(HttpStatus.OK)
+  async setupVerifyMfa(@Body() dto: SetupVerifyDto) {
+    const tokens = await this.authService.setupVerifyMfa(dto.setupToken, dto.code);
+    return {
+      success: true,
+      data: tokens,
       timestamp: new Date().toISOString(),
     };
   }

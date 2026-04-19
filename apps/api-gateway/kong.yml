@@ -2,23 +2,307 @@ _format_version: '3.0'
 _transform: true
 
 services:
+  # ── Auth Service (3001) ────────────────────────────────
   - name: auth-service
-    url: http://auth-service:3000
+    url: http://auth-service:3001/api/v1/auth
     routes:
       - name: auth-route
         paths:
-          - /auth
+          - /api/auth
+        strip_path: true
 
-  - name: sales-service
-    url: http://sales-service:3000
+  - name: auth-users
+    url: http://auth-service:3001/api/v1/users
     routes:
-      - name: sales-route
+      - name: users-route
         paths:
-          - /sales
+          - /api/users
+        strip_path: true
 
+  - name: auth-roles
+    url: http://auth-service:3001/api/v1/roles
+    routes:
+      - name: roles-route
+        paths:
+          - /api/roles
+        strip_path: true
+
+  - name: auth-companies
+    url: http://auth-service:3001/api/v1/companies
+    routes:
+      - name: companies-route
+        paths:
+          - /api/companies
+        strip_path: true
+
+  - name: auth-admin-settings
+    url: http://auth-service:3001/api/v1/settings
+    routes:
+      - name: admin-settings-route
+        paths:
+          - /api/admin/settings
+        strip_path: true
+
+  - name: auth-admin-permissions
+    url: http://auth-service:3001/api/v1/permissions
+    routes:
+      - name: admin-permissions-route
+        paths:
+          - /api/admin/permissions
+        strip_path: true
+
+  # ── Dashboard routes (most specific first) ─────────────
+  - name: dashboard-expense
+    url: http://expense-service:3002/api/v1/dashboard/expense
+    routes:
+      - name: dashboard-expense-route
+        paths:
+          - /api/dashboard/expense
+        strip_path: true
+
+  - name: dashboard-sales
+    url: http://sales-service:3003/api/v1/dashboard/sales
+    routes:
+      - name: dashboard-sales-route
+        paths:
+          - /api/dashboard/sales
+        strip_path: true
+
+  - name: dashboard-fne
+    url: http://sales-service:3003/api/v1/dashboard/fne
+    routes:
+      - name: dashboard-fne-route
+        paths:
+          - /api/dashboard/fne
+        strip_path: true
+
+  - name: dashboard-admin
+    url: http://auth-service:3001/api/v1/dashboard/admin
+    routes:
+      - name: dashboard-admin-route
+        paths:
+          - /api/dashboard/admin
+        strip_path: true
+
+  - name: dashboard-general
+    url: http://expense-service:3002/api/v1/dashboard
+    routes:
+      - name: dashboard-general-route
+        paths:
+          - /api/dashboard
+        strip_path: true
+
+  # ── Expense Service (3002) ─────────────────────────────
   - name: expense-service
-    url: http://expense-service:3000
+    url: http://expense-service:3002/api/v1/expenses
     routes:
       - name: expense-route
         paths:
-          - /expenses
+          - /api/expenses
+        strip_path: true
+
+  - name: expense-categories
+    url: http://expense-service:3002/api/v1/categories
+    routes:
+      - name: categories-route
+        paths:
+          - /api/categories
+        strip_path: true
+
+  - name: expense-budgets
+    url: http://expense-service:3002/api/v1/budgets
+    routes:
+      - name: budgets-route
+        paths:
+          - /api/budgets
+        strip_path: true
+
+  - name: expense-advances
+    url: http://expense-service:3002/api/v1/advances
+    routes:
+      - name: advances-route
+        paths:
+          - /api/advances
+        strip_path: true
+
+  - name: expense-disbursements
+    url: http://expense-service:3002/api/v1/disbursement-requests
+    routes:
+      - name: disbursement-route
+        paths:
+          - /api/disbursement-requests
+        strip_path: true
+
+  - name: expense-closing
+    url: http://expense-service:3002/api/v1/cash-closing
+    routes:
+      - name: closing-route
+        paths:
+          - /api/closing
+        strip_path: true
+
+  - name: expense-report-configs
+    url: http://expense-service:3002/api/v1/report-configs
+    routes:
+      - name: report-configs-route
+        paths:
+          - /api/report-configs
+        strip_path: true
+
+  - name: expense-notifications
+    url: http://expense-service:3002/api/v1/notifications
+    routes:
+      - name: notifications-route
+        paths:
+          - /api/notifications
+        strip_path: true
+
+  - name: admin-categories
+    url: http://expense-service:3002/api/v1/categories
+    routes:
+      - name: admin-categories-route
+        paths:
+          - /api/admin/categories
+        strip_path: true
+
+  - name: admin-approval-circuits
+    url: http://expense-service:3002/api/v1/approval-circuits
+    routes:
+      - name: admin-approval-route
+        paths:
+          - /api/admin/approval-circuits
+        strip_path: true
+
+  # ── Sales Service (3003) ───────────────────────────────
+  - name: sales-service
+    url: http://sales-service:3003/api/v1/sales
+    routes:
+      - name: sales-route
+        paths:
+          - /api/sales
+        strip_path: true
+
+  - name: sales-clients
+    url: http://sales-service:3003/api/v1/clients
+    routes:
+      - name: clients-route
+        paths:
+          - /api/clients
+        strip_path: true
+
+  - name: sales-products
+    url: http://sales-service:3003/api/v1/products
+    routes:
+      - name: products-route
+        paths:
+          - /api/products
+        strip_path: true
+
+  - name: sales-payments
+    url: http://sales-service:3003/api/v1/payments
+    routes:
+      - name: payments-route
+        paths:
+          - /api/payments
+        strip_path: true
+
+  - name: sales-receivables
+    url: http://sales-service:3003/api/v1/receivables
+    routes:
+      - name: receivables-route
+        paths:
+          - /api/receivables
+        strip_path: true
+
+  # ── FNE → Sales Service (3003) ─────────────────────────
+  - name: fne-invoices
+    url: http://sales-service:3003/api/v1/fne-invoices
+    routes:
+      - name: fne-invoices-route
+        paths:
+          - /api/fne-invoices
+        strip_path: true
+
+  - name: fne-clients
+    url: http://sales-service:3003/api/v1/fne-clients
+    routes:
+      - name: fne-clients-route
+        paths:
+          - /api/fne-clients
+        strip_path: true
+
+  - name: fne-products
+    url: http://sales-service:3003/api/v1/fne-products
+    routes:
+      - name: fne-products-route
+        paths:
+          - /api/fne-products
+        strip_path: true
+
+  - name: fne-points-of-sale
+    url: http://sales-service:3003/api/v1/fne-points-of-sale
+    routes:
+      - name: fne-pos-route
+        paths:
+          - /api/fne-points-of-sale
+        strip_path: true
+
+  - name: fne-establishments
+    url: http://sales-service:3003/api/v1/fne-establishments
+    routes:
+      - name: fne-establishments-route
+        paths:
+          - /api/fne-establishments
+        strip_path: true
+
+  - name: fne-settings
+    url: http://sales-service:3003/api/v1/fne-settings
+    routes:
+      - name: fne-settings-route
+        paths:
+          - /api/fne-settings
+        strip_path: true
+
+  - name: fne-accounting
+    url: http://sales-service:3003/api/v1/fne-accounting
+    routes:
+      - name: fne-accounting-route
+        paths:
+          - /api/fne-accounting
+        strip_path: true
+
+  # ── Audit Service (3004) ───────────────────────────────
+  - name: audit-service
+    url: http://audit-service:3004/api/v1/audit/logs
+    routes:
+      - name: audit-route
+        paths:
+          - /api/admin/audit-logs
+        strip_path: true
+
+  # ── HR Service (3006) ──────────────────────────────────
+  - name: hr-employees
+    url: http://hr-service:3006/api/v1/employees
+    routes:
+      - name: employees-route
+        paths:
+          - /api/employees
+        strip_path: true
+
+  # ── AI Service (8000) ──────────────────────────────────
+  - name: ai-service
+    url: http://ai-service:8000/ai
+    routes:
+      - name: ai-route
+        paths:
+          - /api/ai
+        strip_path: true
+
+  # ── Report Service (8001) ──────────────────────────────
+  - name: report-service
+    url: http://report-service:8001/api/v1/reports
+    routes:
+      - name: reports-route
+        paths:
+          - /api/reports
+        strip_path: true

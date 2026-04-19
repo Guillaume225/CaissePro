@@ -40,10 +40,11 @@ export class RolesController {
   async create(
     @Body() dto: CreateRoleDto,
     @CurrentUser('id') actorId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Req() req: Request,
   ) {
     const ip = req.ip || req.socket.remoteAddress || '';
-    const data = await this.rolesService.create(dto, actorId, ip);
+    const data = await this.rolesService.create(dto, actorId, ip, tenantId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 

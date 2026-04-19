@@ -174,16 +174,17 @@ export default function DecisionDashboard() {
 
   // All expenses for chart grouping
   const { data: allExpensesData } = useExpenses({
-    perPage: 500,
+    status: 'PAID',
+    perPage: 100,
     sortBy: 'date',
     sortOrder: 'DESC',
   });
   const allExpenses = allExpensesData?.data ?? [];
 
   // FNE data
-  const { data: fneInvoicesData } = useFneInvoices({ status: 'CERTIFIED', perPage: 500 });
+  const { data: fneInvoicesData } = useFneInvoices({ status: 'CERTIFIED', perPage: 100 });
   const certifiedInvoices = fneInvoicesData?.data ?? [];
-  const { data: allFneData } = useFneInvoices({ perPage: 500 });
+  const { data: allFneData } = useFneInvoices({ perPage: 100 });
   const devisCount = (allFneData?.data ?? []).filter(
     (inv) => inv.invoiceType === 'estimate',
   ).length;

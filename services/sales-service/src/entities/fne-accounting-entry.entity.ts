@@ -52,6 +52,22 @@ export class FneAccountingEntry {
   @Column({ type: 'uuid', name: 'created_by' })
   createdBy!: string;
 
+  /** Whether entry has been posted to ERP */
+  @Column({ type: 'bit', name: 'erp_posted', default: false })
+  erpPosted!: boolean;
+
+  /** When the entry was posted to ERP */
+  @Column({ type: 'datetimeoffset', name: 'erp_posted_at', nullable: true })
+  erpPostedAt!: Date | null;
+
+  /** ERP response data */
+  @Column({ type: 'varchar', length: 2000, name: 'erp_response', nullable: true })
+  erpResponse!: string | null;
+
+  /** ERP error message */
+  @Column({ type: 'varchar', length: 2000, name: 'erp_error', nullable: true })
+  erpError!: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 }

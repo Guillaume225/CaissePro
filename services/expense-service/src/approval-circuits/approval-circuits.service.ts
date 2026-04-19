@@ -39,25 +39,26 @@ export class ApprovalCircuitsService {
     minAmount?: number;
     maxAmount?: number;
     steps?: { level?: number; role: string; approverId?: string }[];
-  }) {
+  }, tenantId: string) {
     const [circuit] = await this.dataSource.query(
       `
-      INSERT INTO approval_circuits (id, name, min_amount, max_amount, is_active)
+      INSERT INTO approval_circuits (id, tenant_id, name, min_amount, max_amount, is_active)
       OUTPUT INSERTED.*
-      VALUES (NEWID(), @0, @1, @2, 1)
+      VALUES (NEWID(), @0, @1, @2, @3, 1)
     `,
-      [dto.name, dto.minAmount || 0, dto.maxAmount || null],
+      [tenantId, dto.name, dto.minAmount || 0, dto.maxAmount || null],
     );
 
     if (dto.steps?.length) {
       for (let i = 0; i < dto.steps.length; i++) {
         const step = dto.steps[i];
+        const role = step.role.toUpperCase();
         await this.dataSource.query(
           `
           INSERT INTO approval_circuit_steps (id, circuit_id, level, role, approver_id)
           VALUES (NEWID(), @0, @1, @2, @3)
         `,
-          [circuit.id, step.level ?? i + 1, step.role, step.approverId || null],
+          [circuit.id, step.level ?? i + 1, role, step.approverId || null],
         );
       }
     }

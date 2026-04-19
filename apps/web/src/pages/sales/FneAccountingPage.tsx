@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Trash2,
+  Send,
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import {
@@ -21,6 +22,7 @@ import {
   useDeleteAllFneAccounting,
 } from '@/hooks/useFneAccounting';
 import { useFneInvoices } from '@/hooks/useFneInvoices';
+import { usePostAllToErp } from '@/hooks/useErpSettings';
 import { formatCFA, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { GenerateEntriesResult } from '@/types/fne';
@@ -58,6 +60,25 @@ export default function FneAccountingPage() {
 
   const generateMutation = useGenerateFneAccounting();
   const deleteAllMutation = useDeleteAllFneAccounting();
+  const postAllToErp = usePostAllToErp();
+
+  /* ── ERP post state ── */
+  const [erpResult, setErpResult] = useState<string | null>(null);
+
+  const handlePostAllToErp = async () => {
+    try {
+      const res = await postAllToErp.mutateAsync();
+      setErpResult(
+        res.success
+          ? `${res.entriesPosted} écritures envoyées à Sage`
+          : `Erreur: ${res.message}`,
+      );
+      setTimeout(() => setErpResult(null), 5000);
+    } catch {
+      setErpResult('Erreur de connexion ERP');
+      setTimeout(() => setErpResult(null), 5000);
+    }
+  };
 
   /* ── Cancel dialog ── */
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -150,6 +171,22 @@ export default function FneAccountingPage() {
           </Button>
           <Button
             variant="outline"
+            onClick={handlePostAllToErp}
+            disabled={!entries.length || postAllToErp.isPending}
+            className="text-blue-600 border-blue-300 hover:bg-blue-50"
+          >
+            {postAllToErp.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="mr-2 h-4 w-4" />
+            )}
+            Comptabiliser dans Sage
+          </Button>
+          {erpResult && (
+            <span className="text-sm font-medium text-blue-600">{erpResult}</span>
+          )}
+          <Button
+            variant="outline"
             onClick={() => setShowCancelDialog(true)}
             disabled={!entries.length}
             className="text-red-600 border-red-300 hover:bg-red-50"
@@ -237,18 +274,19 @@ export default function FneAccountingPage() {
               <th className="px-4 py-3">Libellé écriture</th>
               <th className="px-4 py-3">Réf. facture</th>
               <th className="px-4 py-3">Type</th>
+              <th className="px-4 py-3">ERP</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={9} className="px-4 py-12 text-center">
+                <td colSpan={10} className="px-4 py-12 text-center">
                   <Loader2 className="mx-auto h-6 w-6 animate-spin text-brand-gold" />
                 </td>
               </tr>
             ) : entries.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                   <BookOpen className="mx-auto mb-2 h-8 w-8 text-gray-300" />
                   Aucune écriture comptable générée
                 </td>
@@ -287,6 +325,17 @@ export default function FneAccountingPage() {
                         {e.operationType === 'CREDIT_NOTE' ? 'Avoir' : 'Vente'}
                       </Badge>
                     </td>
+                    <td className="px-4 py-2.5">
+                      {e.erpPosted ? (
+                        <Badge variant="success" className="text-xs">
+                          <CheckCircle2 className="mr-1 h-3 w-3" /> Envoyé
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs text-gray-400">
+                          En attente
+                        </Badge>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {/* Totals row */}
@@ -301,6 +350,7 @@ export default function FneAccountingPage() {
                     {formatCFA(totals.credit)}
                   </td>
                   <td colSpan={3} />
+                  <td />
                 </tr>
               </>
             )}

@@ -15,6 +15,11 @@ import {
   Key,
   Globe,
   Hash,
+  Database,
+  Zap,
+  TestTube2,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { Button, Input, Modal, Badge } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -32,6 +37,7 @@ import {
 } from '@/hooks/useFneEstablishments';
 import { useCompanies } from '@/hooks/useAdmin';
 import { useFneSetting, useUpsertFneSetting } from '@/hooks/useFneSettings';
+import { useErpSetting, useUpsertErpSetting, useTestErpConnection } from '@/hooks/useErpSettings';
 import type { FnePointOfSaleRecord, FneEstablishmentRecord } from '@/types/fne';
 
 interface ItemForm {
@@ -52,7 +58,7 @@ export default function FneConfigPage() {
   const [filterCompanyId, setFilterCompanyId] = useState('');
 
   /* ── Active tab ── */
-  const [activeTab, setActiveTab] = useState<'establishments' | 'settings'>('establishments');
+  const [activeTab, setActiveTab] = useState<'establishments' | 'settings' | 'erp'>('establishments');
 
   /* ── FNE Settings (per-company API config) ── */
   const [settingsCompanyId, setSettingsCompanyId] = useState('');
@@ -70,6 +76,69 @@ export default function FneConfigPage() {
     bankRef: '',
   });
   const [settingsSaved, setSettingsSaved] = useState(false);
+
+  /* ── ERP Sage Settings ── */
+  const [erpCompanyId, setErpCompanyId] = useState('');
+  const { data: erpSetting, isLoading: erpLoading } = useErpSetting(erpCompanyId);
+  const upsertErp = useUpsertErpSetting();
+  const testErpConn = useTestErpConnection();
+  const [erpSaved, setErpSaved] = useState(false);
+  const [erpTestResult, setErpTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [erpForm, setErpForm] = useState({
+    erpName: 'sage',
+    apiUrl: '',
+    accessToken: '',
+    queueName: 'QTask',
+    processusClass: 'TProcessusImportEcritureFA',
+    processusMethod: 'ExecuterAutomate',
+    parametersClass: 'TParametreImportEcriture',
+    parametersCode: 'GenerationAPI_Tresorerie',
+    defaultJournalCode: 'VF',
+    defaultPieceType: 'FA',
+    autoPostOnCertify: false,
+    autoPostOnClosing: false,
+    certifyAfterAccounting: false,
+    isActive: true,
+  });
+
+  // Sync ERP form when data is loaded
+  useEffect(() => {
+    if (erpSetting) {
+      setErpForm({
+        erpName: erpSetting.erpName ?? 'sage',
+        apiUrl: erpSetting.apiUrl,
+        accessToken: erpSetting.accessToken,
+        queueName: erpSetting.queueName ?? 'QTask',
+        processusClass: erpSetting.processusClass ?? 'TProcessusImportEcritureFA',
+        processusMethod: erpSetting.processusMethod ?? 'ExecuterAutomate',
+        parametersClass: erpSetting.parametersClass ?? 'TParametreImportEcriture',
+        parametersCode: erpSetting.parametersCode ?? 'GenerationAPI_Tresorerie',
+        defaultJournalCode: erpSetting.defaultJournalCode ?? 'VF',
+        defaultPieceType: erpSetting.defaultPieceType ?? 'FA',
+        autoPostOnCertify: erpSetting.autoPostOnCertify,
+        autoPostOnClosing: erpSetting.autoPostOnClosing,
+        certifyAfterAccounting: erpSetting.certifyAfterAccounting,
+        isActive: erpSetting.isActive,
+      });
+    } else if (!erpLoading && erpCompanyId) {
+      setErpForm({
+        erpName: 'sage',
+        apiUrl: '',
+        accessToken: '',
+        queueName: 'QTask',
+        processusClass: 'TProcessusImportEcritureFA',
+        processusMethod: 'ExecuterAutomate',
+        parametersClass: 'TParametreImportEcriture',
+        parametersCode: 'GenerationAPI_Tresorerie',
+        defaultJournalCode: 'VF',
+        defaultPieceType: 'FA',
+        autoPostOnCertify: false,
+        autoPostOnClosing: false,
+        certifyAfterAccounting: false,
+        isActive: true,
+      });
+    }
+  }, [erpSetting, erpLoading, erpCompanyId]);
 
   // Sync form when data is loaded
   useEffect(() => {
@@ -720,6 +789,328 @@ export default function FneConfigPage() {
     </div>
   );
 
+  /* ── ERP Sage settings handlers ── */
+  const handleSaveErp = async () => {
+    if (!erpCompanyId) return;
+    await upsertErp.mutateAsync({
+      companyId: erpCompanyId,
+      erpName: erpForm.erpName,
+      apiUrl: erpForm.apiUrl,
+      accessToken: erpForm.accessToken,
+      queueName: erpForm.queueName || undefined,
+      processusClass: erpForm.processusClass || undefined,
+      processusMethod: erpForm.processusMethod || undefined,
+      parametersClass: erpForm.parametersClass || undefined,
+      parametersCode: erpForm.parametersCode || undefined,
+      defaultJournalCode: erpForm.defaultJournalCode || undefined,
+      defaultPieceType: erpForm.defaultPieceType || undefined,
+      autoPostOnCertify: erpForm.autoPostOnCertify,
+      autoPostOnClosing: erpForm.autoPostOnClosing,
+      certifyAfterAccounting: erpForm.certifyAfterAccounting,
+      isActive: erpForm.isActive,
+    });
+    setErpSaved(true);
+    setTimeout(() => setErpSaved(false), 3000);
+  };
+
+  const handleTestErp = async () => {
+    if (!erpCompanyId) return;
+    setErpTestResult(null);
+    try {
+      const res = await testErpConn.mutateAsync(erpCompanyId);
+      setErpTestResult({ ok: res.reachable, msg: res.message });
+    } catch {
+      setErpTestResult({ ok: false, msg: 'Erreur de connexion' });
+    }
+    setTimeout(() => setErpTestResult(null), 5000);
+  };
+
+  const inputClass =
+    'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
+
+  /* ── Render ERP Sage view ── */
+  const renderErpView = () => (
+    <div className="space-y-6">
+      {/* Company selector */}
+      <div className="space-y-1.5 max-w-sm">
+        <label className="block text-sm font-medium text-gray-700">Société *</label>
+        <div className="relative">
+          <select
+            value={erpCompanyId}
+            onChange={(e) => setErpCompanyId(e.target.value)}
+            className="w-full appearance-none rounded-lg border border-gray-300 bg-white py-2.5 pl-3.5 pr-9 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+          >
+            <option value="">Sélectionner une société...</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        </div>
+      </div>
+
+      {!erpCompanyId ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 py-16">
+          <Database className="mb-3 h-10 w-10 text-gray-300" />
+          <p className="text-sm text-gray-500">
+            Sélectionnez une société pour configurer l&apos;intégration ERP Sage
+          </p>
+        </div>
+      ) : erpLoading ? (
+        <p className="text-sm text-gray-500">Chargement...</p>
+      ) : (
+        <div className="max-w-2xl space-y-6">
+          {/* API Connection */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                <Database className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Connexion API Sage DCP</h3>
+                <p className="text-xs text-gray-500">
+                  {erpSetting
+                    ? 'Configuration existante — modifiez si nécessaire'
+                    : 'Aucune configuration — renseignez les paramètres'}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Globe className="h-4 w-4 text-gray-400" />
+                  URL de base de l&apos;API Sage *
+                </label>
+                <input
+                  value={erpForm.apiUrl}
+                  onChange={(e) => setErpForm((f) => ({ ...f, apiUrl: e.target.value }))}
+                  placeholder="https://dcp-sage.fr:8084"
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Key className="h-4 w-4 text-gray-400" />
+                  Token d&apos;accès (Access Token) *
+                </label>
+                <input
+                  type="password"
+                  value={erpForm.accessToken}
+                  onChange={(e) => setErpForm((f) => ({ ...f, accessToken: e.target.value }))}
+                  placeholder="••••••••••••••••"
+                  className={inputClass}
+                />
+                <p className="text-xs text-gray-400">
+                  Le token AuthToken / Bearer fourni par Sage DCP
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Nom de file (Queue)</label>
+                  <input
+                    value={erpForm.queueName}
+                    onChange={(e) => setErpForm((f) => ({ ...f, queueName: e.target.value }))}
+                    placeholder="QTask"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Code journal par défaut</label>
+                  <input
+                    value={erpForm.defaultJournalCode}
+                    onChange={(e) => setErpForm((f) => ({ ...f, defaultJournalCode: e.target.value }))}
+                    placeholder="VF"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Classe processus</label>
+                  <input
+                    value={erpForm.processusClass}
+                    onChange={(e) => setErpForm((f) => ({ ...f, processusClass: e.target.value }))}
+                    placeholder="TProcessusImportEcritureFA"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Méthode processus</label>
+                  <input
+                    value={erpForm.processusMethod}
+                    onChange={(e) => setErpForm((f) => ({ ...f, processusMethod: e.target.value }))}
+                    placeholder="ExecuterAutomate"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Classe paramètres</label>
+                  <input
+                    value={erpForm.parametersClass}
+                    onChange={(e) => setErpForm((f) => ({ ...f, parametersClass: e.target.value }))}
+                    placeholder="TParametreImportEcriture"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Code paramètres</label>
+                  <input
+                    value={erpForm.parametersCode}
+                    onChange={(e) => setErpForm((f) => ({ ...f, parametersCode: e.target.value }))}
+                    placeholder="GenerationAPI_Tresorerie"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Type de pièce par défaut</label>
+                <input
+                  value={erpForm.defaultPieceType}
+                  onChange={(e) => setErpForm((f) => ({ ...f, defaultPieceType: e.target.value }))}
+                  placeholder="FA"
+                  maxLength={50}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Automation options */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                <Zap className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Options d&apos;automatisation</h3>
+                <p className="text-xs text-gray-500">
+                  Configurez quand les écritures sont envoyées automatiquement à Sage
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={erpForm.autoPostOnCertify}
+                  onChange={(e) => setErpForm((f) => ({ ...f, autoPostOnCertify: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Comptabilisation automatique à la certification
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Génère et envoie les écritures comptables vers Sage dès qu&apos;une facture est certifiée FNE
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={erpForm.autoPostOnClosing}
+                  onChange={(e) => setErpForm((f) => ({ ...f, autoPostOnClosing: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Comptabilisation automatique à la clôture de caisse
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Envoie toutes les écritures non comptabilisées vers Sage lors de la clôture de caisse
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={erpForm.certifyAfterAccounting}
+                  onChange={(e) => setErpForm((f) => ({ ...f, certifyAfterAccounting: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Certifier après génération des écritures
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Option pour certifier la facture FNE après la génération des écritures comptables (au lieu d&apos;avant)
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={erpForm.isActive}
+                  onChange={(e) => setErpForm((f) => ({ ...f, isActive: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Intégration active</span>
+                  <p className="text-xs text-gray-500">
+                    Activer / désactiver l&apos;intégration ERP Sage sans supprimer la configuration
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleSaveErp}
+              disabled={!erpForm.apiUrl || !erpForm.accessToken}
+              loading={upsertErp.isPending}
+            >
+              {erpSetting ? 'Enregistrer' : 'Créer la configuration'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleTestErp}
+              disabled={!erpSetting}
+              loading={testErpConn.isPending}
+            >
+              <TestTube2 className="mr-2 h-4 w-4" />
+              Tester la connexion
+            </Button>
+            {erpSaved && (
+              <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
+                <CheckCircle2 className="h-4 w-4" />
+                Configuration ERP enregistrée !
+              </span>
+            )}
+            {erpTestResult && (
+              <span
+                className={cn(
+                  'flex items-center gap-1 text-sm font-medium',
+                  erpTestResult.ok ? 'text-green-600' : 'text-red-600',
+                )}
+              >
+                {erpTestResult.ok ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <XCircle className="h-4 w-4" />
+                )}
+                {erpTestResult.msg}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
       {selectedEst ? (
@@ -773,10 +1164,26 @@ export default function FneConfigPage() {
               <Settings className="h-4 w-4" />
               {t('admin.fneConfig.tabSettings', 'Paramètres API')}
             </button>
+            <button
+              onClick={() => setActiveTab('erp')}
+              className={cn(
+                'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                activeTab === 'erp'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700',
+              )}
+            >
+              <Database className="h-4 w-4" />
+              ERP Sage
+            </button>
           </div>
 
           {/* Tab content */}
-          {activeTab === 'settings' ? renderSettingsView() : renderEstContent()}
+          {activeTab === 'settings'
+            ? renderSettingsView()
+            : activeTab === 'erp'
+              ? renderErpView()
+              : renderEstContent()}
         </div>
       )}
 

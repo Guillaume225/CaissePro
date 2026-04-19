@@ -37,7 +37,7 @@ export class AdminQueryService {
     private readonly auditService: AuditService,
   ) {}
 
-  private getRepo(entity: EntityType): Repository<unknown> {
+  private getRepo(entity: EntityType): Repository<Record<string, any>> {
     switch (entity) {
       case 'expense':
         return this.expenseRepo;
@@ -104,13 +104,14 @@ export class AdminQueryService {
     const results: { id: string; reference: string; oldStatus: string; newStatus: string }[] = [];
 
     for (const record of records) {
-      const oldStatus = record.status;
-      record.status = newStatus;
-      await repo.save(record);
+      const rec = record as Record<string, any>;
+      const oldStatus = rec.status;
+      rec.status = newStatus;
+      await repo.save(rec);
 
       results.push({
-        id: record.id,
-        reference: record.reference || record.id,
+        id: rec.id,
+        reference: rec.reference || rec.id,
         oldStatus,
         newStatus,
       });
@@ -119,7 +120,7 @@ export class AdminQueryService {
         userId,
         action: AuditAction.UPDATE,
         entityType: entity,
-        entityId: record.id,
+        entityId: rec.id,
         oldValue: { status: oldStatus },
         newValue: { status: newStatus, reason: reason || 'Admin status override' },
       });

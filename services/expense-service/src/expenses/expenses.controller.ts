@@ -89,12 +89,14 @@ export class ExpensesController {
   }
 
   @Post(':id/submit')
+  @SkipCashClosingCheck()
   @Permissions(EXPENSE_PERMISSIONS.CREATE)
   submit(@Param('id', ParseLooseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.expensesService.submit(id, userId);
   }
 
   @Post(':id/approve')
+  @SkipCashClosingCheck()
   @Permissions(EXPENSE_PERMISSIONS.APPROVE_L1)
   approve(
     @Param('id', ParseLooseUUIDPipe) id: string,
@@ -105,6 +107,7 @@ export class ExpensesController {
   }
 
   @Post(':id/reject')
+  @SkipCashClosingCheck()
   @Permissions(EXPENSE_PERMISSIONS.APPROVE_L1)
   reject(
     @Param('id', ParseLooseUUIDPipe) id: string,

@@ -297,6 +297,10 @@ export interface FneAccountingEntryRecord {
   credit: number;
   label: string;
   operationType: string;
+  erpPosted: boolean;
+  erpPostedAt: string | null;
+  erpResponse: string | null;
+  erpError: string | null;
   createdBy: string;
   createdAt: string;
 }
@@ -345,4 +349,57 @@ export interface FneTopClient {
 export interface FneStatusBreakdownItem {
   status: string;
   count: number;
+}
+
+// ── ERP (Sage) Settings ──────────────────────────────────
+export interface ErpSettingRecord {
+  id: string;
+  companyId: string;
+  erpName: string;
+  apiUrl: string;
+  accessToken: string;
+  queueName: string;
+  processusClass: string;
+  processusMethod: string;
+  parametersClass: string;
+  parametersCode: string;
+  defaultJournalCode: string;
+  defaultPieceType: string;
+  autoPostOnCertify: boolean;
+  autoPostOnClosing: boolean;
+  certifyAfterAccounting: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertErpSettingPayload {
+  companyId: string;
+  erpName?: string;
+  apiUrl: string;
+  accessToken: string;
+  queueName?: string;
+  processusClass?: string;
+  processusMethod?: string;
+  parametersClass?: string;
+  parametersCode?: string;
+  defaultJournalCode?: string;
+  defaultPieceType?: string;
+  autoPostOnCertify?: boolean;
+  autoPostOnClosing?: boolean;
+  certifyAfterAccounting?: boolean;
+  isActive?: boolean;
+}
+
+export interface ErpPostResult {
+  success: boolean;
+  entriesPosted: number;
+  message: string;
+  rawResponse?: string;
+  errors?: string[];
+}
+
+export interface ErpTestResult {
+  reachable: boolean;
+  message: string;
 }

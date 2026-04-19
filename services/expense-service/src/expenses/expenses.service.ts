@@ -39,6 +39,7 @@ export interface WorkflowUser {
   email: string;
   roleName: string;
   permissions: string[];
+  tenantId: string;
   departmentId: string | null;
 }
 
@@ -161,6 +162,7 @@ export class ExpensesService {
       paymentMethod: dto.paymentMethod,
       categoryId: dto.categoryId,
       createdById: user.id,
+      tenantId: user.tenantId,
       departmentId: user.departmentId || null,
       observations: dto.observations || null,
       costCenterId: dto.costCenterId || null,
@@ -263,6 +265,9 @@ export class ExpensesService {
     expense.status = ExpenseStatus.PENDING;
     await this.expenseRepo.save(expense);
 
+    // ── Create approval records from the matching approval circuit ──
+    await this.createApprovalRecordsFromCircuit(expense);
+
     await this.auditService.log({
       userId,
       action: AuditAction.SUBMIT,
@@ -280,6 +285,71 @@ export class ExpensesService {
     });
 
     return this.findById(id);
+  }
+
+  /**
+   * Finds the active approval circuit whose amount range covers the expense,
+   * fetches its steps, and creates PENDING ExpenseApproval records for each step.
+   * If no circuit matches, creates a single L1 PENDING approval without a
+   * pre-assigned approver so any authorised user can approve it.
+   */
+  private async createApprovalRecordsFromCircuit(expense: Expense): Promise<void> {
+    const amount = Number(expense.amount);
+
+    // Find matching circuit by amount range
+    const circuit: { id: string } | undefined = await this.dataSource.query(
+      `SELECT TOP 1 id
+         FROM approval_circuits
+        WHERE is_active = 1
+          AND min_amount <= @0
+          AND (max_amount IS NULL OR max_amount >= @0)
+        ORDER BY min_amount DESC`,
+      [amount],
+    ).then((rows: { id: string }[]) => rows[0]);
+
+    if (circuit) {
+      // Fetch all steps for this circuit, ordered by level
+      const steps: { level: number; role: string; approver_id: string | null }[] =
+        await this.dataSource.query(
+          `SELECT level, role, approver_id
+             FROM approval_circuit_steps
+            WHERE circuit_id = @0
+            ORDER BY level ASC`,
+          [circuit.id],
+        );
+
+      if (steps.length > 0) {
+        for (const step of steps) {
+          const approval = this.approvalRepo.create({
+            expenseId: expense.id,
+            approverId: step.approver_id ?? expense.createdById, // fallback; will be replaced on actual approve
+            level: step.level,
+            status: ApprovalStatus.PENDING,
+            comment: null,
+            approvedAt: null,
+          });
+          await this.approvalRepo.save(approval);
+        }
+        this.logger.log(
+          `Created ${steps.length} approval step(s) for expense ${expense.reference} (circuit: ${circuit.id})`,
+        );
+        return;
+      }
+    }
+
+    // Fallback: no circuit found or circuit has no steps — create a generic L1 pending approval
+    this.logger.warn(
+      `No approval circuit found for expense ${expense.reference} (amount=${amount}). Creating default L1 approval.`,
+    );
+    const fallbackApproval = this.approvalRepo.create({
+      expenseId: expense.id,
+      approverId: expense.createdById, // placeholder; any authorised user can approve
+      level: 1,
+      status: ApprovalStatus.PENDING,
+      comment: null,
+      approvedAt: null,
+    });
+    await this.approvalRepo.save(fallbackApproval);
   }
 
   /* ─── Approve (level auto-detected from expense status) ─── */
@@ -314,11 +384,13 @@ export class ExpensesService {
     user: WorkflowUser,
     threshold: number,
   ) {
-    if (!user.departmentId || user.departmentId !== expense.departmentId) {
+    // If both have departments assigned, they must match
+    const bothHaveDept = user.departmentId && expense.departmentId;
+    if (bothHaveDept && user.departmentId !== expense.departmentId) {
       throw new ForbiddenException('L1 approver must belong to the same department as the expense');
     }
 
-    const approval = this.approvalRepo.create({
+    await this.upsertApproval({
       expenseId: expense.id,
       approverId: user.id,
       level: 1,
@@ -326,14 +398,13 @@ export class ExpensesService {
       comment: dto.comment || null,
       approvedAt: new Date(),
     });
-    await this.approvalRepo.save(approval);
 
     const amount = Number(expense.amount);
     const autoL2 = amount <= threshold;
 
     if (autoL2) {
       // Amount below threshold → auto-approve L2
-      const l2Approval = this.approvalRepo.create({
+      await this.upsertApproval({
         expenseId: expense.id,
         approverId: user.id,
         level: 2,
@@ -341,7 +412,6 @@ export class ExpensesService {
         comment: `Auto-approved: amount (${amount} FCFA) below threshold (${threshold} FCFA)`,
         approvedAt: new Date(),
       });
-      await this.approvalRepo.save(l2Approval);
 
       expense.status = ExpenseStatus.APPROVED_L2;
       await this.expenseRepo.save(expense);
@@ -406,7 +476,7 @@ export class ExpensesService {
 
     const amount = Number(expense.amount);
 
-    const approval = this.approvalRepo.create({
+    await this.upsertApproval({
       expenseId: expense.id,
       approverId: user.id,
       level: 2,
@@ -414,7 +484,6 @@ export class ExpensesService {
       comment: dto.comment || null,
       approvedAt: new Date(),
     });
-    await this.approvalRepo.save(approval);
 
     expense.status = ExpenseStatus.APPROVED_L2;
     await this.expenseRepo.save(expense);
@@ -471,7 +540,7 @@ export class ExpensesService {
       throw new BadRequestException('Only PENDING or APPROVED_L1 expenses can be rejected');
     }
 
-    const approval = this.approvalRepo.create({
+    await this.upsertApproval({
       expenseId: id,
       approverId: user.id,
       level,
@@ -479,7 +548,6 @@ export class ExpensesService {
       comment: dto.comment,
       approvedAt: new Date(),
     });
-    await this.approvalRepo.save(approval);
 
     expense.status = ExpenseStatus.REJECTED;
     await this.expenseRepo.save(expense);
@@ -524,12 +592,8 @@ export class ExpensesService {
       throw new BadRequestException(msg);
     }
 
-    // Check disbursement limit from company settings
-    const cashierRole =
-      this.configService.get<string>('workflow.cashierRole') ?? 'CAISSIER_DEPENSES';
-    if (user.roleName !== cashierRole) {
-      throw new ForbiddenException('Seul le caissier peut marquer une dépense comme payée.');
-    }
+    // The @Permissions(EXPENSE_PERMISSIONS.PAY) guard already ensures the user
+    // has the 'expense.pay' permission, so no additional role check is needed.
 
     const amount = Number(expense.amount);
     const [company] = await this.dataSource.query(
@@ -791,6 +855,35 @@ export class ExpensesService {
       createdAt: e.createdAt?.toISOString(),
       updatedAt: e.updatedAt?.toISOString(),
     };
+  }
+
+  /**
+   * Find-or-create an ExpenseApproval for (expenseId, level).
+   * If a PENDING record already exists (created at submit time), update it;
+   * otherwise create a new one.
+   */
+  private async upsertApproval(data: {
+    expenseId: string;
+    approverId: string;
+    level: number;
+    status: ApprovalStatus;
+    comment: string | null;
+    approvedAt: Date | null;
+  }): Promise<ExpenseApproval> {
+    const existing = await this.approvalRepo.findOne({
+      where: { expenseId: data.expenseId, level: data.level },
+    });
+    if (existing) {
+      await this.approvalRepo.update(existing.id, {
+        approverId: data.approverId,
+        status: data.status,
+        comment: data.comment,
+        approvedAt: data.approvedAt,
+      });
+      return { ...existing, ...data } as ExpenseApproval;
+    }
+    const approval = this.approvalRepo.create(data);
+    return this.approvalRepo.save(approval);
   }
 
   private getCurrentApprovalLevel(e: Expense): number | null {

@@ -36,8 +36,16 @@ export class CategoriesService {
     return this.toTree(cat, allCats);
   }
 
-  async create(dto: CreateCategoryDto, actorId: string): Promise<CategoryResponseDto> {
-    const existing = await this.catRepo.findOne({ where: { code: dto.code } });
+  async create(dto: CreateCategoryDto, actorId: string, tenantId?: string): Promise<CategoryResponseDto> {
+    const code = dto.code || dto.name
+      .toUpperCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .substring(0, 20);
+
+    const existing = await this.catRepo.findOne({ where: { code } });
     if (existing) throw new ConflictException('Category code already exists');
 
     if (dto.parentId) {
@@ -47,11 +55,12 @@ export class CategoriesService {
 
     const cat = this.catRepo.create({
       name: dto.name,
-      code: dto.code,
+      code,
       parentId: dto.parentId || null,
       budgetLimit: dto.budgetLimit ?? null,
       accountingDebitAccount: dto.accountingDebitAccount ?? null,
       accountingCreditAccount: dto.accountingCreditAccount ?? null,
+      tenantId: tenantId || '00000000-0000-0000-0000-000000000001',
       ...(dto.direction && { direction: dto.direction }),
     });
     const saved = await this.catRepo.save(cat);
@@ -61,7 +70,7 @@ export class CategoriesService {
       action: AuditAction.CREATE,
       entityType: 'expense_category',
       entityId: saved.id,
-      newValue: { name: dto.name, code: dto.code },
+      newValue: { name: dto.name, code },
     });
 
     return this.findById(saved.id);

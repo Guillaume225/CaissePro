@@ -13,6 +13,10 @@ export class LoginDto {
   @MinLength(6)
   @MaxLength(6)
   mfaCode?: string;
+
+  @IsOptional()
+  @IsString()
+  mfaToken?: string;
 }
 
 export class RefreshTokenDto {
@@ -39,6 +43,16 @@ export class ResetPasswordDto {
 }
 
 export class VerifyMfaDto {
+  @IsString()
+  @MinLength(6)
+  @MaxLength(6)
+  code!: string;
+}
+
+export class SetupVerifyDto {
+  @IsString()
+  setupToken!: string;
+
   @IsString()
   @MinLength(6)
   @MaxLength(6)

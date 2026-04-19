@@ -27,6 +27,7 @@ import {
   useAddCashMovement,
   useLockCash,
   useUnlockCash,
+  useCloseCash,
 } from '@/hooks/useClosing';
 import { usePendingDisbursementRequests } from '@/hooks/useDisbursementRequests';
 import { useExpenses, useExpenseCategories } from '@/hooks/useExpenses';
@@ -44,9 +45,16 @@ export default function ClosingPage() {
   const addMovement = useAddCashMovement();
   const lockCash = useLockCash();
   const unlockCash = useUnlockCash();
+  const closeCash = useCloseCash();
 
   const [showOpenModal, setShowOpenModal] = useState(false);
   const [openingBalance, setOpeningBalance] = useState('');
+
+  // ── Close (clôture) modal state ────────────────────
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [actualBalance, setActualBalance] = useState('');
+  const [closeComment, setCloseComment] = useState('');
+  const [closeError, setCloseError] = useState<string | null>(null);
 
   // ── Lock confirmation: must visit reports first ────────
   const [showLockModal, setShowLockModal] = useState(false);
@@ -202,14 +210,23 @@ export default function ClosingPage() {
             </Button>
           )}
           {state?.status === 'PENDING_CLOSE' && (
-            <Button
-              variant="outline"
-              onClick={() => unlockCash.mutate()}
-              loading={unlockCash.isPending}
-            >
-              <UnlockKeyhole className="mr-2 h-4 w-4" />
-              {t('closing.unlockCash')}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => unlockCash.mutate()}
+                loading={unlockCash.isPending}
+              >
+                <UnlockKeyhole className="mr-2 h-4 w-4" />
+                {t('closing.unlockCash')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => { setCloseError(null); setShowCloseModal(true); }}
+              >
+                <LockKeyhole className="mr-2 h-4 w-4" />
+                {t('closing.closeCash')}
+              </Button>
+            </div>
           )}
           {state?.status === 'CLOSED' && (
             <Button onClick={() => setShowOpenModal(true)}>
@@ -541,6 +558,100 @@ export default function ClosingPage() {
             >
               <LockKeyhole className="mr-2 h-4 w-4" />
               {t('closing.lockCash')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Close (Clôture) Modal */}
+      <Modal
+        open={showCloseModal}
+        onClose={() => setShowCloseModal(false)}
+        title={t('closing.closeModal.title')}
+        size="md"
+      >
+        <div className="space-y-4">
+          {closeError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+              {closeError}
+            </div>
+          )}
+
+          <div className="rounded-lg bg-gray-50 p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">{t('closing.openModal.openingBalance')}</span>
+              <span className="font-medium">{fmt(state?.openingBalance ?? 0)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">{t('closing.theoreticalBalance')}</span>
+              <span className="font-bold text-brand-gold">{fmt(state?.theoreticalBalance ?? 0)}</span>
+            </div>
+          </div>
+
+          <Input
+            label={t('closing.closeModal.actualBalance')}
+            type="number"
+            value={actualBalance}
+            onChange={(e) => setActualBalance(e.target.value)}
+            placeholder="0"
+          />
+
+          {actualBalance !== '' && (() => {
+            const gap = (Number(actualBalance) || 0) - (state?.theoreticalBalance ?? 0);
+            return (
+              <div className={`rounded-lg p-3 ${gap === 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                <p className="text-xs text-gray-500">{t('closing.closeModal.gap')}</p>
+                <p className={`text-lg font-bold ${gap === 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  {gap >= 0 ? '+' : ''}{fmt(gap)}
+                </p>
+              </div>
+            );
+          })()}
+
+          {actualBalance !== '' && (Number(actualBalance) || 0) !== (state?.theoreticalBalance ?? 0) && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                {t('closing.closeModal.comment')} <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={closeComment}
+                onChange={(e) => setCloseComment(e.target.value)}
+                rows={2}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                placeholder={t('closing.closeModal.commentPlaceholder')}
+              />
+              <p className="mt-1 text-xs text-amber-600">{t('closing.closeModal.gapWarning')}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowCloseModal(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                const bal = Number(actualBalance) || 0;
+                const gap = bal - (state?.theoreticalBalance ?? 0);
+                if (gap !== 0 && !closeComment.trim()) {
+                  setCloseError(t('closing.closeModal.gapWarning'));
+                  return;
+                }
+                try {
+                  await closeCash.mutateAsync({ actualBalance: bal, comment: closeComment || undefined });
+                  setShowCloseModal(false);
+                  setActualBalance('');
+                  setCloseComment('');
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : 'Erreur lors de la clôture';
+                  setCloseError(msg);
+                }
+              }}
+              loading={closeCash.isPending}
+              disabled={actualBalance === ''}
+            >
+              <LockKeyhole className="mr-2 h-4 w-4" />
+              {t('closing.closeCash')}
             </Button>
           </div>
         </div>

@@ -70,6 +70,7 @@ const makeUser = (overrides?: Partial<WorkflowUser>): WorkflowUser => ({
   email: 'user@test.com',
   roleName: 'CHEF_SERVICE',
   permissions: [],
+  tenantId: 'tenant-1',
   departmentId: 'dept-1',
   ...overrides,
 });

@@ -11,6 +11,9 @@ import { FneInvoice } from '../entities/fne-invoice.entity';
 import { FneInvoiceItem } from '../entities/fne-invoice-item.entity';
 import { FneInvoiceStatus, FneTemplate, FnePaymentMethod, FneInvoiceType } from '../entities/enums';
 import { FneApiService } from './fne-api.service';
+import { FneAccountingService } from './fne-accounting.service';
+import { SageErpService } from '../erp/sage-erp.service';
+import { ErpSettingsService } from '../erp/erp-settings.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 
@@ -103,6 +106,9 @@ export class FneInvoicesService {
     @InjectRepository(FneInvoiceItem)
     private readonly itemRepo: Repository<FneInvoiceItem>,
     private readonly fneApi: FneApiService,
+    private readonly fneAccountingService: FneAccountingService,
+    private readonly sageErpService: SageErpService,
+    private readonly erpSettingsService: ErpSettingsService,
     private readonly auditService: AuditService,
   ) {}
 
@@ -415,6 +421,28 @@ export class FneInvoicesService {
           status: 'CERTIFIED',
         },
       });
+
+      // Auto-generate accounting entries + post to ERP if configured
+      try {
+        const erpSetting = await this.erpSettingsService.findActive();
+        if (erpSetting?.autoPostOnCertify && erpSetting.isActive) {
+          const genResult = await this.fneAccountingService.generate(
+            { invoiceIds: [invoice.id] },
+            userId,
+          );
+          this.logger.log(
+            `Auto-generated ${genResult.generated} accounting entries for certified invoice ${invoice.reference}`,
+          );
+          if (genResult.generated > 0) {
+            const erpResult = await this.sageErpService.postEntries([invoice.id]);
+            this.logger.log(
+              `Auto-post ERP after certify: ${erpResult.entriesPosted} entries (${erpResult.message})`,
+            );
+          }
+        }
+      } catch (erpErr) {
+        this.logger.error(`Auto-post ERP after certify failed (non-blocking): ${erpErr}`);
+      }
 
       return this.findById(invoice.id);
     } catch (err) {

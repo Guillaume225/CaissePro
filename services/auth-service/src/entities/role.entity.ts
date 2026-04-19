@@ -13,6 +13,9 @@ export class Role {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ type: 'uuid', name: 'tenant_id' })
+  tenantId!: string;
+
   @Column({ type: 'varchar', length: 50, unique: true })
   name!: string;
 

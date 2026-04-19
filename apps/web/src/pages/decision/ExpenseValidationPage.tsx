@@ -51,29 +51,49 @@ export default function ExpenseValidationPage() {
   const [approveComment, setApproveComment] = useState('');
   const [approveModalOpen, setApproveModalOpen] = useState(false);
 
-  // Fetch all PENDING expenses for validation
+  // Fetch all PENDING expenses (L1 validation)
   const { data: pendingData, isLoading: pendingLoading } = useExpenses({
     status: 'PENDING',
     perPage: 100,
   });
+  // Fetch expenses awaiting L2 validation
+  const { data: awaitingL2Data } = useExpenses({
+    status: 'APPROVED_L1',
+    perPage: 100,
+  });
   // Fetch recently approved/rejected for the history tabs
   const { data: approvedData } = useExpenses({
-    status: ['APPROVED_L1', 'APPROVED_L2', 'PAID'],
+    status: ['APPROVED_L2', 'PAID'],
     perPage: 50,
   });
   const { data: rejectedData } = useExpenses({ status: 'REJECTED', perPage: 50 });
 
   // Filter expenses that are at the user's validation level
   const pendingExpenses = useMemo(() => {
-    if (!pendingData?.data || !user) return [];
-    return pendingData.data.filter((exp) => {
-      // Find the next pending approval for this expense
-      const nextPending = exp.approvals?.find((a) => a.status === 'PENDING');
-      if (!nextPending) return false;
-      // Show expenses where the current user is the next approver
-      return nextPending.approverId === user.id;
-    });
-  }, [pendingData, user]);
+    if (!user) return [];
+    const results: Expense[] = [];
+
+    // L1: show PENDING expenses where the user is the assigned approver
+    for (const exp of pendingData?.data ?? []) {
+      if (exp.createdById === user.id) continue; // can't self-approve
+      if (exp.approvals && exp.approvals.length > 0) {
+        const myPending = exp.approvals.find(
+          (a) => a.status === 'PENDING' && a.approverId === user.id,
+        );
+        if (myPending) results.push(exp);
+      }
+    }
+
+    // L2: show APPROVED_L1 expenses for admin/manager with approve_l2 permission
+    if (user.permissions.includes('expense.approve_l2') || user.role === 'admin') {
+      for (const exp of awaitingL2Data?.data ?? []) {
+        if (exp.createdById === user.id) continue;
+        results.push(exp);
+      }
+    }
+
+    return results;
+  }, [pendingData, awaitingL2Data, user]);
 
   const approvedExpenses = useMemo(() => approvedData?.data ?? [], [approvedData]);
   const rejectedExpenses = useMemo(() => rejectedData?.data ?? [], [rejectedData]);

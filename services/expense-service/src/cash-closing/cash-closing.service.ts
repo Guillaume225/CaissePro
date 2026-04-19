@@ -306,6 +306,17 @@ export class CashClosingService {
 
   /* ─── Check if yesterday was closed (used by guard) ─── */
   async isYesterdayClosed(): Promise<boolean> {
+    // If there's a currently active cash day, operations are allowed.
+    // The open() method already validated yesterday's status before opening.
+    const activeCashDay = await this.closingRepo.findOne({
+      where: {
+        cashType: this.CASH_TYPE,
+        status: In([CashDayStatus.OPEN, CashDayStatus.PENDING_CLOSE]),
+      },
+    });
+    if (activeCashDay) return true;
+
+    // No active cash day — check if yesterday's was properly closed
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);

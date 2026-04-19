@@ -7,6 +7,8 @@ import { FneClient } from '../entities/fne-client.entity';
 import { FneProduct } from '../entities/fne-product.entity';
 import { FneSetting } from '../entities/fne-setting.entity';
 import { FneInvoiceStatus, FneInvoiceType } from '../entities/enums';
+import { SageErpService } from '../erp/sage-erp.service';
+import { ErpSettingsService } from '../erp/erp-settings.service';
 
 /* ── Default OHADA accounts ── */
 const DEFAULT_CLIENT_ACCOUNT = '411000';
@@ -42,6 +44,8 @@ export class FneAccountingService {
     private readonly productRepo: Repository<FneProduct>,
     @InjectRepository(FneSetting)
     private readonly settingRepo: Repository<FneSetting>,
+    private readonly sageErpService: SageErpService,
+    private readonly erpSettingsService: ErpSettingsService,
   ) {}
 
   /**
@@ -229,6 +233,27 @@ export class FneAccountingService {
 
       await this.entryRepo.save(entries.map((e) => this.entryRepo.create(e)));
       generated++;
+    }
+
+    // Auto-post to ERP if configured
+    if (generated > 0) {
+      try {
+        const erpSetting = await this.erpSettingsService.findActive();
+        if (erpSetting?.autoPostOnCertify || erpSetting?.autoPostOnClosing) {
+          const successIds = invoices
+            .filter((inv) => !existingInvoiceIds.has(inv.id))
+            .map((inv) => inv.id);
+          if (successIds.length) {
+            const erpResult = await this.sageErpService.postEntries(successIds);
+            this.logger.log(
+              `Auto-post ERP: ${erpResult.entriesPosted} entries posted (${erpResult.message})`,
+            );
+          }
+        }
+      } catch (erpErr) {
+        this.logger.error(`Auto-post ERP failed (non-blocking): ${erpErr}`);
+        // Non-blocking — entries are saved, ERP post failed but can be retried
+      }
     }
 
     return { generated, skipped: skipped.length, errors };

@@ -9,6 +9,8 @@ import { CashDayStatus, CashType, PaymentMethod } from '../entities/enums';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { EventsService, SalesEvent } from '../events/events.service';
+import { SageErpService } from '../erp/sage-erp.service';
+import { ErpSettingsService } from '../erp/erp-settings.service';
 import { OpenCashClosingDto, CloseCashClosingDto, ListCashClosingsQueryDto } from './dto';
 
 export interface CashClosingUser {
@@ -31,6 +33,8 @@ export class CashClosingService {
     private readonly auditService: AuditService,
     private readonly eventsService: EventsService,
     private readonly configService: ConfigService,
+    private readonly sageErpService: SageErpService,
+    private readonly erpSettingsService: ErpSettingsService,
   ) {}
 
   private readonly CASH_TYPE = CashType.SALES;
@@ -199,6 +203,19 @@ export class CashClosingService {
         comment: dto.comment,
         closedById: user.id,
       });
+    }
+
+    // Auto-post unposted accounting entries to ERP on cash closing
+    try {
+      const erpSetting = await this.erpSettingsService.findActive();
+      if (erpSetting?.autoPostOnClosing && erpSetting.isActive) {
+        const erpResult = await this.sageErpService.postAllUnposted();
+        this.logger.log(
+          `Auto-post ERP on closing: ${erpResult.entriesPosted} entries (${erpResult.message})`,
+        );
+      }
+    } catch (erpErr) {
+      this.logger.error(`Auto-post ERP on closing failed (non-blocking): ${erpErr}`);
     }
 
     return this.toResponseDto(saved);

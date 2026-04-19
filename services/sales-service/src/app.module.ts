@@ -30,6 +30,7 @@ import { ReceivablesModule } from './receivables/receivables.module';
 import { CashClosingModule } from './cash-closing/cash-closing.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { FneModule } from './fne/fne.module';
+import { ErpModule } from './erp/erp.module';
 
 // Entities
 import { Client } from './entities/client.entity';
@@ -50,6 +51,7 @@ import { FnePointOfSale } from './entities/fne-point-of-sale.entity';
 import { FneEstablishment } from './entities/fne-establishment.entity';
 import { FneSetting } from './entities/fne-setting.entity';
 import { FneAccountingEntry } from './entities/fne-accounting-entry.entity';
+import { ErpSetting } from './entities/erp-setting.entity';
 
 @Module({
   imports: [
@@ -94,6 +96,7 @@ import { FneAccountingEntry } from './entities/fne-accounting-entry.entity';
           FneEstablishment,
           FneSetting,
           FneAccountingEntry,
+          ErpSetting,
         ],
         synchronize: false,
         logging: cfg.get<string>('app.nodeEnv') === 'development',
@@ -126,6 +129,7 @@ import { FneAccountingEntry } from './entities/fne-accounting-entry.entity';
     CashClosingModule,
     DashboardModule,
     FneModule,
+    ErpModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

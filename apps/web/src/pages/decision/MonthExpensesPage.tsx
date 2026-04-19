@@ -33,9 +33,10 @@ export default function MonthExpensesPage() {
 
   const filters: ExpenseFilters = useMemo(
     () => ({
-      perPage: 200,
+      perPage: 100,
       sortBy: 'date',
       sortOrder: 'DESC',
+      status: 'PAID',
       dateFrom,
       dateTo,
     }),

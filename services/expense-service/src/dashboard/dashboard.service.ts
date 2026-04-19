@@ -23,10 +23,10 @@ export class DashboardService {
         SELECT
           COALESCE((SELECT SUM(CASE WHEN type='ENTRY' THEN amount ELSE -amount END) FROM cash_movements), 0) AS cashBalance,
           COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@0 AND YEAR([date])=@1 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS monthExpenses,
-          COALESCE((SELECT SUM(total_ttc) FROM sales WHERE MONTH(created_at)=@0 AND YEAR(created_at)=@1 AND status != 'CANCELLED'), 0) AS monthRevenue,
-          COALESCE((SELECT SUM(outstanding_amount) FROM receivables WHERE is_settled = 0), 0) AS outstandingReceivables,
+          COALESCE((SELECT SUM(total) FROM sales WHERE MONTH(created_at)=@0 AND YEAR(created_at)=@1 AND status != 'CANCELLED'), 0) AS monthRevenue,
+          COALESCE((SELECT SUM(amount_due - amount_paid) FROM receivables WHERE status != 'PAID'), 0) AS outstandingReceivables,
           COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@2 AND YEAR([date])=@3 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS prevMonthExpenses,
-          COALESCE((SELECT SUM(total_ttc) FROM sales WHERE MONTH(created_at)=@2 AND YEAR(created_at)=@3 AND status != 'CANCELLED'), 0) AS prevMonthRevenue
+          COALESCE((SELECT SUM(total) FROM sales WHERE MONTH(created_at)=@2 AND YEAR(created_at)=@3 AND status != 'CANCELLED'), 0) AS prevMonthRevenue
       `,
         [thisMonth, thisYear, lastMonth, lastYear],
       ),
@@ -79,7 +79,7 @@ export class DashboardService {
         GROUP BY FORMAT([date], 'yyyy-MM')
       ) e ON e.month = m.month
       LEFT JOIN (
-        SELECT FORMAT(created_at, 'yyyy-MM') AS month, SUM(total_ttc) AS total
+        SELECT FORMAT(created_at, 'yyyy-MM') AS month, SUM(total) AS total
         FROM sales WHERE status != 'CANCELLED'
         GROUP BY FORMAT(created_at, 'yyyy-MM')
       ) s ON s.month = m.month
@@ -114,7 +114,7 @@ export class DashboardService {
   /* ── Top clients (/dashboard/top-clients) ──────────── */
   async getTopClients() {
     const rows = await this.dataSource.query(`
-      SELECT TOP 5 c.id AS clientId, c.name AS clientName, COALESCE(SUM(s.total_ttc), 0) AS revenue
+      SELECT TOP 5 c.id AS clientId, c.name AS clientName, COALESCE(SUM(s.total), 0) AS revenue
       FROM clients c
       LEFT JOIN sales s ON s.client_id = c.id AND s.status != 'CANCELLED'
       WHERE c.is_active = 1
