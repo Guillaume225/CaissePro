@@ -1,27 +1,28 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Product } from '../entities/product.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { CreateProductDto, UpdateProductDto, ListProductsQueryDto } from './dto';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class ProductsService {
   private readonly logger = new Logger(ProductsService.name);
 
   constructor(
-    @InjectRepository(Product)
-    private readonly productRepo: Repository<Product>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
   ) {}
 
   /* ─── FindAll with filters ─── */
-  async findAll(query: ListProductsQueryDto) {
+  async findAll(tenantId: string, query: ListProductsQueryDto) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Product);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = this.productRepo.createQueryBuilder('p');
+    const qb = repo.createQueryBuilder('p');
 
     if (query.search) {
       qb.andWhere('(p.name ILIKE :s OR p.code ILIKE :s OR p.description ILIKE :s)', {
@@ -59,8 +60,9 @@ export class ProductsService {
   }
 
   /* ─── FindById ─── */
-  async findById(id: string) {
-    const product = await this.productRepo.findOne({ where: { id } });
+  async findById(tenantId: string, id: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const product = await ds.getRepository(Product).findOne({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
     return {
       ...product,
@@ -70,12 +72,15 @@ export class ProductsService {
   }
 
   /* ─── Create ─── */
-  async create(dto: CreateProductDto, userId: string) {
-    const existing = await this.productRepo.findOne({ where: { code: dto.code } });
+  async create(tenantId: string, dto: CreateProductDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Product);
+
+    const existing = await repo.findOne({ where: { code: dto.code } });
     if (existing) throw new BadRequestException(`Product code ${dto.code} already exists`);
 
-    const product = this.productRepo.create(dto);
-    const saved = await this.productRepo.save(product);
+    const product = repo.create(dto);
+    const saved = await repo.save(product);
 
     await this.auditService.log({
       userId,
@@ -85,12 +90,15 @@ export class ProductsService {
       newValue: { code: dto.code, name: dto.name },
     });
 
-    return this.findById(saved.id);
+    return this.findById(tenantId, saved.id);
   }
 
   /* ─── Update ─── */
-  async update(id: string, dto: UpdateProductDto, userId: string) {
-    const product = await this.productRepo.findOne({ where: { id } });
+  async update(tenantId: string, id: string, dto: UpdateProductDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Product);
+
+    const product = await repo.findOne({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
 
     const oldValue: Record<string, unknown> = {};
@@ -104,7 +112,7 @@ export class ProductsService {
     }
 
     Object.assign(product, dto);
-    await this.productRepo.save(product);
+    await repo.save(product);
 
     await this.auditService.log({
       userId,
@@ -115,16 +123,19 @@ export class ProductsService {
       newValue,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Toggle activation ─── */
-  async toggleActive(id: string, userId: string) {
-    const product = await this.productRepo.findOne({ where: { id } });
+  async toggleActive(tenantId: string, id: string, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Product);
+
+    const product = await repo.findOne({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
 
     product.isActive = !product.isActive;
-    await this.productRepo.save(product);
+    await repo.save(product);
 
     await this.auditService.log({
       userId,
@@ -135,15 +146,18 @@ export class ProductsService {
       newValue: { isActive: product.isActive },
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Soft Delete ─── */
-  async remove(id: string, userId: string): Promise<void> {
-    const product = await this.productRepo.findOne({ where: { id } });
+  async remove(tenantId: string, id: string, userId: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Product);
+
+    const product = await repo.findOne({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
 
-    await this.productRepo.softDelete(id);
+    await repo.softDelete(id);
 
     await this.auditService.log({
       userId,

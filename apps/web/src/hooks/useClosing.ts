@@ -336,3 +336,18 @@ export function useCancelAccounting() {
     },
   });
 }
+
+export function usePostCashToSage() {
+  const qc = useQueryClient();
+  const keys = useClosingKeys();
+  return useMutation({
+    mutationFn: async (cashDayId: string) => {
+      const { data } = await api.post('/closing/accounting-entries/post-to-sage', { cashDayId });
+      return data.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.accountingEntries });
+      qc.invalidateQueries({ queryKey: keys.history });
+    },
+  });
+}

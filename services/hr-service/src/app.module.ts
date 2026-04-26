@@ -8,7 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard, PermissionsGuard } from './common/guards';
 import { EmployeesModule } from './employees/employees.module';
-import { Employee } from './employees/employee.entity';
+import { TenantDataSourceModule } from './tenant/tenant-datasource.module';
 
 @Module({
   imports: [
@@ -25,7 +25,7 @@ import { Employee } from './employees/employee.entity';
         username: config.get<string>('database.username'),
         password: config.get<string>('database.password'),
         database: config.get<string>('database.database'),
-        entities: [Employee],
+        entities: [],
         synchronize: false,
         logging: config.get<string>('app.nodeEnv') !== 'production',
         options: { encrypt: false, trustServerCertificate: true },
@@ -42,6 +42,7 @@ import { Employee } from './employees/employee.entity';
         ],
       }),
     }),
+    TenantDataSourceModule,
     AuthModule,
     EmployeesModule,
   ],

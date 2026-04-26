@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # App
-    app_name: str = "CaisseFlow AI Service"
+    app_name: str = "Caisse Pro AI Service"
     app_version: str = "0.1.0"
     debug: bool = False
     api_prefix: str = "/ai"

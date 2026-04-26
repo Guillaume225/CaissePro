@@ -9,8 +9,8 @@ export class ApprovalCircuitsController {
 
   @Get()
   @Permissions('expense.read')
-  findAll() {
-    return this.service.findAll();
+  findAll(@CurrentUser('tenantId') tenantId: string) {
+    return this.service.findAll(tenantId);
   }
 
   @Post()
@@ -26,6 +26,7 @@ export class ApprovalCircuitsController {
   @Permissions('expense.approve_l1')
   update(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body()
     dto: {
       name?: string;
@@ -35,12 +36,12 @@ export class ApprovalCircuitsController {
       steps?: { level?: number; role: string; approverId?: string }[];
     },
   ) {
-    return this.service.update(id, dto);
+    return this.service.update(id, tenantId, dto);
   }
 
   @Delete(':id')
   @Permissions('expense.approve_l1')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.remove(id);
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.service.remove(id, tenantId);
   }
 }

@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
@@ -18,10 +19,11 @@ import { CurrentUser, Public } from '../common/decorators';
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
+  /** Public — requires ?tenantId= for schema routing */
   @Public()
   @Get('disbursement-limit')
-  async getDisbursementLimit() {
-    const maxAmount = await this.employeesService.getDisbursementLimit();
+  async getDisbursementLimit(@Query('tenantId') tenantId: string) {
+    const maxAmount = await this.employeesService.getDisbursementLimit(tenantId);
     return {
       success: true,
       data: { maxDisbursementAmount: maxAmount },
@@ -29,11 +31,12 @@ export class EmployeesController {
     };
   }
 
+  /** Public employee login — tenantId must be in body */
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginEmployeeDto) {
-    const data = await this.employeesService.loginByMatricule(dto.matricule, dto.email);
+  async login(@Body() dto: LoginEmployeeDto & { tenantId: string }) {
+    const data = await this.employeesService.loginByMatricule(dto.tenantId, dto.matricule, dto.email);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 

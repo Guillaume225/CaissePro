@@ -1,58 +1,51 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { In } from 'typeorm';
 import { DisbursementRequest } from '../entities/disbursement-request.entity';
 import { DisbursementRequestStatus } from '../entities/enums';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class DisbursementRequestsService {
-  constructor(
-    @InjectRepository(DisbursementRequest)
-    private readonly repo: Repository<DisbursementRequest>,
-  ) {}
+  constructor(private readonly tenantDsService: TenantDataSourceService) {}
 
-  /** List all requests for a tenant, optionally filtered by status */
-  async findAll(
-    tenantId: string,
-    status?: DisbursementRequestStatus,
-  ): Promise<DisbursementRequest[]> {
-    const where: Record<string, unknown> = { tenantId };
-    if (status) where.status = status;
-    return this.repo.find({ where, order: { createdAt: 'DESC' } });
+  private repo(tenantId: string) {
+    return this.tenantDsService
+      .getDataSource(tenantId)
+      .then((ds) => ds.getRepository(DisbursementRequest));
   }
 
-  /** List actionable requests (PENDING + APPROVED) — excludes VALIDATING, VALIDATED, REJECTED */
+  async findAll(tenantId: string, status?: DisbursementRequestStatus): Promise<DisbursementRequest[]> {
+    const repo = await this.repo(tenantId);
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    return repo.find({ where, order: { createdAt: 'DESC' } });
+  }
+
   async findPending(tenantId: string): Promise<DisbursementRequest[]> {
-    return this.repo.find({
-      where: {
-        tenantId,
-        status: In([DisbursementRequestStatus.PENDING, DisbursementRequestStatus.APPROVED]),
-      },
+    const repo = await this.repo(tenantId);
+    return repo.find({
+      where: { status: In([DisbursementRequestStatus.PENDING, DisbursementRequestStatus.APPROVED]) },
       order: { createdAt: 'DESC' },
     });
   }
 
-  /** Find one by ID */
   async findOne(id: string, tenantId: string): Promise<DisbursementRequest> {
-    const req = await this.repo.findOne({ where: { id, tenantId } });
+    const repo = await this.repo(tenantId);
+    const req = await repo.findOne({ where: { id } });
     if (!req) throw new NotFoundException('Disbursement request not found');
     return req;
   }
 
-  /** Track by reference (public — no auth needed) */
-  async trackByReference(reference: string): Promise<DisbursementRequest | null> {
-    return this.repo.findOne({ where: { reference } });
+  async trackByReference(reference: string, tenantId: string): Promise<DisbursementRequest | null> {
+    const repo = await this.repo(tenantId);
+    return repo.findOne({ where: { reference } });
   }
 
-  /** Find all requests for a given matricule (public — employee portal) */
-  async findByMatricule(matricule: string): Promise<DisbursementRequest[]> {
-    return this.repo.find({
-      where: { matricule },
-      order: { createdAt: 'DESC' },
-    });
+  async findByMatricule(matricule: string, tenantId: string): Promise<DisbursementRequest[]> {
+    const repo = await this.repo(tenantId);
+    return repo.find({ where: { matricule }, order: { createdAt: 'DESC' } });
   }
 
-  /** Create a new request (from employee portal) */
   async create(
     tenantId: string,
     dto: {
@@ -67,9 +60,9 @@ export class DisbursementRequestsService {
       reason: string;
     },
   ): Promise<DisbursementRequest> {
-    const entity = this.repo.create({
-      tenantId,
-      reference: '', // trigger will auto-generate
+    const repo = await this.repo(tenantId);
+    const entity = repo.create({
+      reference: '',
       lastName: dto.lastName,
       firstName: dto.firstName,
       position: dto.position ?? null,
@@ -81,40 +74,34 @@ export class DisbursementRequestsService {
       reason: dto.reason,
       status: DisbursementRequestStatus.PENDING,
     });
-    const saved = await this.repo.save(entity);
-    // Reload to get trigger-generated reference
-    return this.repo.findOneOrFail({ where: { id: saved.id } });
+    const saved = await repo.save(entity);
+    return repo.findOneOrFail({ where: { id: saved.id } });
   }
 
-  /** Approve a request */
   async approve(id: string, tenantId: string, userId: string): Promise<DisbursementRequest> {
+    const repo = await this.repo(tenantId);
     const req = await this.findOne(id, tenantId);
     req.status = DisbursementRequestStatus.APPROVED;
     req.processedById = userId;
-    return this.repo.save(req);
+    return repo.save(req);
   }
 
-  /** Reject a request */
-  async reject(
-    id: string,
-    tenantId: string,
-    userId: string,
-    comment?: string,
-  ): Promise<DisbursementRequest> {
+  async reject(id: string, tenantId: string, userId: string, comment?: string): Promise<DisbursementRequest> {
+    const repo = await this.repo(tenantId);
     const req = await this.findOne(id, tenantId);
     req.status = DisbursementRequestStatus.REJECTED;
     req.processedById = userId;
     if (comment) req.comment = comment;
-    return this.repo.save(req);
+    return repo.save(req);
   }
 
-  /** Mark as processed (linked to expense) — sets VALIDATING */
   async markProcessed(
     id: string,
     tenantId: string,
     userId: string,
     linkedExpenseId?: string,
   ): Promise<DisbursementRequest> {
+    const repo = await this.repo(tenantId);
     const req = await this.findOne(id, tenantId);
     if (req.status !== DisbursementRequestStatus.APPROVED) {
       throw new BadRequestException(
@@ -124,15 +111,15 @@ export class DisbursementRequestsService {
     req.status = DisbursementRequestStatus.VALIDATING;
     req.processedById = userId;
     if (linkedExpenseId) req.linkedExpenseId = linkedExpenseId;
-    return this.repo.save(req);
+    return repo.save(req);
   }
 
-  /** Mark as validated — expense completed validation circuit */
-  async markValidated(linkedExpenseId: string): Promise<void> {
-    const req = await this.repo.findOne({ where: { linkedExpenseId } });
+  async markValidated(linkedExpenseId: string, tenantId: string): Promise<void> {
+    const repo = await this.repo(tenantId);
+    const req = await repo.findOne({ where: { linkedExpenseId } });
     if (req && req.status === DisbursementRequestStatus.VALIDATING) {
       req.status = DisbursementRequestStatus.VALIDATED;
-      await this.repo.save(req);
+      await repo.save(req);
     }
   }
 }

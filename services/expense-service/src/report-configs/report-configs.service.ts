@@ -1,28 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ReportConfiguration } from './report-config.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { SaveReportConfigDto } from './dto';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class ReportConfigsService {
   constructor(
-    @InjectRepository(ReportConfiguration)
-    private readonly repo: Repository<ReportConfiguration>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
   ) {}
 
   async findAllByTenant(tenantId: string): Promise<ReportConfiguration[]> {
-    return this.repo.find({
-      where: { tenantId },
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    return ds.getRepository(ReportConfiguration).find({
       order: { reportId: 'ASC' },
     });
   }
 
   async findOne(tenantId: string, reportId: string): Promise<ReportConfiguration | null> {
-    return this.repo.findOne({ where: { tenantId, reportId } });
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    return ds.getRepository(ReportConfiguration).findOne({ where: { reportId } });
   }
 
   async upsert(
@@ -30,8 +29,11 @@ export class ReportConfigsService {
     dto: SaveReportConfigDto,
     actorId: string,
   ): Promise<ReportConfiguration> {
-    let entity = await this.repo.findOne({
-      where: { tenantId, reportId: dto.reportId },
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(ReportConfiguration);
+
+    let entity = await repo.findOne({
+      where: { reportId: dto.reportId },
     });
 
     const isNew = !entity;
@@ -40,8 +42,7 @@ export class ReportConfigsService {
       entity.configJson = dto.configJson;
       entity.updatedById = actorId;
     } else {
-      entity = this.repo.create({
-        tenantId,
+      entity = repo.create({
         reportId: dto.reportId,
         reportName: dto.reportName,
         configJson: dto.configJson,
@@ -49,7 +50,7 @@ export class ReportConfigsService {
       });
     }
 
-    const saved = await this.repo.save(entity);
+    const saved = await repo.save(entity);
 
     await this.auditService.log({
       userId: actorId,
@@ -75,10 +76,12 @@ export class ReportConfigsService {
   }
 
   async remove(tenantId: string, reportId: string, actorId: string): Promise<void> {
-    const entity = await this.repo.findOne({ where: { tenantId, reportId } });
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(ReportConfiguration);
+    const entity = await repo.findOne({ where: { reportId } });
     if (!entity) throw new NotFoundException('Report config not found');
 
-    await this.repo.remove(entity);
+    await repo.remove(entity);
 
     await this.auditService.log({
       userId: actorId,

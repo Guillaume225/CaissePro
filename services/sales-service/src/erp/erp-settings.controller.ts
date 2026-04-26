@@ -9,19 +9,25 @@ export class ErpSettingsController {
 
   @Get()
   @Permissions(FNE_PERMISSIONS.READ)
-  findByCompany(@Query('companyId') companyId: string) {
-    return this.erpSettingsService.findByCompany(companyId);
+  findByCompany(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('companyId') companyId: string,
+  ) {
+    return this.erpSettingsService.findByCompany(tenantId, companyId);
   }
 
   @Post()
   @Permissions(FNE_PERMISSIONS.CREATE)
-  upsert(@Body() dto: UpsertErpSettingDto) {
-    return this.erpSettingsService.upsert(dto);
+  upsert(@CurrentUser('tenantId') tenantId: string, @Body() dto: UpsertErpSettingDto) {
+    return this.erpSettingsService.upsert(tenantId, dto);
   }
 
   @Post('test')
   @Permissions(FNE_PERMISSIONS.READ)
-  testConnection(@Body() dto: { companyId: string }) {
-    return this.erpSettingsService.testConnection(dto.companyId);
+  testConnection(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: { companyId: string },
+  ) {
+    return this.erpSettingsService.testConnection(tenantId, dto.companyId);
   }
 }

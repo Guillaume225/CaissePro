@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Search,
   ChevronDown,
+  Send,
 } from 'lucide-react';
 import {
   Button,
@@ -24,6 +25,7 @@ import {
   useClosingHistory,
   useProcessAccounting,
   useCancelAccounting,
+  usePostCashToSage,
 } from '@/hooks/useClosing';
 import type { AccountingEntry } from '@/types/admin';
 import ExcelJS from 'exceljs';
@@ -74,6 +76,9 @@ export default function AccountingEntriesPage() {
 
   const processAccounting = useProcessAccounting();
   const cancelAccounting = useCancelAccounting();
+  const postToSage = usePostCashToSage();
+
+  const [sageMessage, setSageMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleExportExcel = async () => {
     if (!accountingSummary) return;
@@ -128,6 +133,7 @@ export default function AccountingEntriesPage() {
 
   const handleProcess = () => {
     if (!selectedCashDayId) return;
+    setSageMessage(null);
     processAccounting.mutate(selectedCashDayId);
   };
 
@@ -137,12 +143,33 @@ export default function AccountingEntriesPage() {
       setConfirmCancel(true);
       return;
     }
+    setSageMessage(null);
     cancelAccounting.mutate(selectedCashDayId, {
       onSettled: () => setConfirmCancel(false),
     });
   };
 
+  const handlePostToSage = () => {
+    if (!selectedCashDayId) return;
+    setSageMessage(null);
+    postToSage.mutate(selectedCashDayId, {
+      onSuccess: (result: any) => {
+        setSageMessage({
+          type: 'success',
+          text: result?.message || 'Écritures envoyées à Sage avec succès.',
+        });
+      },
+      onError: (err: any) => {
+        setSageMessage({
+          type: 'error',
+          text: err?.response?.data?.message || err?.message || 'Erreur lors de l\'envoi vers Sage.',
+        });
+      },
+    });
+  };
+
   const isProcessed = !!accountingSummary?.accountingProcessed;
+  const isSagePosted = !!(accountingSummary as any)?.sagePosted;
 
   const opTypeLabel: Record<string, string> = {
     SALE: t('closing.accounting.sale'),
@@ -371,6 +398,16 @@ export default function AccountingEntriesPage() {
                     <Download className="mr-2 h-4 w-4" />
                     {t('closing.accounting.exportExcel')}
                   </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handlePostToSage}
+                    loading={postToSage.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    Comptabiliser vers Sage
+                  </Button>
                 </>
               )}
             </div>
@@ -380,6 +417,24 @@ export default function AccountingEntriesPage() {
               <p className="py-6 text-center text-sm text-gray-400">{t('common.loading')}</p>
             ) : accountingSummary ? (
               <div className="space-y-4">
+                {/* Sage result message */}
+                {sageMessage && (
+                  <div
+                    className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${
+                      sageMessage.type === 'success'
+                        ? 'border-green-200 bg-green-50 text-green-800'
+                        : 'border-red-200 bg-red-50 text-red-800'
+                    }`}
+                  >
+                    {sageMessage.type === 'success' ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <XCircle className="h-4 w-4" />
+                    )}
+                    <span>{sageMessage.text}</span>
+                  </div>
+                )}
+
                 {/* Processing status banner */}
                 {isProcessed && (
                   <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
@@ -392,6 +447,19 @@ export default function AccountingEntriesPage() {
                             )
                           : '',
                       })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Sage posted status banner */}
+                {isSagePosted && (
+                  <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                    <Send className="h-4 w-4" />
+                    <span>
+                      Comptabilisé vers Sage le{' '}
+                      {(accountingSummary as any).sagePostedAt
+                        ? new Date((accountingSummary as any).sagePostedAt).toLocaleString('fr-FR')
+                        : ''}
                     </span>
                   </div>
                 )}

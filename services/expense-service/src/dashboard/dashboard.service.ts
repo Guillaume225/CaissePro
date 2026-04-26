@@ -1,36 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { TenantDataSourceService, tenantSchema } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly tenantDsService: TenantDataSourceService) {}
 
   private wrap(data: unknown) {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   /* ── General KPIs (/dashboard/kpis) ────────────────── */
-  async getKpis() {
+  async getKpis(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
     const now = new Date();
     const thisMonth = now.getMonth() + 1;
     const thisYear = now.getFullYear();
     const lastMonth = thisMonth === 1 ? 12 : thisMonth - 1;
     const lastYear = thisMonth === 1 ? thisYear - 1 : thisYear;
 
-    const [[row]] = await Promise.all([
-      this.dataSource.query(
-        `
-        SELECT
-          COALESCE((SELECT SUM(CASE WHEN type='ENTRY' THEN amount ELSE -amount END) FROM cash_movements), 0) AS cashBalance,
-          COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@0 AND YEAR([date])=@1 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS monthExpenses,
-          COALESCE((SELECT SUM(total) FROM sales WHERE MONTH(created_at)=@0 AND YEAR(created_at)=@1 AND status != 'CANCELLED'), 0) AS monthRevenue,
-          COALESCE((SELECT SUM(amount_due - amount_paid) FROM receivables WHERE status != 'PAID'), 0) AS outstandingReceivables,
-          COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@2 AND YEAR([date])=@3 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS prevMonthExpenses,
-          COALESCE((SELECT SUM(total) FROM sales WHERE MONTH(created_at)=@2 AND YEAR(created_at)=@3 AND status != 'CANCELLED'), 0) AS prevMonthRevenue
-      `,
-        [thisMonth, thisYear, lastMonth, lastYear],
-      ),
-    ]);
+    const [row] = await ds.query(
+      `
+      SELECT
+        COALESCE((SELECT SUM(CASE WHEN type='ENTRY' THEN amount ELSE -amount END) FROM [${s}].[cash_movements]), 0) AS cashBalance,
+        COALESCE((SELECT SUM(amount) FROM [${s}].[expenses] WHERE MONTH([date])=@0 AND YEAR([date])=@1 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS monthExpenses,
+        COALESCE((SELECT SUM(total) FROM [${s}].[sales] WHERE MONTH(created_at)=@0 AND YEAR(created_at)=@1 AND status != 'CANCELLED'), 0) AS monthRevenue,
+        COALESCE((SELECT SUM(amount_due - amount_paid) FROM [${s}].[receivables] WHERE status != 'PAID'), 0) AS outstandingReceivables,
+        COALESCE((SELECT SUM(amount) FROM [${s}].[expenses] WHERE MONTH([date])=@2 AND YEAR([date])=@3 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS prevMonthExpenses,
+        COALESCE((SELECT SUM(total) FROM [${s}].[sales] WHERE MONTH(created_at)=@2 AND YEAR(created_at)=@3 AND status != 'CANCELLED'), 0) AS prevMonthRevenue
+    `,
+      [thisMonth, thisYear, lastMonth, lastYear],
+    );
 
     const trend = (cur: number, prev: number) =>
       prev === 0 ? 0 : Math.round(((cur - prev) / prev) * 100);
@@ -48,12 +48,14 @@ export class DashboardService {
   }
 
   /* ── Treasury chart (/dashboard/treasury) ──────────── */
-  async getTreasury() {
-    const rows = await this.dataSource.query(`
+  async getTreasury(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+    const rows = await ds.query(`
       SELECT
         FORMAT(created_at, 'yyyy-MM') AS month,
         SUM(CASE WHEN type='ENTRY' THEN amount ELSE -amount END) AS amount
-      FROM cash_movements
+      FROM [${s}].[cash_movements]
       WHERE created_at >= DATEADD(MONTH, -11, CAST(CAST(YEAR(GETDATE()) AS VARCHAR) + '-' + RIGHT('0'+CAST(MONTH(GETDATE()) AS VARCHAR),2) + '-01' AS DATE))
       GROUP BY FORMAT(created_at, 'yyyy-MM')
       ORDER BY month
@@ -64,25 +66,27 @@ export class DashboardService {
   }
 
   /* ── Monthly comparison (/dashboard/monthly-comparison) */
-  async getMonthlyComparison() {
-    const rows = await this.dataSource.query(`
+  async getMonthlyComparison(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+    const rows = await ds.query(`
       SELECT m.month,
         COALESCE(e.total, 0) AS expenses,
-        COALESCE(s.total, 0) AS revenue
+        COALESCE(sv.total, 0) AS revenue
       FROM (
         SELECT FORMAT(DATEADD(MONTH, -n, GETDATE()), 'yyyy-MM') AS month
         FROM (VALUES (0),(1),(2),(3),(4),(5)) AS t(n)
       ) m
       LEFT JOIN (
         SELECT FORMAT([date], 'yyyy-MM') AS month, SUM(amount) AS total
-        FROM expenses WHERE status NOT IN ('CANCELLED','REJECTED')
+        FROM [${s}].[expenses] WHERE status NOT IN ('CANCELLED','REJECTED')
         GROUP BY FORMAT([date], 'yyyy-MM')
       ) e ON e.month = m.month
       LEFT JOIN (
         SELECT FORMAT(created_at, 'yyyy-MM') AS month, SUM(total) AS total
-        FROM sales WHERE status != 'CANCELLED'
+        FROM [${s}].[sales] WHERE status != 'CANCELLED'
         GROUP BY FORMAT(created_at, 'yyyy-MM')
-      ) s ON s.month = m.month
+      ) sv ON sv.month = m.month
       ORDER BY m.month
     `);
     return this.wrap(
@@ -95,11 +99,13 @@ export class DashboardService {
   }
 
   /* ── Expense categories breakdown (/dashboard/expense-categories) */
-  async getExpenseCategories() {
-    const rows = await this.dataSource.query(`
+  async getExpenseCategories(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+    const rows = await ds.query(`
       SELECT c.name, COALESCE(SUM(e.amount), 0) AS value
-      FROM expense_categories c
-      LEFT JOIN expenses e ON e.category_id = c.id
+      FROM [${s}].[expense_categories] c
+      LEFT JOIN [${s}].[expenses] e ON e.category_id = c.id
         AND MONTH(e.[date]) = MONTH(GETDATE()) AND YEAR(e.[date]) = YEAR(GETDATE())
         AND e.status NOT IN ('CANCELLED','REJECTED')
       WHERE c.is_active = 1
@@ -112,11 +118,13 @@ export class DashboardService {
   }
 
   /* ── Top clients (/dashboard/top-clients) ──────────── */
-  async getTopClients() {
-    const rows = await this.dataSource.query(`
-      SELECT TOP 5 c.id AS clientId, c.name AS clientName, COALESCE(SUM(s.total), 0) AS revenue
-      FROM clients c
-      LEFT JOIN sales s ON s.client_id = c.id AND s.status != 'CANCELLED'
+  async getTopClients(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+    const rows = await ds.query(`
+      SELECT TOP 5 c.id AS clientId, c.name AS clientName, COALESCE(SUM(sv.total), 0) AS revenue
+      FROM [${s}].[clients] c
+      LEFT JOIN [${s}].[sales] sv ON sv.client_id = c.id AND sv.status != 'CANCELLED'
       WHERE c.is_active = 1
       GROUP BY c.id, c.name
       ORDER BY revenue DESC
@@ -131,20 +139,22 @@ export class DashboardService {
   }
 
   /* ── Expense module KPIs (/dashboard/expense/kpis) ─── */
-  async getExpenseKpis() {
+  async getExpenseKpis(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
     const thisMonth = new Date().getMonth() + 1;
     const thisYear = new Date().getFullYear();
     const lastMonth = thisMonth === 1 ? 12 : thisMonth - 1;
     const lastYear = thisMonth === 1 ? thisYear - 1 : thisYear;
 
-    const [row] = await this.dataSource.query(
+    const [row] = await ds.query(
       `
       SELECT
-        COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@0 AND YEAR([date])=@1 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS totalExpenses,
-        COALESCE((SELECT COUNT(*) FROM expenses WHERE status = 'PENDING'), 0) AS pendingApprovals,
-        COALESCE((SELECT COUNT(*) FROM expenses WHERE status = 'APPROVED_L2' AND DATEDIFF(DAY, [date], GETDATE()) > 30), 0) AS overduePayments,
-        COALESCE((SELECT SUM(amount) FROM expenses WHERE MONTH([date])=@2 AND YEAR([date])=@3 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS prevTotal,
-        COALESCE((SELECT COUNT(*) FROM expenses WHERE status = 'PENDING' AND MONTH([date])=@2 AND YEAR([date])=@3), 0) AS prevPending
+        COALESCE((SELECT SUM(amount) FROM [${s}].[expenses] WHERE MONTH([date])=@0 AND YEAR([date])=@1 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS totalExpenses,
+        COALESCE((SELECT COUNT(*) FROM [${s}].[expenses] WHERE status = 'PENDING'), 0) AS pendingApprovals,
+        COALESCE((SELECT COUNT(*) FROM [${s}].[expenses] WHERE status = 'APPROVED_L2' AND DATEDIFF(DAY, [date], GETDATE()) > 30), 0) AS overduePayments,
+        COALESCE((SELECT SUM(amount) FROM [${s}].[expenses] WHERE MONTH([date])=@2 AND YEAR([date])=@3 AND status NOT IN ('CANCELLED','REJECTED')), 0) AS prevTotal,
+        COALESCE((SELECT COUNT(*) FROM [${s}].[expenses] WHERE status = 'PENDING' AND MONTH([date])=@2 AND YEAR([date])=@3), 0) AS prevPending
     `,
       [thisMonth, thisYear, lastMonth, lastYear],
     );
@@ -163,10 +173,12 @@ export class DashboardService {
   }
 
   /* ── Expense monthly trend (/dashboard/expense/monthly-trend) */
-  async getExpenseMonthlyTrend() {
-    const rows = await this.dataSource.query(`
+  async getExpenseMonthlyTrend(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+    const rows = await ds.query(`
       SELECT FORMAT([date], 'yyyy-MM') AS month, SUM(amount) AS amount
-      FROM expenses
+      FROM [${s}].[expenses]
       WHERE status NOT IN ('CANCELLED','REJECTED')
         AND [date] >= DATEADD(MONTH, -11, CAST(CAST(YEAR(GETDATE()) AS VARCHAR) + '-' + RIGHT('0'+CAST(MONTH(GETDATE()) AS VARCHAR),2) + '-01' AS DATE))
       GROUP BY FORMAT([date], 'yyyy-MM')
@@ -178,11 +190,13 @@ export class DashboardService {
   }
 
   /* ── Recent expenses (/dashboard/expense/recent) ───── */
-  async getRecentExpenses() {
-    const rows = await this.dataSource.query(`
+  async getRecentExpenses(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+    const rows = await ds.query(`
       SELECT TOP 10 e.id, e.reference, e.[date], e.amount, c.name AS categoryName, e.status, e.beneficiary
-      FROM expenses e
-      LEFT JOIN expense_categories c ON c.id = e.category_id
+      FROM [${s}].[expenses] e
+      LEFT JOIN [${s}].[expense_categories] c ON c.id = e.category_id
       ORDER BY e.created_at DESC
     `);
     return this.wrap(

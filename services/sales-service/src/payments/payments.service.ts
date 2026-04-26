@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder } from 'typeorm';
 import { Payment } from '../entities/payment.entity';
 import { Sale } from '../entities/sale.entity';
 import { Receivable } from '../entities/receivable.entity';
@@ -10,28 +9,25 @@ import { AuditAction } from '../audit/audit-log.entity';
 import { EventsService, SalesEvent } from '../events/events.service';
 import { CreatePaymentDto } from '../sales/dto';
 import { ListPaymentsQueryDto } from './dto';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
-    @InjectRepository(Payment)
-    private readonly paymentRepo: Repository<Payment>,
-    @InjectRepository(Sale)
-    private readonly saleRepo: Repository<Sale>,
-    @InjectRepository(Receivable)
-    private readonly receivableRepo: Repository<Receivable>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
     private readonly eventsService: EventsService,
   ) {}
 
   /* ─── Reference generation: REC-YYYY-NNNNN ─── */
-  private async generateReference(): Promise<string> {
+  private async generateReference(tenantId: string): Promise<string> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
     const year = new Date().getFullYear();
     const prefix = `REC-${year}-`;
 
-    const last = await this.paymentRepo
+    const last = await ds.getRepository(Payment)
       .createQueryBuilder('p')
       .where('p.reference LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('p.reference', 'DESC')
@@ -46,11 +42,14 @@ export class PaymentsService {
   }
 
   /* ─── FindAll with filters ─── */
-  async findAll(query: ListPaymentsQueryDto) {
+  async findAll(tenantId: string, query: ListPaymentsQueryDto) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Payment);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = this.paymentRepo
+    const qb = repo
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.sale', 'sale')
       .leftJoinAndSelect('p.client', 'client');
@@ -80,8 +79,9 @@ export class PaymentsService {
   }
 
   /* ─── FindById ─── */
-  async findById(id: string) {
-    const payment = await this.paymentRepo.findOne({
+  async findById(tenantId: string, id: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const payment = await ds.getRepository(Payment).findOne({
       where: { id },
       relations: ['sale', 'client'],
     });
@@ -90,8 +90,13 @@ export class PaymentsService {
   }
 
   /* ─── Record payment ─── */
-  async create(dto: CreatePaymentDto, userId: string) {
-    const sale = await this.saleRepo.findOne({ where: { id: dto.saleId } });
+  async create(tenantId: string, dto: CreatePaymentDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const paymentRepo = ds.getRepository(Payment);
+    const saleRepo = ds.getRepository(Sale);
+    const receivableRepo = ds.getRepository(Receivable);
+
+    const sale = await saleRepo.findOne({ where: { id: dto.saleId } });
     if (!sale) throw new NotFoundException('Sale not found');
 
     if (sale.status === SaleStatus.DRAFT) {
@@ -108,8 +113,8 @@ export class PaymentsService {
       );
     }
 
-    const reference = await this.generateReference();
-    const payment = this.paymentRepo.create({
+    const reference = await this.generateReference(tenantId);
+    const payment = paymentRepo.create({
       reference,
       saleId: dto.saleId,
       clientId: sale.clientId,
@@ -120,7 +125,7 @@ export class PaymentsService {
       notes: dto.notes || null,
       receivedById: userId,
     });
-    const saved = await this.paymentRepo.save(payment);
+    const saved = await paymentRepo.save(payment);
 
     // Update sale
     const newAmountPaid = Number(sale.amountPaid) + dto.amount;
@@ -131,10 +136,10 @@ export class PaymentsService {
     } else {
       sale.status = SaleStatus.PARTIALLY_PAID;
     }
-    await this.saleRepo.save(sale);
+    await saleRepo.save(sale);
 
     // Update receivable if exists
-    const receivable = await this.receivableRepo.findOne({ where: { saleId: dto.saleId } });
+    const receivable = await receivableRepo.findOne({ where: { saleId: dto.saleId } });
     if (receivable) {
       receivable.paidAmount = newAmountPaid;
       receivable.outstandingAmount = Number(receivable.totalAmount) - newAmountPaid;
@@ -142,7 +147,7 @@ export class PaymentsService {
         receivable.isSettled = true;
         receivable.outstandingAmount = 0;
       }
-      await this.receivableRepo.save(receivable);
+      await receivableRepo.save(receivable);
     }
 
     await this.auditService.log({
@@ -168,7 +173,7 @@ export class PaymentsService {
       receivedById: userId,
     });
 
-    return this.findById(saved.id);
+    return this.findById(tenantId, saved.id);
   }
 
   /* ─── Private helpers ─── */

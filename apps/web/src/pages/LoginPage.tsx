@@ -9,6 +9,7 @@ import { ShieldCheck, ArrowLeft, Copy, CheckCircle2, Smartphone } from 'lucide-r
 
 const ROLE_MAP: Record<string, User['role']> = {
   ADMIN: 'admin',
+  ADMINISTRATEUR: 'admin',
   MANAGER: 'manager',
   CASHIER: 'cashier',
   ACCOUNTANT: 'viewer',

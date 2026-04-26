@@ -13,13 +13,13 @@ export class Role {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
-
   @Column({ type: 'varchar', length: 50, unique: true })
   name!: string;
 
-  @Column({ type: 'simple-json', default: [] })
+  @Column({ type: 'nvarchar', length: 'MAX', default: '[]', transformer: {
+    to: (val: string[]) => JSON.stringify(val ?? []),
+    from: (val: string) => { try { return JSON.parse(val ?? '[]'); } catch { return []; } },
+  } })
   permissions!: string[];
 
   @Column({ type: 'bit', name: 'is_system', default: false })

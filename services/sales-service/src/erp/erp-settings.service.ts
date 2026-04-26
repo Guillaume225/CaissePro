@@ -1,7 +1,6 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ErpSetting } from '../entities/erp-setting.entity';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 export interface UpsertErpSettingDto {
   companyId: string;
@@ -23,28 +22,28 @@ export interface UpsertErpSettingDto {
 
 @Injectable()
 export class ErpSettingsService {
-  private readonly logger = new Logger(ErpSettingsService.name);
+  constructor(private readonly tenantDsService: TenantDataSourceService) {}
 
-  constructor(
-    @InjectRepository(ErpSetting)
-    private readonly repo: Repository<ErpSetting>,
-  ) {}
-
-  async findByCompany(companyId: string): Promise<ErpSetting | null> {
+  async findByCompany(tenantId: string, companyId: string): Promise<ErpSetting | null> {
     if (!companyId) return null;
-    return this.repo.findOne({ where: { companyId } });
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    return ds.getRepository(ErpSetting).findOne({ where: { companyId } });
   }
 
-  async findActive(): Promise<ErpSetting | null> {
-    return this.repo.findOne({ where: { isActive: true } });
+  async findActive(tenantId: string): Promise<ErpSetting | null> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    return ds.getRepository(ErpSetting).findOne({ where: { isActive: true } });
   }
 
-  async upsert(dto: UpsertErpSettingDto): Promise<ErpSetting> {
+  async upsert(tenantId: string, dto: UpsertErpSettingDto): Promise<ErpSetting> {
     if (!dto.companyId) throw new BadRequestException('companyId requis');
     if (!dto.apiUrl) throw new BadRequestException('apiUrl requis');
     if (!dto.accessToken) throw new BadRequestException('accessToken requis');
 
-    const existing = await this.repo.findOne({ where: { companyId: dto.companyId } });
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(ErpSetting);
+
+    const existing = await repo.findOne({ where: { companyId: dto.companyId } });
 
     if (existing) {
       Object.assign(existing, {
@@ -63,10 +62,10 @@ export class ErpSettingsService {
         certifyAfterAccounting: dto.certifyAfterAccounting ?? existing.certifyAfterAccounting,
         isActive: dto.isActive ?? existing.isActive,
       });
-      return this.repo.save(existing);
+      return repo.save(existing);
     }
 
-    const entity = this.repo.create({
+    const entity = repo.create({
       companyId: dto.companyId,
       erpName: dto.erpName ?? 'sage',
       apiUrl: dto.apiUrl,
@@ -83,11 +82,11 @@ export class ErpSettingsService {
       certifyAfterAccounting: dto.certifyAfterAccounting ?? false,
       isActive: dto.isActive ?? true,
     });
-    return this.repo.save(entity);
+    return repo.save(entity);
   }
 
-  async testConnection(companyId: string): Promise<{ success: boolean; message: string }> {
-    const setting = await this.findByCompany(companyId);
+  async testConnection(tenantId: string, companyId: string): Promise<{ success: boolean; message: string }> {
+    const setting = await this.findByCompany(tenantId, companyId);
     if (!setting) throw new NotFoundException('Configuration ERP non trouvée');
 
     try {

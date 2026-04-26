@@ -22,15 +22,18 @@ export class RolesController {
 
   @Get()
   @Permissions(PERMISSIONS.ROLE_READ)
-  async findAll() {
-    const data = await this.rolesService.findAll();
+  async findAll(@CurrentUser('tenantId') tenantId: string) {
+    const data = await this.rolesService.findAll(tenantId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   @Get(':id')
   @Permissions(PERMISSIONS.ROLE_READ)
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    const data = await this.rolesService.findById(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    const data = await this.rolesService.findById(id, tenantId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -44,7 +47,7 @@ export class RolesController {
     @Req() req: Request,
   ) {
     const ip = req.ip || req.socket.remoteAddress || '';
-    const data = await this.rolesService.create(dto, actorId, ip, tenantId);
+    const data = await this.rolesService.create(dto, tenantId, actorId, ip);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -54,10 +57,11 @@ export class RolesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateRoleDto,
     @CurrentUser('id') actorId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Req() req: Request,
   ) {
     const ip = req.ip || req.socket.remoteAddress || '';
-    const data = await this.rolesService.update(id, dto, actorId, ip);
+    const data = await this.rolesService.update(id, dto, tenantId, actorId, ip);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 }

@@ -24,6 +24,10 @@ export class FneClient {
   @Column({ type: 'varchar', length: 255 })
   email!: string;
 
+  /** Code client */
+  @Column({ type: 'varchar', length: 50, name: 'client_code', nullable: true })
+  clientCode!: string | null;
+
   /** NCC client (required for B2B) */
   @Column({ type: 'varchar', length: 100, nullable: true })
   ncc!: string | null;

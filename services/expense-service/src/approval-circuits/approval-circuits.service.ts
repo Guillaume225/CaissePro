@@ -1,29 +1,31 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { TenantDataSourceService, tenantSchema } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class ApprovalCircuitsService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly tenantDsService: TenantDataSourceService) {}
 
   private wrap(data: unknown) {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
-  async findAll() {
-    const circuits = await this.dataSource.query(`
+  async findAll(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+
+    const circuits = await ds.query(`
       SELECT ac.id, ac.name, ac.min_amount AS minAmount, ac.max_amount AS maxAmount, ac.is_active AS isActive,
-        (SELECT COUNT(*) FROM approval_circuit_steps WHERE circuit_id = ac.id) AS stepsCount
-      FROM approval_circuits ac
+        (SELECT COUNT(*) FROM [${s}].[approval_circuit_steps] WHERE circuit_id = ac.id) AS stepsCount
+      FROM [${s}].[approval_circuits] ac
       ORDER BY ac.name
     `);
 
-    // Load steps for each circuit
     for (const circuit of circuits) {
       circuit.isActive = !!circuit.isActive;
-      const steps = await this.dataSource.query(
+      const steps = await ds.query(
         `
         SELECT s.id, s.level AS stepOrder, s.role AS roleName, s.approver_id AS approverId
-        FROM approval_circuit_steps s
+        FROM [${s}].[approval_circuit_steps] s
         WHERE s.circuit_id = @0
         ORDER BY s.level
       `,
@@ -34,28 +36,34 @@ export class ApprovalCircuitsService {
     return this.wrap(circuits);
   }
 
-  async create(dto: {
-    name: string;
-    minAmount?: number;
-    maxAmount?: number;
-    steps?: { level?: number; role: string; approverId?: string }[];
-  }, tenantId: string) {
-    const [circuit] = await this.dataSource.query(
+  async create(
+    dto: {
+      name: string;
+      minAmount?: number;
+      maxAmount?: number;
+      steps?: { level?: number; role: string; approverId?: string }[];
+    },
+    tenantId: string,
+  ) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+
+    const [circuit] = await ds.query(
       `
-      INSERT INTO approval_circuits (id, tenant_id, name, min_amount, max_amount, is_active)
+      INSERT INTO [${s}].[approval_circuits] (id, name, min_amount, max_amount, is_active)
       OUTPUT INSERTED.*
-      VALUES (NEWID(), @0, @1, @2, @3, 1)
+      VALUES (NEWID(), @0, @1, @2, 1)
     `,
-      [tenantId, dto.name, dto.minAmount || 0, dto.maxAmount || null],
+      [dto.name, dto.minAmount || 0, dto.maxAmount || null],
     );
 
     if (dto.steps?.length) {
       for (let i = 0; i < dto.steps.length; i++) {
         const step = dto.steps[i];
         const role = step.role.toUpperCase();
-        await this.dataSource.query(
+        await ds.query(
           `
-          INSERT INTO approval_circuit_steps (id, circuit_id, level, role, approver_id)
+          INSERT INTO [${s}].[approval_circuit_steps] (id, circuit_id, level, role, approver_id)
           VALUES (NEWID(), @0, @1, @2, @3)
         `,
           [circuit.id, step.level ?? i + 1, role, step.approverId || null],
@@ -67,6 +75,7 @@ export class ApprovalCircuitsService {
 
   async update(
     id: string,
+    tenantId: string,
     dto: {
       name?: string;
       minAmount?: number;
@@ -75,8 +84,11 @@ export class ApprovalCircuitsService {
       steps?: { level?: number; role: string; approverId?: string }[];
     },
   ) {
-    const [existing] = await this.dataSource.query(
-      'SELECT id FROM approval_circuits WHERE id = @0',
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+
+    const [existing] = await ds.query(
+      `SELECT id FROM [${s}].[approval_circuits] WHERE id = @0`,
       [id],
     );
     if (!existing) throw new NotFoundException('Circuit not found');
@@ -106,19 +118,19 @@ export class ApprovalCircuitsService {
     }
 
     if (sets.length) {
-      await this.dataSource.query(
-        `UPDATE approval_circuits SET ${sets.join(', ')} WHERE id = @0`,
+      await ds.query(
+        `UPDATE [${s}].[approval_circuits] SET ${sets.join(', ')} WHERE id = @0`,
         params,
       );
     }
 
     if (dto.steps) {
-      await this.dataSource.query('DELETE FROM approval_circuit_steps WHERE circuit_id = @0', [id]);
+      await ds.query(`DELETE FROM [${s}].[approval_circuit_steps] WHERE circuit_id = @0`, [id]);
       for (let i = 0; i < dto.steps.length; i++) {
         const step = dto.steps[i];
-        await this.dataSource.query(
+        await ds.query(
           `
-          INSERT INTO approval_circuit_steps (id, circuit_id, level, role, approver_id)
+          INSERT INTO [${s}].[approval_circuit_steps] (id, circuit_id, level, role, approver_id)
           VALUES (NEWID(), @0, @1, @2, @3)
         `,
           [id, step.level ?? i + 1, step.role, step.approverId || null],
@@ -126,12 +138,14 @@ export class ApprovalCircuitsService {
       }
     }
 
-    return this.findAll();
+    return this.findAll(tenantId);
   }
 
-  async remove(id: string) {
-    await this.dataSource.query('DELETE FROM approval_circuit_steps WHERE circuit_id = @0', [id]);
-    await this.dataSource.query('DELETE FROM approval_circuits WHERE id = @0', [id]);
+  async remove(id: string, tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const s = tenantSchema(tenantId);
+    await ds.query(`DELETE FROM [${s}].[approval_circuit_steps] WHERE circuit_id = @0`, [id]);
+    await ds.query(`DELETE FROM [${s}].[approval_circuits] WHERE id = @0`, [id]);
     return this.wrap(null);
   }
 }

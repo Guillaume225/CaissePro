@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, ParseUUIDPipe } from '@nestjs/common';
 import { AdvancesService } from './advances.service';
-import { Permissions } from '../common/decorators';
-import { CurrentUser } from '../common/decorators';
+import { Permissions, CurrentUser } from '../common/decorators';
 import { EXPENSE_PERMISSIONS } from '../common/permissions';
 import { CreateAdvanceDto, UpdateAdvanceDto, JustifyAdvanceDto, ListAdvancesQueryDto } from './dto';
 
@@ -11,39 +10,45 @@ export class AdvancesController {
 
   @Get()
   @Permissions(EXPENSE_PERMISSIONS.READ)
-  findAll(@Query() query: ListAdvancesQueryDto) {
-    return this.advancesService.findAll(query);
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListAdvancesQueryDto) {
+    return this.advancesService.findAll(tenantId, query);
   }
 
   @Get(':id')
   @Permissions(EXPENSE_PERMISSIONS.READ)
-  findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.advancesService.findById(id);
+  findById(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.advancesService.findById(tenantId, id);
   }
 
   @Post()
   @Permissions(EXPENSE_PERMISSIONS.CREATE)
-  create(@Body() dto: CreateAdvanceDto, @CurrentUser('id') userId: string) {
-    return this.advancesService.create(dto, userId);
+  create(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: CreateAdvanceDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.advancesService.create(tenantId, dto, userId);
   }
 
   @Patch(':id')
   @Permissions(EXPENSE_PERMISSIONS.UPDATE)
   update(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAdvanceDto,
     @CurrentUser('id') userId: string,
   ) {
-    return this.advancesService.update(id, dto, userId);
+    return this.advancesService.update(tenantId, id, dto, userId);
   }
 
   @Post(':id/justify')
   @Permissions(EXPENSE_PERMISSIONS.UPDATE)
   justify(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: JustifyAdvanceDto,
     @CurrentUser('id') userId: string,
   ) {
-    return this.advancesService.justify(id, dto, userId);
+    return this.advancesService.justify(tenantId, id, dto, userId);
   }
 }

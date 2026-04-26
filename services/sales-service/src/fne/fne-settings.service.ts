@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { FneSetting } from '../entities/fne-setting.entity';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 export interface CreateFneSettingDto {
   companyId: string;
@@ -31,21 +30,21 @@ export interface UpdateFneSettingDto {
 
 @Injectable()
 export class FneSettingsService {
-  constructor(
-    @InjectRepository(FneSetting)
-    private readonly repo: Repository<FneSetting>,
-  ) {}
+  constructor(private readonly tenantDsService: TenantDataSourceService) {}
 
-  async findByCompany(companyId: string): Promise<FneSetting | null> {
-    return this.repo.findOneBy({ companyId });
+  async findByCompany(tenantId: string, companyId: string): Promise<FneSetting | null> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    return ds.getRepository(FneSetting).findOneBy({ companyId });
   }
 
-  async create(dto: CreateFneSettingDto): Promise<FneSetting> {
-    const existing = await this.repo.findOneBy({ companyId: dto.companyId });
+  async create(tenantId: string, dto: CreateFneSettingDto): Promise<FneSetting> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FneSetting);
+    const existing = await repo.findOneBy({ companyId: dto.companyId });
     if (existing) {
       throw new ConflictException('La configuration FNE existe déjà pour cette société');
     }
-    const entity = this.repo.create({
+    const entity = repo.create({
       companyId: dto.companyId,
       apiUrl: dto.apiUrl || 'http://54.247.95.108/ws',
       apiKey: dto.apiKey,
@@ -57,18 +56,22 @@ export class FneSettingsService {
       centreImpots: dto.centreImpots ?? null,
       bankRef: dto.bankRef ?? null,
     });
-    return this.repo.save(entity);
+    return repo.save(entity);
   }
 
-  async update(companyId: string, dto: UpdateFneSettingDto): Promise<FneSetting> {
-    const entity = await this.repo.findOneBy({ companyId });
+  async update(tenantId: string, companyId: string, dto: UpdateFneSettingDto): Promise<FneSetting> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FneSetting);
+    const entity = await repo.findOneBy({ companyId });
     if (!entity) throw new NotFoundException('Configuration FNE introuvable pour cette société');
     Object.assign(entity, dto);
-    return this.repo.save(entity);
+    return repo.save(entity);
   }
 
-  async upsert(dto: CreateFneSettingDto): Promise<FneSetting> {
-    const existing = await this.repo.findOneBy({ companyId: dto.companyId });
+  async upsert(tenantId: string, dto: CreateFneSettingDto): Promise<FneSetting> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FneSetting);
+    const existing = await repo.findOneBy({ companyId: dto.companyId });
     if (existing) {
       Object.assign(existing, {
         apiUrl: dto.apiUrl || existing.apiUrl,
@@ -82,8 +85,8 @@ export class FneSettingsService {
         centreImpots: dto.centreImpots !== undefined ? dto.centreImpots : existing.centreImpots,
         bankRef: dto.bankRef !== undefined ? dto.bankRef : existing.bankRef,
       });
-      return this.repo.save(existing);
+      return repo.save(existing);
     }
-    return this.create(dto);
+    return this.create(tenantId, dto);
   }
 }

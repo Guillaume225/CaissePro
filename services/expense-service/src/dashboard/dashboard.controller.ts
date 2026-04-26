@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { Permissions } from '../common/decorators';
+import { Permissions, CurrentUser } from '../common/decorators';
 import { DashboardService } from './dashboard.service';
 
 @Controller('dashboard')
@@ -8,49 +8,49 @@ export class DashboardController {
 
   @Get('kpis')
   @Permissions('expense.read')
-  getKpis() {
-    return this.dashboardService.getKpis();
+  getKpis(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getKpis(tenantId);
   }
 
   @Get('treasury')
   @Permissions('expense.read')
-  getTreasury() {
-    return this.dashboardService.getTreasury();
+  getTreasury(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getTreasury(tenantId);
   }
 
   @Get('monthly-comparison')
   @Permissions('expense.read')
-  getMonthlyComparison() {
-    return this.dashboardService.getMonthlyComparison();
+  getMonthlyComparison(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getMonthlyComparison(tenantId);
   }
 
   @Get('expense-categories')
   @Permissions('expense.read')
-  getExpenseCategories() {
-    return this.dashboardService.getExpenseCategories();
+  getExpenseCategories(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getExpenseCategories(tenantId);
   }
 
   @Get('top-clients')
   @Permissions('expense.read')
-  getTopClients() {
-    return this.dashboardService.getTopClients();
+  getTopClients(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getTopClients(tenantId);
   }
 
   @Get('expense/kpis')
   @Permissions('expense.read')
-  getExpenseKpis() {
-    return this.dashboardService.getExpenseKpis();
+  getExpenseKpis(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getExpenseKpis(tenantId);
   }
 
   @Get('expense/monthly-trend')
   @Permissions('expense.read')
-  getExpenseMonthlyTrend() {
-    return this.dashboardService.getExpenseMonthlyTrend();
+  getExpenseMonthlyTrend(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getExpenseMonthlyTrend(tenantId);
   }
 
   @Get('expense/recent')
   @Permissions('expense.read')
-  getRecentExpenses() {
-    return this.dashboardService.getRecentExpenses();
+  getRecentExpenses(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getRecentExpenses(tenantId);
   }
 }

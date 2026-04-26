@@ -39,6 +39,7 @@ const ADMIN_KEYS = {
 // ── Role name ↔ frontend role mapping ────────────────────
 const ROLE_NAME_TO_FRONTEND: Record<string, string> = {
   ADMIN: 'admin',
+  ADMINISTRATEUR: 'admin',
   MANAGER: 'manager',
   CASHIER: 'cashier',
   ACCOUNTANT: 'viewer',

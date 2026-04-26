@@ -1,7 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
 import { CashDay } from '../entities/cash-day.entity';
 import { Payment } from '../entities/payment.entity';
@@ -12,6 +10,7 @@ import { EventsService, SalesEvent } from '../events/events.service';
 import { SageErpService } from '../erp/sage-erp.service';
 import { ErpSettingsService } from '../erp/erp-settings.service';
 import { OpenCashClosingDto, CloseCashClosingDto, ListCashClosingsQueryDto } from './dto';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 export interface CashClosingUser {
   id: string;
@@ -26,10 +25,7 @@ export class CashClosingService {
   private readonly logger = new Logger(CashClosingService.name);
 
   constructor(
-    @InjectRepository(CashDay)
-    private readonly closingRepo: Repository<CashDay>,
-    @InjectRepository(Payment)
-    private readonly paymentRepo: Repository<Payment>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
     private readonly eventsService: EventsService,
     private readonly configService: ConfigService,
@@ -40,10 +36,11 @@ export class CashClosingService {
   private readonly CASH_TYPE = CashType.SALES;
 
   /* ─── Reference generation: CLV-YYYY-NNNNN ─── */
-  private async generateReference(): Promise<string> {
+  private async generateReference(tenantId: string): Promise<string> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
     const year = new Date().getFullYear();
     const prefix = `CLV-${year}-`;
-    const last = await this.closingRepo
+    const last = await ds.getRepository(CashDay)
       .createQueryBuilder('cc')
       .where('cc.reference LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('cc.reference', 'DESC')
@@ -59,7 +56,10 @@ export class CashClosingService {
 
   /* ─── Open cash register ─── */
   async open(dto: OpenCashClosingDto, user: CashClosingUser) {
-    const existing = await this.closingRepo.findOne({
+    const ds = await this.tenantDsService.getDataSource(user.tenantId);
+    const closingRepo = ds.getRepository(CashDay);
+
+    const existing = await closingRepo.findOne({
       where: { status: CashDayStatus.OPEN, cashType: this.CASH_TYPE },
     });
     if (existing) {
@@ -68,11 +68,11 @@ export class CashClosingService {
       );
     }
 
-    await this.ensureYesterdayClosed();
+    await this.ensureYesterdayClosed(user.tenantId);
 
     // Auto-inherit opening balance from last closed cash day
     let openingBalance = dto.openingBalance ?? 0;
-    const lastClosed = await this.closingRepo.findOne({
+    const lastClosed = await closingRepo.findOne({
       where: { status: CashDayStatus.CLOSED, cashType: this.CASH_TYPE },
       order: { reference: 'DESC' },
     });
@@ -80,11 +80,10 @@ export class CashClosingService {
       openingBalance = Number(lastClosed.actualBalance);
     }
 
-    const reference = await this.generateReference();
-    const closing = this.closingRepo.create({
+    const reference = await this.generateReference(user.tenantId);
+    const closing = closingRepo.create({
       reference,
       cashType: this.CASH_TYPE,
-      tenantId: user.tenantId,
       status: CashDayStatus.OPEN,
       openingBalance,
       totalEntries: 0,
@@ -98,7 +97,7 @@ export class CashClosingService {
       closedAt: null,
     });
 
-    const saved = await this.closingRepo.save(closing);
+    const saved = await closingRepo.save(closing);
 
     await this.auditService.log({
       userId: user.id,
@@ -119,15 +118,18 @@ export class CashClosingService {
   }
 
   /* ─── Get current open register ─── */
-  async getCurrent() {
-    const current = await this.closingRepo.findOne({
+  async getCurrent(tenantId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const closingRepo = ds.getRepository(CashDay);
+
+    const current = await closingRepo.findOne({
       where: { status: CashDayStatus.OPEN, cashType: this.CASH_TYPE },
     });
     if (!current) {
       throw new NotFoundException('Aucune caisse ouverte actuellement.');
     }
 
-    const totals = await this.calculateTotals(current.openedAt);
+    const totals = await this.calculateTotals(tenantId, current.openedAt);
     current.totalEntries = totals.totalEntries;
     current.totalExits = totals.totalExits;
     current.theoreticalBalance =
@@ -138,14 +140,17 @@ export class CashClosingService {
 
   /* ─── Close cash register ─── */
   async close(dto: CloseCashClosingDto, user: CashClosingUser) {
-    const current = await this.closingRepo.findOne({
+    const ds = await this.tenantDsService.getDataSource(user.tenantId);
+    const closingRepo = ds.getRepository(CashDay);
+
+    const current = await closingRepo.findOne({
       where: { status: CashDayStatus.OPEN, cashType: this.CASH_TYPE },
     });
     if (!current) {
       throw new NotFoundException('Aucune caisse ouverte à clôturer.');
     }
 
-    const totals = await this.calculateTotals(current.openedAt);
+    const totals = await this.calculateTotals(user.tenantId, current.openedAt);
     const openingBalance = Number(current.openingBalance);
     const theoreticalBalance = openingBalance + totals.totalEntries - totals.totalExits;
     const variance = dto.actualBalance - theoreticalBalance;
@@ -167,7 +172,7 @@ export class CashClosingService {
     current.closedById = user.id;
     current.closedAt = new Date();
 
-    const saved = await this.closingRepo.save(current);
+    const saved = await closingRepo.save(current);
 
     await this.auditService.log({
       userId: user.id,
@@ -207,9 +212,9 @@ export class CashClosingService {
 
     // Auto-post unposted accounting entries to ERP on cash closing
     try {
-      const erpSetting = await this.erpSettingsService.findActive();
+      const erpSetting = await this.erpSettingsService.findActive(user.tenantId);
       if (erpSetting?.autoPostOnClosing && erpSetting.isActive) {
-        const erpResult = await this.sageErpService.postAllUnposted();
+        const erpResult = await this.sageErpService.postAllUnposted(user.tenantId);
         this.logger.log(
           `Auto-post ERP on closing: ${erpResult.entriesPosted} entries (${erpResult.message})`,
         );
@@ -222,11 +227,14 @@ export class CashClosingService {
   }
 
   /* ─── History (paginated) ─── */
-  async findAll(query: ListCashClosingsQueryDto) {
+  async findAll(tenantId: string, query: ListCashClosingsQueryDto) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const closingRepo = ds.getRepository(CashDay);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = this.closingRepo.createQueryBuilder('cc');
+    const qb = closingRepo.createQueryBuilder('cc');
 
     qb.andWhere('cc.cash_type = :cashType', { cashType: this.CASH_TYPE });
 
@@ -262,7 +270,10 @@ export class CashClosingService {
   }
 
   /* ─── Check if yesterday was closed (used by guard) ─── */
-  async isYesterdayClosed(): Promise<boolean> {
+  async isYesterdayClosed(tenantId: string): Promise<boolean> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const closingRepo = ds.getRepository(CashDay);
+
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
@@ -270,7 +281,7 @@ export class CashClosingService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const yesterdayClosing = await this.closingRepo
+    const yesterdayClosing = await closingRepo
       .createQueryBuilder('cc')
       .where('cc.cash_type = :cashType', { cashType: this.CASH_TYPE })
       .andWhere('cc.opened_at >= :yesterday', { yesterday })
@@ -282,32 +293,15 @@ export class CashClosingService {
   }
 
   /* ─── Cron: reminder at configurable hour if register not closed ─── */
+  // TODO: This cron needs tenantId to iterate all tenants — skipped for schema-per-tenant migration
   @Cron('0 * * * *')
   async sendReminderIfNotClosed() {
-    const reminderHour = this.configService.get<number>('cashClosing.reminderHour') ?? 18;
-    const currentHour = new Date().getHours();
-    if (currentHour !== reminderHour) return;
-
-    const openClosing = await this.closingRepo.findOne({
-      where: { status: CashDayStatus.OPEN, cashType: this.CASH_TYPE },
-    });
-    if (!openClosing) return;
-
-    this.logger.warn(
-      `Caisse non clôturée à ${reminderHour}h — envoi rappel (${openClosing.reference})`,
-    );
-
-    await this.eventsService.publish(SalesEvent.CASH_CLOSING_REMINDER, {
-      closingId: openClosing.id,
-      reference: openClosing.reference,
-      openedById: openClosing.openedById,
-      openedAt: openClosing.openedAt.toISOString(),
-    });
+    this.logger.log('Cash closing reminder cron: skipped — requires per-tenant iteration (TODO)');
   }
 
   /* ─── Private helpers ─── */
-  private async ensureYesterdayClosed(): Promise<void> {
-    const closed = await this.isYesterdayClosed();
+  private async ensureYesterdayClosed(tenantId: string): Promise<void> {
+    const closed = await this.isYesterdayClosed(tenantId);
     if (!closed) {
       throw new BadRequestException(
         "La clôture de la veille n'a pas été effectuée. Veuillez d'abord clôturer la caisse précédente.",
@@ -316,10 +310,13 @@ export class CashClosingService {
   }
 
   private async calculateTotals(
+    tenantId: string,
     since: Date,
   ): Promise<{ totalEntries: number; totalExits: number }> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+
     // Entries = sum of CASH payments received since register opened
-    const entryResult = await this.paymentRepo
+    const entryResult = await ds.getRepository(Payment)
       .createQueryBuilder('p')
       .select('COALESCE(SUM(p.amount), 0)', 'total')
       .where('p.payment_method = :method', { method: PaymentMethod.CASH })

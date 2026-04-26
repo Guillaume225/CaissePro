@@ -15,7 +15,7 @@ import {
   UpdateFnePointOfSaleDto,
   ListFnePointsOfSaleQuery,
 } from './fne-points-of-sale.service';
-import { Permissions } from '../common/decorators';
+import { Permissions, CurrentUser } from '../common/decorators';
 import { FNE_PERMISSIONS } from '../common/permissions';
 
 @Controller('fne-points-of-sale')
@@ -24,31 +24,35 @@ export class FnePointsOfSaleController {
 
   @Get()
   @Permissions(FNE_PERMISSIONS.READ)
-  findAll(@Query() query: ListFnePointsOfSaleQuery) {
-    return this.service.findAll(query);
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListFnePointsOfSaleQuery) {
+    return this.service.findAll(tenantId, query);
   }
 
   @Get(':id')
   @Permissions(FNE_PERMISSIONS.READ)
-  findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.findById(id);
+  findById(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.findById(tenantId, id);
   }
 
   @Post()
   @Permissions(FNE_PERMISSIONS.CREATE)
-  create(@Body() dto: CreateFnePointOfSaleDto) {
-    return this.service.create(dto);
+  create(@CurrentUser('tenantId') tenantId: string, @Body() dto: CreateFnePointOfSaleDto) {
+    return this.service.create(tenantId, dto);
   }
 
   @Put(':id')
   @Permissions(FNE_PERMISSIONS.CREATE)
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateFnePointOfSaleDto) {
-    return this.service.update(id, dto);
+  update(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateFnePointOfSaleDto,
+  ) {
+    return this.service.update(tenantId, id, dto);
   }
 
   @Delete(':id')
   @Permissions(FNE_PERMISSIONS.CREATE)
-  delete(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.delete(id);
+  delete(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.delete(tenantId, id);
   }
 }

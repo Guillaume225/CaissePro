@@ -32,7 +32,7 @@ const LAYOUT_HEADER = `
 
 const LAYOUT_FOOTER = `
       <div class="footer">
-        <p>CaisseFlow Pro — Système de gestion financière</p>
+        <p>Caisse Pro — Système de gestion financière</p>
         <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
       </div>
     </div>

@@ -28,4 +28,6 @@ export const appConfig = registerAs('app', () => ({
   throttleTtl: parseInt(process.env.THROTTLE_TTL || '900', 10),
   throttleLimit: parseInt(process.env.THROTTLE_LIMIT || '5', 10),
   mfaAppName: process.env.MFA_APP_NAME || 'CaisseFlowPro',
+  marketplaceUrl: process.env.MARKETPLACE_URL || 'http://marketplace-api',
+  internalSecret: process.env.INTERNAL_SECRET || '',
 }));

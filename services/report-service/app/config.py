@@ -4,7 +4,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # App
-    app_name: str = "CaisseFlow Pro - Report Service"
+    app_name: str = "Caisse Pro - Report Service"
     app_port: int = 8001
     debug: bool = False
 
@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     reports_storage_path: str = "/tmp/reports"
 
     # Company defaults (configurable per tenant)
-    company_name: str = "CaisseFlow Pro"
+    company_name: str = "Caisse Pro"
     company_address: str = ""
     company_phone: str = ""
     company_email: str = ""

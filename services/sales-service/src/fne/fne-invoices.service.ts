@@ -5,8 +5,6 @@ import {
   HttpException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { FneInvoice } from '../entities/fne-invoice.entity';
 import { FneInvoiceItem } from '../entities/fne-invoice-item.entity';
 import { FneInvoiceStatus, FneTemplate, FnePaymentMethod, FneInvoiceType } from '../entities/enums';
@@ -16,6 +14,7 @@ import { SageErpService } from '../erp/sage-erp.service';
 import { ErpSettingsService } from '../erp/erp-settings.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 /* ─── Tax rates mapping ─── */
 const TAX_RATES: Record<string, number> = {
@@ -101,10 +100,7 @@ export class FneInvoicesService {
   private readonly logger = new Logger(FneInvoicesService.name);
 
   constructor(
-    @InjectRepository(FneInvoice)
-    private readonly invoiceRepo: Repository<FneInvoice>,
-    @InjectRepository(FneInvoiceItem)
-    private readonly itemRepo: Repository<FneInvoiceItem>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly fneApi: FneApiService,
     private readonly fneAccountingService: FneAccountingService,
     private readonly sageErpService: SageErpService,
@@ -113,10 +109,11 @@ export class FneInvoicesService {
   ) {}
 
   /* ─── Reference generation: FNE-YYYY-NNNNN ─── */
-  private async generateReference(): Promise<string> {
+  private async generateReference(tenantId: string): Promise<string> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
     const year = new Date().getFullYear();
     const prefix = `FNE-${year}-`;
-    const result = await this.invoiceRepo
+    const result = await ds.getRepository(FneInvoice)
       .createQueryBuilder('i')
       .select('MAX(CAST(RIGHT(i.reference, 5) AS INT))', 'maxSeq')
       .where('i.reference LIKE :prefix', { prefix: `${prefix}%` })
@@ -156,10 +153,15 @@ export class FneInvoicesService {
 
   /* ─── Create invoice + certify with FNE API ─── */
   async createAndCertify(
+    tenantId: string,
     dto: CreateFneInvoiceDto,
     userId: string,
     companyId?: string,
   ): Promise<FneInvoice> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+    const itemRepo = ds.getRepository(FneInvoiceItem);
+
     // Validate
     if (!dto.items?.length) throw new BadRequestException('Au moins un article est requis');
     const VALID_FNE_TAXES = ['TVA', 'TVAB', 'TVAC', 'TVAD', 'TVAE'];
@@ -181,13 +183,12 @@ export class FneInvoicesService {
       throw new BadRequestException('Le taux de change est obligatoire pour une devise étrangère');
     }
 
-    const reference = await this.generateReference();
+    const reference = await this.generateReference(tenantId);
     const globalDiscountPct = Number(dto.discount ?? 0);
-
     const isEstimate = dto.invoiceType === 'estimate';
 
     // Build entity
-    const invoice = this.invoiceRepo.create({
+    const invoice = invoiceRepo.create({
       reference,
       status: FneInvoiceStatus.DRAFT,
       invoiceType: isEstimate ? FneInvoiceType.ESTIMATE : FneInvoiceType.SALE,
@@ -220,7 +221,7 @@ export class FneInvoicesService {
       subtotalHt += totals.lineTotalHt;
       totalVat += totals.lineVat;
       itemEntities.push(
-        this.itemRepo.create({
+        itemRepo.create({
           reference: it.reference || null,
           description: it.description,
           quantity: it.quantity,
@@ -246,7 +247,7 @@ export class FneInvoicesService {
     invoice.discountAmount = Math.round(discountAmount * 100) / 100;
 
     invoice.items = itemEntities;
-    const saved = await this.invoiceRepo.save(invoice);
+    const saved = await invoiceRepo.save(invoice);
 
     // Estimates are saved as DRAFT only — no FNE API call
     if (isEstimate) {
@@ -257,7 +258,7 @@ export class FneInvoicesService {
         entityId: saved.id,
         newValue: { reference, invoiceType: 'estimate', status: 'DRAFT' },
       });
-      return this.findById(saved.id);
+      return this.findById(tenantId, saved.id);
     }
 
     // Build FNE API payload
@@ -293,7 +294,7 @@ export class FneInvoicesService {
     };
 
     try {
-      const res = await this.fneApi.signInvoice(fnePayload, saved.id, userId, companyId);
+      const res = await this.fneApi.signInvoice(tenantId, fnePayload, saved.id, userId, companyId);
 
       // Update invoice with FNE response
       saved.fneNcc = res.ncc;
@@ -315,7 +316,7 @@ export class FneInvoicesService {
         }
       }
 
-      await this.invoiceRepo.save(saved);
+      await invoiceRepo.save(saved);
 
       await this.auditService.log({
         userId,
@@ -325,18 +326,21 @@ export class FneInvoicesService {
         newValue: { reference, fneReference: res.reference, status: 'CERTIFIED' },
       });
 
-      return this.findById(saved.id);
+      return this.findById(tenantId, saved.id);
     } catch (err) {
       saved.status = FneInvoiceStatus.ERROR;
       saved.fneResponse = this.extractErrorDetails(err);
-      await this.invoiceRepo.save(saved);
+      await invoiceRepo.save(saved);
       throw err;
     }
   }
 
   /* ─── Certify a DRAFT invoice via FNE API ─── */
-  async certify(id: string, userId: string, companyId?: string): Promise<FneInvoice> {
-    const invoice = await this.findById(id);
+  async certify(tenantId: string, id: string, userId: string, companyId?: string): Promise<FneInvoice> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+
+    const invoice = await this.findById(tenantId, id);
     if (invoice.status !== FneInvoiceStatus.DRAFT && invoice.status !== FneInvoiceStatus.ERROR) {
       throw new BadRequestException(
         'Seules les factures en brouillon ou en erreur peuvent être certifiées',
@@ -345,7 +349,7 @@ export class FneInvoicesService {
 
     // Credit note → use refund API on the original invoice
     if (invoice.invoiceType === FneInvoiceType.CREDIT_NOTE) {
-      return this.certifyCreditNote(invoice, userId, companyId);
+      return this.certifyCreditNote(tenantId, invoice, userId, companyId);
     }
 
     const fnePayload: Record<string, unknown> = {
@@ -383,7 +387,7 @@ export class FneInvoicesService {
     };
 
     try {
-      const res = await this.fneApi.signInvoice(fnePayload, invoice.id, userId, companyId);
+      const res = await this.fneApi.signInvoice(tenantId, fnePayload, invoice.id, userId, companyId);
 
       invoice.fneNcc = res.ncc;
       invoice.fneReference = res.reference;
@@ -408,7 +412,7 @@ export class FneInvoicesService {
         }
       }
 
-      await this.invoiceRepo.save(invoice);
+      await invoiceRepo.save(invoice);
 
       await this.auditService.log({
         userId,
@@ -424,9 +428,10 @@ export class FneInvoicesService {
 
       // Auto-generate accounting entries + post to ERP if configured
       try {
-        const erpSetting = await this.erpSettingsService.findActive();
+        const erpSetting = await this.erpSettingsService.findActive(tenantId);
         if (erpSetting?.autoPostOnCertify && erpSetting.isActive) {
           const genResult = await this.fneAccountingService.generate(
+            tenantId,
             { invoiceIds: [invoice.id] },
             userId,
           );
@@ -434,7 +439,7 @@ export class FneInvoicesService {
             `Auto-generated ${genResult.generated} accounting entries for certified invoice ${invoice.reference}`,
           );
           if (genResult.generated > 0) {
-            const erpResult = await this.sageErpService.postEntries([invoice.id]);
+            const erpResult = await this.sageErpService.postEntries(tenantId, [invoice.id]);
             this.logger.log(
               `Auto-post ERP after certify: ${erpResult.entriesPosted} entries (${erpResult.message})`,
             );
@@ -444,25 +449,29 @@ export class FneInvoicesService {
         this.logger.error(`Auto-post ERP after certify failed (non-blocking): ${erpErr}`);
       }
 
-      return this.findById(invoice.id);
+      return this.findById(tenantId, invoice.id);
     } catch (err) {
       invoice.status = FneInvoiceStatus.ERROR;
       invoice.fneResponse = this.extractErrorDetails(err);
-      await this.invoiceRepo.save(invoice);
+      await invoiceRepo.save(invoice);
       throw err;
     }
   }
 
   /* ─── Certify a credit note via FNE refund API ─── */
   private async certifyCreditNote(
+    tenantId: string,
     invoice: FneInvoice,
     userId: string,
     companyId?: string,
   ): Promise<FneInvoice> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+
     if (!invoice.creditNoteOf) {
       throw new BadRequestException("Avoir sans facture d'origine");
     }
-    const original = await this.findById(invoice.creditNoteOf);
+    const original = await this.findById(tenantId, invoice.creditNoteOf);
     if (!original.fneInvoiceId) {
       throw new BadRequestException("ID FNE manquant sur la facture d'origine");
     }
@@ -477,6 +486,7 @@ export class FneInvoicesService {
 
     try {
       const res = await this.fneApi.refundInvoice(
+        tenantId,
         original.fneInvoiceId,
         { items: refundItems },
         invoice.id,
@@ -494,11 +504,11 @@ export class FneInvoicesService {
       invoice.balanceSticker = res.balance_funds ?? 0;
       invoice.fneWarning = res.warning ?? false;
       invoice.status = FneInvoiceStatus.CERTIFIED;
-      await this.invoiceRepo.save(invoice);
+      await invoiceRepo.save(invoice);
 
       // Update original's credit note reference
       original.creditNoteReference = invoice.reference;
-      await this.invoiceRepo.save(original);
+      await invoiceRepo.save(original);
 
       await this.auditService.log({
         userId,
@@ -512,11 +522,11 @@ export class FneInvoicesService {
         },
       });
 
-      return this.findById(invoice.id);
+      return this.findById(tenantId, invoice.id);
     } catch (err) {
       invoice.status = FneInvoiceStatus.ERROR;
       invoice.fneResponse = this.extractErrorDetails(err);
-      await this.invoiceRepo.save(invoice);
+      await invoiceRepo.save(invoice);
       throw err;
     }
   }
@@ -533,13 +543,18 @@ export class FneInvoicesService {
 
   /* ─── Create credit note (avoir) — creates a NEW invoice as DRAFT ─── */
   async createCreditNote(
+    tenantId: string,
     invoiceId: string,
     refundItems: RefundItemDto[],
     userId: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _companyId?: string,
   ): Promise<FneInvoice> {
-    const original = await this.findById(invoiceId);
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+    const itemRepo = ds.getRepository(FneInvoiceItem);
+
+    const original = await this.findById(tenantId, invoiceId);
     if (
       original.status !== FneInvoiceStatus.CERTIFIED &&
       original.status !== FneInvoiceStatus.CREDIT_NOTE
@@ -562,7 +577,7 @@ export class FneInvoicesService {
     }
 
     // Generate a reference for the credit note
-    const reference = await this.generateReference();
+    const reference = await this.generateReference(tenantId);
 
     // Build credit note items from the refund selection
     const creditItems: FneInvoiceItem[] = [];
@@ -585,7 +600,7 @@ export class FneInvoicesService {
       totalVat += totals.lineVat;
 
       creditItems.push(
-        this.itemRepo.create({
+        itemRepo.create({
           fneItemId: srcItem.fneItemId,
           reference: srcItem.reference,
           description: srcItem.description,
@@ -603,7 +618,7 @@ export class FneInvoicesService {
     const totalTtc = subtotalHt + totalVat;
 
     // Create the credit note invoice as DRAFT
-    const creditNote = this.invoiceRepo.create({
+    const creditNote = invoiceRepo.create({
       reference,
       status: FneInvoiceStatus.DRAFT,
       invoiceType: FneInvoiceType.CREDIT_NOTE,
@@ -633,18 +648,18 @@ export class FneInvoicesService {
       items: creditItems,
     });
 
-    const saved = await this.invoiceRepo.save(creditNote);
+    const saved = await invoiceRepo.save(creditNote);
 
     // Update returned quantities on the original
     for (const ri of refundItems) {
       const item = original.items.find((i) => i.fneItemId === ri.fneItemId)!;
       item.quantityReturned = Number(item.quantityReturned) + ri.quantity;
-      await this.itemRepo.save(item);
+      await itemRepo.save(item);
     }
 
     // Link original to this credit note
     original.creditNoteReference = saved.reference;
-    await this.invoiceRepo.save(original);
+    await invoiceRepo.save(original);
 
     await this.auditService.log({
       userId,
@@ -654,12 +669,16 @@ export class FneInvoicesService {
       newValue: { reference, creditNoteOf: original.reference },
     });
 
-    return this.findById(saved.id);
+    return this.findById(tenantId, saved.id);
   }
 
   /* ─── Update a DRAFT invoice ─── */
-  async update(id: string, dto: UpdateFneInvoiceDto, userId: string): Promise<FneInvoice> {
-    const invoice = await this.findById(id);
+  async update(tenantId: string, id: string, dto: UpdateFneInvoiceDto, userId: string): Promise<FneInvoice> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+    const itemRepo = ds.getRepository(FneInvoiceItem);
+
+    const invoice = await this.findById(tenantId, id);
     if (invoice.status !== FneInvoiceStatus.DRAFT && invoice.status !== FneInvoiceStatus.ERROR) {
       throw new BadRequestException(
         'Seules les factures en brouillon ou en erreur peuvent être modifiées',
@@ -716,7 +735,7 @@ export class FneInvoicesService {
       }
 
       // Remove old items
-      await this.itemRepo.delete({ invoice: { id: invoice.id } });
+      await itemRepo.delete({ invoice: { id: invoice.id } });
 
       // Build new items
       let subtotalHt = 0;
@@ -727,7 +746,7 @@ export class FneInvoicesService {
         subtotalHt += totals.lineTotalHt;
         totalVat += totals.lineVat;
         itemEntities.push(
-          this.itemRepo.create({
+          itemRepo.create({
             reference: it.reference || null,
             description: it.description,
             quantity: it.quantity,
@@ -754,7 +773,7 @@ export class FneInvoicesService {
       invoice.items = itemEntities;
     }
 
-    await this.invoiceRepo.save(invoice);
+    await invoiceRepo.save(invoice);
 
     await this.auditService.log({
       userId,
@@ -764,20 +783,26 @@ export class FneInvoicesService {
       newValue: { reference: invoice.reference, status: invoice.status },
     });
 
-    return this.findById(invoice.id);
+    return this.findById(tenantId, invoice.id);
   }
 
   /* ─── Update decision comment (any status) ─── */
-  async updateDecisionComment(id: string, comment: string | null): Promise<FneInvoice> {
-    const invoice = await this.findById(id);
+  async updateDecisionComment(tenantId: string, id: string, comment: string | null): Promise<FneInvoice> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+    const invoice = await this.findById(tenantId, id);
     invoice.decisionComment = comment;
-    await this.invoiceRepo.save(invoice);
-    return this.findById(invoice.id);
+    await invoiceRepo.save(invoice);
+    return this.findById(tenantId, invoice.id);
   }
 
   /* ─── Delete a non-certified invoice ─── */
-  async remove(id: string, userId: string): Promise<{ deleted: true }> {
-    const invoice = await this.findById(id);
+  async remove(tenantId: string, id: string, userId: string): Promise<{ deleted: true }> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+    const itemRepo = ds.getRepository(FneInvoiceItem);
+
+    const invoice = await this.findById(tenantId, id);
     if (invoice.status !== FneInvoiceStatus.DRAFT && invoice.status !== FneInvoiceStatus.ERROR) {
       throw new BadRequestException(
         'Seules les factures non certifiées (brouillon ou erreur) peuvent être supprimées',
@@ -785,8 +810,8 @@ export class FneInvoicesService {
     }
 
     const reference = invoice.reference;
-    await this.itemRepo.delete({ invoice: { id } });
-    await this.invoiceRepo.delete(id);
+    await itemRepo.delete({ invoice: { id } });
+    await invoiceRepo.delete(id);
 
     await this.auditService.log({
       userId,
@@ -801,6 +826,7 @@ export class FneInvoicesService {
 
   /* ─── Bulk certify DRAFT/ERROR invoices ─── */
   async bulkCertify(
+    tenantId: string,
     ids: string[],
     userId: string,
     companyId?: string,
@@ -811,15 +837,18 @@ export class FneInvoicesService {
     if (!ids?.length) throw new BadRequestException('Aucun ID fourni');
     if (ids.length > 50) throw new BadRequestException('Maximum 50 factures à la fois');
 
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+
     let certified = 0;
     const errors: Array<{ id: string; reference?: string; error: string }> = [];
 
     for (const id of ids) {
       try {
-        await this.certify(id, userId, companyId);
+        await this.certify(tenantId, id, userId, companyId);
         certified++;
       } catch (err) {
-        const invoice = await this.invoiceRepo
+        const invoice = await invoiceRepo
           .findOne({ where: { id }, select: ['id', 'reference'] })
           .catch(() => null);
         errors.push({
@@ -835,6 +864,7 @@ export class FneInvoicesService {
 
   /* ─── Bulk delete non-certified invoices ─── */
   async bulkRemove(
+    tenantId: string,
     ids: string[],
     userId: string,
   ): Promise<{ deleted: number; skipped: number; errors: string[] }> {
@@ -846,7 +876,7 @@ export class FneInvoicesService {
 
     for (const id of ids) {
       try {
-        await this.remove(id, userId);
+        await this.remove(tenantId, id, userId);
         deleted++;
       } catch (err) {
         errors.push(`${id}: ${err instanceof Error ? err.message : String(err)}`);
@@ -858,11 +888,16 @@ export class FneInvoicesService {
 
   /* ─── Bulk import invoices as DRAFT ─── */
   async bulkImport(
+    tenantId: string,
     invoices: CreateFneInvoiceDto[],
     userId: string,
   ): Promise<{ imported: number; errors: Array<{ index: number; error: string }> }> {
     if (!invoices?.length) throw new BadRequestException('Aucune facture à importer');
     if (invoices.length > 200) throw new BadRequestException('Maximum 200 factures à la fois');
+
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+    const itemRepo = ds.getRepository(FneInvoiceItem);
 
     let imported = 0;
     const errors: Array<{ index: number; error: string }> = [];
@@ -882,10 +917,10 @@ export class FneInvoicesService {
           }
         }
 
-        const reference = await this.generateReference();
+        const reference = await this.generateReference(tenantId);
         const globalDiscountPct = Number(dto.discount ?? 0);
 
-        const invoice = this.invoiceRepo.create({
+        const invoice = invoiceRepo.create({
           reference,
           status: FneInvoiceStatus.DRAFT,
           invoiceType: FneInvoiceType.SALE,
@@ -917,7 +952,7 @@ export class FneInvoicesService {
           subtotalHt += totals.lineTotalHt;
           totalVat += totals.lineVat;
           itemEntities.push(
-            this.itemRepo.create({
+            itemRepo.create({
               reference: it.reference || null,
               description: it.description,
               quantity: it.quantity,
@@ -942,7 +977,7 @@ export class FneInvoicesService {
         invoice.discountAmount = Math.round(discountAmount * 100) / 100;
         invoice.items = itemEntities;
 
-        await this.invoiceRepo.save(invoice);
+        await invoiceRepo.save(invoice);
 
         await this.auditService.log({
           userId,
@@ -966,18 +1001,22 @@ export class FneInvoicesService {
 
   /* ─── Find by ID ─── */
   async findById(
+    tenantId: string,
     id: string,
   ): Promise<
     FneInvoice & { creditNotes?: Array<{ id: string; reference: string; status: string }> }
   > {
-    const inv = await this.invoiceRepo.findOne({
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+
+    const inv = await invoiceRepo.findOne({
       where: { id },
       relations: ['items'],
     });
     if (!inv) throw new NotFoundException('Facture FNE introuvable');
 
     // Attach credit notes linked to this invoice
-    const creditNotes = await this.invoiceRepo.find({
+    const creditNotes = await invoiceRepo.find({
       where: { creditNoteOf: id },
       select: ['id', 'reference', 'status'],
       order: { createdAt: 'DESC' },
@@ -992,11 +1031,14 @@ export class FneInvoicesService {
   }
 
   /* ─── List with filters ─── */
-  async findAll(query: ListFneInvoicesQuery) {
+  async findAll(tenantId: string, query: ListFneInvoicesQuery) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = this.invoiceRepo
+    const qb = invoiceRepo
       .createQueryBuilder('i')
       .leftJoinAndSelect('i.items', 'items')
       .orderBy('i.createdAt', 'DESC');
@@ -1027,8 +1069,9 @@ export class FneInvoicesService {
   }
 
   /* ─── Sticker balance (latest) ─── */
-  async getLatestStickerBalance(): Promise<number> {
-    const latest = await this.invoiceRepo
+  async getLatestStickerBalance(tenantId: string): Promise<number> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const latest = await ds.getRepository(FneInvoice)
       .createQueryBuilder('i')
       .select('i.balanceSticker', 'balanceSticker')
       .where('i.status = :status', { status: FneInvoiceStatus.CERTIFIED })

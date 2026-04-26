@@ -19,6 +19,7 @@ import { CompaniesService } from './companies.service';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto';
 import { CurrentUser, Permissions } from '../common/decorators';
 import { PERMISSIONS } from '../common/permissions';
+import { RequireLimit } from '../subscription/subscription.decorator';
 
 @Controller('companies')
 export class CompaniesController {
@@ -27,7 +28,7 @@ export class CompaniesController {
   @Get()
   @Permissions(PERMISSIONS.COMPANY_READ)
   async findAll(@CurrentUser('tenantId') tenantId: string) {
-    const data = await this.companiesService.findAllByTenant(tenantId);
+    const data = await this.companiesService.findAll(tenantId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -40,6 +41,7 @@ export class CompaniesController {
 
   @Post()
   @Permissions(PERMISSIONS.COMPANY_CREATE)
+  @RequireLimit('max_companies')
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: CreateCompanyDto,

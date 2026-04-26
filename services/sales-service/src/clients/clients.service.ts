@@ -1,27 +1,28 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Client } from '../entities/client.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { CreateClientDto, UpdateClientDto, ListClientsQueryDto } from './dto';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class ClientsService {
   private readonly logger = new Logger(ClientsService.name);
 
   constructor(
-    @InjectRepository(Client)
-    private readonly clientRepo: Repository<Client>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
   ) {}
 
   /* ─── FindAll with filters ─── */
-  async findAll(query: ListClientsQueryDto) {
+  async findAll(tenantId: string, query: ListClientsQueryDto) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Client);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = this.clientRepo.createQueryBuilder('c');
+    const qb = repo.createQueryBuilder('c');
 
     if (query.search) {
       qb.andWhere('(c.name ILIKE :s OR c.email ILIKE :s OR c.phone ILIKE :s)', {
@@ -52,16 +53,20 @@ export class ClientsService {
   }
 
   /* ─── FindById ─── */
-  async findById(id: string) {
-    const client = await this.clientRepo.findOne({ where: { id } });
+  async findById(tenantId: string, id: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const client = await ds.getRepository(Client).findOne({ where: { id } });
     if (!client) throw new NotFoundException('Client not found');
     return client;
   }
 
   /* ─── Create ─── */
-  async create(dto: CreateClientDto, userId: string) {
-    const client = this.clientRepo.create(dto);
-    const saved = await this.clientRepo.save(client);
+  async create(tenantId: string, dto: CreateClientDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Client);
+
+    const client = repo.create(dto);
+    const saved = await repo.save(client);
 
     await this.auditService.log({
       userId,
@@ -75,8 +80,11 @@ export class ClientsService {
   }
 
   /* ─── Update ─── */
-  async update(id: string, dto: UpdateClientDto, userId: string) {
-    const client = await this.findById(id);
+  async update(tenantId: string, id: string, dto: UpdateClientDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Client);
+
+    const client = await this.findById(tenantId, id);
 
     const oldValue: Record<string, unknown> = {};
     const newValue: Record<string, unknown> = {};
@@ -89,7 +97,7 @@ export class ClientsService {
     }
 
     Object.assign(client, dto);
-    const saved = await this.clientRepo.save(client);
+    const saved = await repo.save(client);
 
     await this.auditService.log({
       userId,
@@ -104,9 +112,12 @@ export class ClientsService {
   }
 
   /* ─── Soft Delete ─── */
-  async remove(id: string, userId: string): Promise<void> {
-    const client = await this.findById(id);
-    await this.clientRepo.softDelete(id);
+  async remove(tenantId: string, id: string, userId: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Client);
+
+    const client = await this.findById(tenantId, id);
+    await repo.softDelete(id);
 
     await this.auditService.log({
       userId,
@@ -118,8 +129,9 @@ export class ClientsService {
   }
 
   /* ─── Client statement (purchase history + payments) ─── */
-  async getStatement(id: string) {
-    const client = await this.clientRepo.findOne({
+  async getStatement(tenantId: string, id: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const client = await ds.getRepository(Client).findOne({
       where: { id },
       relations: ['sales', 'sales.items', 'sales.payments'],
     });

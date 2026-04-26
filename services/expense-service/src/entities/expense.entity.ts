@@ -50,9 +50,6 @@ export class Expense {
   @Column({ type: 'text', nullable: true })
   observations!: string | null;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
-
   @Column({ type: 'uuid', name: 'category_id' })
   categoryId!: string;
 

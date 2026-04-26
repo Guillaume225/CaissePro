@@ -4,7 +4,7 @@ import {
   CreateFneSettingDto,
   UpdateFneSettingDto,
 } from './fne-settings.service';
-import { Permissions } from '../common/decorators';
+import { Permissions, CurrentUser } from '../common/decorators';
 import { FNE_PERMISSIONS } from '../common/permissions';
 
 @Controller('fne-settings')
@@ -13,19 +13,26 @@ export class FneSettingsController {
 
   @Get()
   @Permissions(FNE_PERMISSIONS.READ)
-  findByCompany(@Query('companyId') companyId: string) {
-    return this.service.findByCompany(companyId);
+  findByCompany(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('companyId') companyId: string,
+  ) {
+    return this.service.findByCompany(tenantId, companyId);
   }
 
   @Post()
   @Permissions(FNE_PERMISSIONS.CREATE)
-  upsert(@Body() dto: CreateFneSettingDto) {
-    return this.service.upsert(dto);
+  upsert(@CurrentUser('tenantId') tenantId: string, @Body() dto: CreateFneSettingDto) {
+    return this.service.upsert(tenantId, dto);
   }
 
   @Put()
   @Permissions(FNE_PERMISSIONS.CREATE)
-  update(@Query('companyId') companyId: string, @Body() dto: UpdateFneSettingDto) {
-    return this.service.update(companyId, dto);
+  update(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('companyId') companyId: string,
+    @Body() dto: UpdateFneSettingDto,
+  ) {
+    return this.service.update(tenantId, companyId, dto);
   }
 }

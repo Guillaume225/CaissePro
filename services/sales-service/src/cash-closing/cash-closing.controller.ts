@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { CashClosingService, CashClosingUser } from './cash-closing.service';
 import { Permissions, CurrentUser } from '../common/decorators';
 import { CASH_CLOSING_PERMISSIONS } from '../common/permissions';
+import { RequireFeature, RequireLimit } from '../subscription/subscription.decorator';
 import { OpenCashClosingDto, CloseCashClosingDto, ListCashClosingsQueryDto } from './dto';
 
 @Controller('cash-closing')
@@ -10,14 +11,16 @@ export class CashClosingController {
 
   @Post('open')
   @Permissions(CASH_CLOSING_PERMISSIONS.OPEN)
+  @RequireFeature('caisse')
+  @RequireLimit('maxCaisses')
   open(@Body() dto: OpenCashClosingDto, @CurrentUser() user: CashClosingUser) {
     return this.cashClosingService.open(dto, user);
   }
 
   @Get('current')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  getCurrent() {
-    return this.cashClosingService.getCurrent();
+  getCurrent(@CurrentUser('tenantId') tenantId: string) {
+    return this.cashClosingService.getCurrent(tenantId);
   }
 
   @Post('close')
@@ -28,7 +31,7 @@ export class CashClosingController {
 
   @Get('history')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  history(@Query() query: ListCashClosingsQueryDto) {
-    return this.cashClosingService.findAll(query);
+  history(@CurrentUser('tenantId') tenantId: string, @Query() query: ListCashClosingsQueryDto) {
+    return this.cashClosingService.findAll(tenantId, query);
   }
 }

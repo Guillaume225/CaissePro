@@ -1,12 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { FneClient } from '../entities/fne-client.entity';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 export interface CreateFneClientDto {
   companyName: string;
   phone: string;
   email: string;
+  clientCode?: string;
   ncc?: string;
   sellerName?: string;
   accountCode?: string;
@@ -16,6 +16,7 @@ export interface UpdateFneClientDto {
   companyName?: string;
   phone?: string;
   email?: string;
+  clientCode?: string;
   ncc?: string;
   sellerName?: string;
   accountCode?: string;
@@ -32,46 +33,52 @@ export interface ListFneClientsQuery {
 export class FneClientsService {
   private readonly logger = new Logger(FneClientsService.name);
 
-  constructor(
-    @InjectRepository(FneClient)
-    private readonly clientRepo: Repository<FneClient>,
-  ) {}
+  constructor(private readonly tenantDsService: TenantDataSourceService) {}
 
-  async create(dto: CreateFneClientDto): Promise<FneClient> {
-    const client = this.clientRepo.create({
+  async create(tenantId: string, dto: CreateFneClientDto): Promise<FneClient> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FneClient);
+    const client = repo.create({
       companyName: dto.companyName,
       phone: dto.phone,
       email: dto.email,
+      clientCode: dto.clientCode ?? null,
       ncc: dto.ncc ?? null,
       sellerName: dto.sellerName ?? null,
       accountCode: dto.accountCode ?? null,
     });
-    return this.clientRepo.save(client);
+    return repo.save(client);
   }
 
-  async update(id: string, dto: UpdateFneClientDto): Promise<FneClient> {
-    const client = await this.clientRepo.findOneBy({ id });
+  async update(tenantId: string, id: string, dto: UpdateFneClientDto): Promise<FneClient> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FneClient);
+    const client = await repo.findOneBy({ id });
     if (!client) throw new NotFoundException('Client introuvable');
     Object.assign(client, dto);
-    return this.clientRepo.save(client);
+    return repo.save(client);
   }
 
-  async findById(id: string): Promise<FneClient> {
-    const client = await this.clientRepo.findOneBy({ id });
+  async findById(tenantId: string, id: string): Promise<FneClient> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const client = await ds.getRepository(FneClient).findOneBy({ id });
     if (!client) throw new NotFoundException('Client introuvable');
     return client;
   }
 
-  async findAll(query: ListFneClientsQuery) {
+  async findAll(tenantId: string, query: ListFneClientsQuery) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FneClient);
+
     const page = Math.max(Number(query.page) || 1, 1);
     const perPage = Math.min(Math.max(Number(query.perPage) || 25, 1), 100);
     const skip = (page - 1) * perPage;
 
-    const qb = this.clientRepo.createQueryBuilder('c').where('c.isActive = 1');
+    const qb = repo.createQueryBuilder('c').where('c.isActive = 1');
 
     if (query.search) {
       qb.andWhere(
-        '(c.companyName LIKE :s OR c.phone LIKE :s OR c.email LIKE :s OR c.ncc LIKE :s)',
+        '(c.companyName LIKE :s OR c.phone LIKE :s OR c.email LIKE :s OR c.ncc LIKE :s OR c.clientCode LIKE :s)',
         { s: `%${query.search}%` },
       );
     }
@@ -82,10 +89,12 @@ export class FneClientsService {
     return { data, meta: { total, page, perPage, totalPages: Math.ceil(total / perPage) } };
   }
 
-  async delete(id: string): Promise<void> {
-    const client = await this.clientRepo.findOneBy({ id });
+  async delete(tenantId: string, id: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FneClient);
+    const client = await repo.findOneBy({ id });
     if (!client) throw new NotFoundException('Client introuvable');
     client.isActive = false;
-    await this.clientRepo.save(client);
+    await repo.save(client);
   }
 }

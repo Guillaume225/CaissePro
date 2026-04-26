@@ -8,14 +8,10 @@ import {
 } from 'typeorm';
 
 @Entity('employees')
-@Index(['tenantId'])
-@Index(['tenantId', 'matricule'], { unique: true })
+@Index(['matricule'], { unique: true })
 export class Employee {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
-
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
 
   @Column({ type: 'varchar', length: 50 })
   matricule!: string;

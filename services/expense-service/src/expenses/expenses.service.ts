@@ -5,9 +5,8 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Repository, SelectQueryBuilder, DataSource } from 'typeorm';
+import { SelectQueryBuilder } from 'typeorm';
 import { Expense } from '../entities/expense.entity';
 import { ExpenseAttachment } from '../entities/expense-attachment.entity';
 import { ExpenseApproval } from '../entities/expense-approval.entity';
@@ -24,6 +23,7 @@ import { CashDay } from '../entities/cash-day.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { EventsService, ExpenseEvent } from '../events/events.service';
+import { TenantDataSourceService, tenantSchema } from '../tenant/tenant-datasource.service';
 import {
   CreateExpenseDto,
   UpdateExpenseDto,
@@ -48,30 +48,20 @@ export class ExpensesService {
   private readonly logger = new Logger(ExpensesService.name);
 
   constructor(
-    @InjectRepository(Expense)
-    private readonly expenseRepo: Repository<Expense>,
-    @InjectRepository(ExpenseAttachment)
-    private readonly attachRepo: Repository<ExpenseAttachment>,
-    @InjectRepository(ExpenseApproval)
-    private readonly approvalRepo: Repository<ExpenseApproval>,
-    @InjectRepository(ExpenseCategory)
-    private readonly catRepo: Repository<ExpenseCategory>,
-    @InjectRepository(CashDay)
-    private readonly cashDayRepo: Repository<CashDay>,
-    @InjectRepository(DisbursementRequest)
-    private readonly disbursementRequestRepo: Repository<DisbursementRequest>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
     private readonly eventsService: EventsService,
     private readonly configService: ConfigService,
-    private readonly dataSource: DataSource,
   ) {}
 
   /* ─── Reference generation: DEP-YYYY-NNNNN ─── */
-  private async generateReference(): Promise<string> {
+  private async generateReference(tenantId: string): Promise<string> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
     const year = new Date().getFullYear();
     const prefix = `DEP-${year}-`;
 
-    const result = await this.expenseRepo
+    const result = await expenseRepo
       .createQueryBuilder('e')
       .select('MAX(CAST(RIGHT(e.reference, 5) AS INT))', 'maxSeq')
       .where('e.reference LIKE :prefix', { prefix: `${prefix}%` })
@@ -83,11 +73,14 @@ export class ExpensesService {
   }
 
   /* ─── FindAll with advanced filters ─── */
-  async findAll(query: ListExpensesQueryDto) {
+  async findAll(tenantId: string, query: ListExpensesQueryDto) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = this.expenseRepo
+    const qb = expenseRepo
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.category', 'cat')
       .leftJoinAndSelect('e.cashDay', 'cashDay')
@@ -123,8 +116,9 @@ export class ExpensesService {
   }
 
   /* ─── FindById ─── */
-  async findById(id: string) {
-    const expense = await this.expenseRepo
+  async findById(tenantId: string, id: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expense = await ds.getRepository(Expense)
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.category', 'cat')
       .leftJoinAndSelect('e.cashDay', 'cashDay')
@@ -141,19 +135,24 @@ export class ExpensesService {
   }
 
   /* ─── Create ─── */
-  async create(dto: CreateExpenseDto, user: WorkflowUser) {
-    const cat = await this.catRepo.findOne({ where: { id: dto.categoryId } });
+  async create(tenantId: string, dto: CreateExpenseDto, user: WorkflowUser) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+    const catRepo = ds.getRepository(ExpenseCategory);
+    const cashDayRepo = ds.getRepository(CashDay);
+
+    const cat = await catRepo.findOne({ where: { id: dto.categoryId } });
     if (!cat) throw new NotFoundException('Category not found');
 
-    const reference = await this.generateReference();
+    const reference = await this.generateReference(tenantId);
 
     // Find open EXPENSE cash day to link the expense
-    const openCashDay = await this.cashDayRepo.findOne({
+    const openCashDay = await cashDayRepo.findOne({
       where: { cashType: CashType.EXPENSE, status: CashDayStatus.OPEN },
       order: { openedAt: 'DESC' },
     });
 
-    const expense = this.expenseRepo.create({
+    const expense = expenseRepo.create({
       reference,
       date: dto.date,
       amount: dto.amount,
@@ -162,7 +161,6 @@ export class ExpensesService {
       paymentMethod: dto.paymentMethod,
       categoryId: dto.categoryId,
       createdById: user.id,
-      tenantId: user.tenantId,
       departmentId: user.departmentId || null,
       observations: dto.observations || null,
       costCenterId: dto.costCenterId || null,
@@ -172,7 +170,7 @@ export class ExpensesService {
       cashDayId: openCashDay?.id || null,
     });
 
-    const saved = await this.expenseRepo.save(expense);
+    const saved = await expenseRepo.save(expense);
 
     await this.auditService.log({
       userId: user.id,
@@ -189,12 +187,16 @@ export class ExpensesService {
       createdById: user.id,
     });
 
-    return this.findById(saved.id);
+    return this.findById(tenantId, saved.id);
   }
 
   /* ─── Update (only DRAFT) ─── */
-  async update(id: string, dto: UpdateExpenseDto, userId: string) {
-    const expense = await this.expenseRepo.findOne({ where: { id } });
+  async update(tenantId: string, id: string, dto: UpdateExpenseDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+    const catRepo = ds.getRepository(ExpenseCategory);
+
+    const expense = await expenseRepo.findOne({ where: { id } });
     if (!expense) throw new NotFoundException('Expense not found');
 
     if (expense.status !== ExpenseStatus.DRAFT) {
@@ -202,7 +204,7 @@ export class ExpensesService {
     }
 
     if (dto.categoryId) {
-      const cat = await this.catRepo.findOne({ where: { id: dto.categoryId } });
+      const cat = await catRepo.findOne({ where: { id: dto.categoryId } });
       if (!cat) throw new NotFoundException('Category not found');
     }
 
@@ -217,7 +219,7 @@ export class ExpensesService {
     }
 
     Object.assign(expense, dto);
-    await this.expenseRepo.save(expense);
+    await expenseRepo.save(expense);
 
     await this.auditService.log({
       userId,
@@ -228,19 +230,21 @@ export class ExpensesService {
       newValue,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Soft Delete (only DRAFT) ─── */
-  async remove(id: string, userId: string): Promise<void> {
-    const expense = await this.expenseRepo.findOne({ where: { id } });
+  async remove(tenantId: string, id: string, userId: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+    const expense = await expenseRepo.findOne({ where: { id } });
     if (!expense) throw new NotFoundException('Expense not found');
 
     if (expense.status !== ExpenseStatus.DRAFT) {
       throw new BadRequestException('Only DRAFT expenses can be deleted');
     }
 
-    await this.expenseRepo.softDelete(id);
+    await expenseRepo.softDelete(id);
 
     await this.auditService.log({
       userId,
@@ -252,8 +256,10 @@ export class ExpensesService {
   }
 
   /* ─── Submit for approval ─── */
-  async submit(id: string, userId: string) {
-    const expense = await this.expenseRepo.findOne({ where: { id } });
+  async submit(tenantId: string, id: string, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+    const expense = await expenseRepo.findOne({ where: { id } });
     if (!expense) throw new NotFoundException('Expense not found');
     if (expense.status !== ExpenseStatus.DRAFT) {
       throw new BadRequestException('Only DRAFT expenses can be submitted');
@@ -263,10 +269,10 @@ export class ExpensesService {
     }
 
     expense.status = ExpenseStatus.PENDING;
-    await this.expenseRepo.save(expense);
+    await expenseRepo.save(expense);
 
     // ── Create approval records from the matching approval circuit ──
-    await this.createApprovalRecordsFromCircuit(expense);
+    await this.createApprovalRecordsFromCircuit(tenantId, expense);
 
     await this.auditService.log({
       userId,
@@ -284,7 +290,7 @@ export class ExpensesService {
       createdById: expense.createdById,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /**
@@ -293,26 +299,30 @@ export class ExpensesService {
    * If no circuit matches, creates a single L1 PENDING approval without a
    * pre-assigned approver so any authorised user can approve it.
    */
-  private async createApprovalRecordsFromCircuit(expense: Expense): Promise<void> {
+  private async createApprovalRecordsFromCircuit(tenantId: string, expense: Expense): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const schema = tenantSchema(tenantId);
+    const approvalRepo = ds.getRepository(ExpenseApproval);
     const amount = Number(expense.amount);
 
     // Find matching circuit by amount range
-    const circuit: { id: string } | undefined = await this.dataSource.query(
+    const circuitRows: { id: string }[] = await ds.query(
       `SELECT TOP 1 id
-         FROM approval_circuits
+         FROM [${schema}].[approval_circuits]
         WHERE is_active = 1
           AND min_amount <= @0
           AND (max_amount IS NULL OR max_amount >= @0)
         ORDER BY min_amount DESC`,
       [amount],
-    ).then((rows: { id: string }[]) => rows[0]);
+    );
+    const circuit = circuitRows[0];
 
     if (circuit) {
       // Fetch all steps for this circuit, ordered by level
       const steps: { level: number; role: string; approver_id: string | null }[] =
-        await this.dataSource.query(
+        await ds.query(
           `SELECT level, role, approver_id
-             FROM approval_circuit_steps
+             FROM [${schema}].[approval_circuit_steps]
             WHERE circuit_id = @0
             ORDER BY level ASC`,
           [circuit.id],
@@ -320,7 +330,7 @@ export class ExpensesService {
 
       if (steps.length > 0) {
         for (const step of steps) {
-          const approval = this.approvalRepo.create({
+          const approval = approvalRepo.create({
             expenseId: expense.id,
             approverId: step.approver_id ?? expense.createdById, // fallback; will be replaced on actual approve
             level: step.level,
@@ -328,7 +338,7 @@ export class ExpensesService {
             comment: null,
             approvedAt: null,
           });
-          await this.approvalRepo.save(approval);
+          await approvalRepo.save(approval);
         }
         this.logger.log(
           `Created ${steps.length} approval step(s) for expense ${expense.reference} (circuit: ${circuit.id})`,
@@ -341,7 +351,7 @@ export class ExpensesService {
     this.logger.warn(
       `No approval circuit found for expense ${expense.reference} (amount=${amount}). Creating default L1 approval.`,
     );
-    const fallbackApproval = this.approvalRepo.create({
+    const fallbackApproval = approvalRepo.create({
       expenseId: expense.id,
       approverId: expense.createdById, // placeholder; any authorised user can approve
       level: 1,
@@ -349,12 +359,13 @@ export class ExpensesService {
       comment: null,
       approvedAt: null,
     });
-    await this.approvalRepo.save(fallbackApproval);
+    await approvalRepo.save(fallbackApproval);
   }
 
   /* ─── Approve (level auto-detected from expense status) ─── */
-  async approve(id: string, dto: ApproveExpenseDto, user: WorkflowUser) {
-    const expense = await this.expenseRepo.findOne({ where: { id }, relations: ['approvals'] });
+  async approve(tenantId: string, id: string, dto: ApproveExpenseDto, user: WorkflowUser) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expense = await ds.getRepository(Expense).findOne({ where: { id }, relations: ['approvals'] });
     if (!expense) throw new NotFoundException('Expense not found');
 
     if (user.id === expense.createdById) {
@@ -368,10 +379,10 @@ export class ExpensesService {
     ];
 
     if (expense.status === ExpenseStatus.PENDING) {
-      return this.approveL1(expense, dto, user, threshold);
+      return this.approveL1(tenantId, expense, dto, user, threshold);
     }
     if (expense.status === ExpenseStatus.APPROVED_L1) {
-      return this.approveL2(expense, dto, user, l2Roles);
+      return this.approveL2(tenantId, expense, dto, user, l2Roles);
     }
 
     throw new BadRequestException('Expense must be in PENDING or APPROVED_L1 status for approval');
@@ -379,18 +390,22 @@ export class ExpensesService {
 
   /* ── L1 internal ── */
   private async approveL1(
+    tenantId: string,
     expense: Expense,
     dto: ApproveExpenseDto,
     user: WorkflowUser,
     threshold: number,
   ) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+
     // If both have departments assigned, they must match
     const bothHaveDept = user.departmentId && expense.departmentId;
     if (bothHaveDept && user.departmentId !== expense.departmentId) {
       throw new ForbiddenException('L1 approver must belong to the same department as the expense');
     }
 
-    await this.upsertApproval({
+    await this.upsertApproval(tenantId, {
       expenseId: expense.id,
       approverId: user.id,
       level: 1,
@@ -404,7 +419,7 @@ export class ExpensesService {
 
     if (autoL2) {
       // Amount below threshold → auto-approve L2
-      await this.upsertApproval({
+      await this.upsertApproval(tenantId, {
         expenseId: expense.id,
         approverId: user.id,
         level: 2,
@@ -414,7 +429,7 @@ export class ExpensesService {
       });
 
       expense.status = ExpenseStatus.APPROVED_L2;
-      await this.expenseRepo.save(expense);
+      await expenseRepo.save(expense);
 
       await this.auditService.log({
         userId: user.id,
@@ -439,7 +454,7 @@ export class ExpensesService {
       });
     } else {
       expense.status = ExpenseStatus.APPROVED_L1;
-      await this.expenseRepo.save(expense);
+      await expenseRepo.save(expense);
 
       await this.auditService.log({
         userId: user.id,
@@ -458,16 +473,20 @@ export class ExpensesService {
       });
     }
 
-    return this.findById(expense.id);
+    return this.findById(tenantId, expense.id);
   }
 
   /* ── L2 internal ── */
   private async approveL2(
+    tenantId: string,
     expense: Expense,
     dto: ApproveExpenseDto,
     user: WorkflowUser,
     l2Roles: string[],
   ) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+
     if (!l2Roles.includes(user.roleName)) {
       throw new ForbiddenException(
         `L2 approval requires one of the following roles: ${l2Roles.join(', ')}`,
@@ -476,7 +495,7 @@ export class ExpensesService {
 
     const amount = Number(expense.amount);
 
-    await this.upsertApproval({
+    await this.upsertApproval(tenantId, {
       expenseId: expense.id,
       approverId: user.id,
       level: 2,
@@ -486,7 +505,7 @@ export class ExpensesService {
     });
 
     expense.status = ExpenseStatus.APPROVED_L2;
-    await this.expenseRepo.save(expense);
+    await expenseRepo.save(expense);
 
     await this.auditService.log({
       userId: user.id,
@@ -504,12 +523,14 @@ export class ExpensesService {
       approverId: user.id,
     });
 
-    return this.findById(expense.id);
+    return this.findById(tenantId, expense.id);
   }
 
   /* ─── Reject (level auto-detected from expense status) ─── */
-  async reject(id: string, dto: RejectExpenseDto, user: WorkflowUser) {
-    const expense = await this.expenseRepo.findOne({ where: { id } });
+  async reject(tenantId: string, id: string, dto: RejectExpenseDto, user: WorkflowUser) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+    const expense = await expenseRepo.findOne({ where: { id } });
     if (!expense) throw new NotFoundException('Expense not found');
 
     if (user.id === expense.createdById) {
@@ -540,7 +561,7 @@ export class ExpensesService {
       throw new BadRequestException('Only PENDING or APPROVED_L1 expenses can be rejected');
     }
 
-    await this.upsertApproval({
+    await this.upsertApproval(tenantId, {
       expenseId: id,
       approverId: user.id,
       level,
@@ -550,7 +571,7 @@ export class ExpensesService {
     });
 
     expense.status = ExpenseStatus.REJECTED;
-    await this.expenseRepo.save(expense);
+    await expenseRepo.save(expense);
 
     await this.auditService.log({
       userId: user.id,
@@ -568,12 +589,17 @@ export class ExpensesService {
       rejectedBy: user.id,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Mark as Paid ─── */
-  async markPaid(id: string, user: WorkflowUser) {
-    const expense = await this.expenseRepo.findOne({ where: { id } });
+  async markPaid(tenantId: string, id: string, user: WorkflowUser) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+    const cashDayRepo = ds.getRepository(CashDay);
+    const disbursementRequestRepo = ds.getRepository(DisbursementRequest);
+
+    const expense = await expenseRepo.findOne({ where: { id } });
     if (!expense) throw new NotFoundException('Expense not found');
 
     if (expense.status !== ExpenseStatus.APPROVED_L2) {
@@ -596,8 +622,9 @@ export class ExpensesService {
     // has the 'expense.pay' permission, so no additional role check is needed.
 
     const amount = Number(expense.amount);
-    const [company] = await this.dataSource.query(
-      `SELECT TOP 1 max_disbursement_amount FROM companies`,
+    const schema = tenantSchema(tenantId);
+    const [company] = await ds.query(
+      `SELECT TOP 1 max_disbursement_amount FROM [${schema}].[companies]`,
     );
     const maxDisbursement = Number(company?.max_disbursement_amount ?? 0);
     if (maxDisbursement > 0 && amount > maxDisbursement) {
@@ -609,23 +636,23 @@ export class ExpensesService {
     expense.status = ExpenseStatus.PAID;
 
     // Link expense to current open EXPENSE cash day
-    const openCashDay = await this.cashDayRepo.findOne({
+    const openCashDay = await cashDayRepo.findOne({
       where: { status: CashDayStatus.OPEN, cashType: CashType.EXPENSE },
     });
     if (openCashDay) {
       expense.cashDayId = openCashDay.id;
     }
 
-    await this.expenseRepo.save(expense);
+    await expenseRepo.save(expense);
 
     // Update linked disbursement request to VALIDATED
     if (expense.disbursementRequestId) {
-      const dr = await this.disbursementRequestRepo.findOne({
+      const dr = await disbursementRequestRepo.findOne({
         where: { id: expense.disbursementRequestId },
       });
       if (dr && dr.status === DisbursementRequestStatus.VALIDATING) {
         dr.status = DisbursementRequestStatus.VALIDATED;
-        await this.disbursementRequestRepo.save(dr);
+        await disbursementRequestRepo.save(dr);
       }
     }
 
@@ -645,12 +672,14 @@ export class ExpensesService {
       paidBy: user.id,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Cancel (after payment, with mandatory reason) ─── */
-  async cancel(id: string, dto: CancelExpenseDto, userId: string) {
-    const expense = await this.expenseRepo.findOne({ where: { id } });
+  async cancel(tenantId: string, id: string, dto: CancelExpenseDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+    const expense = await expenseRepo.findOne({ where: { id } });
     if (!expense) throw new NotFoundException('Expense not found');
 
     if (expense.status !== ExpenseStatus.PAID) {
@@ -658,7 +687,7 @@ export class ExpensesService {
     }
 
     expense.status = ExpenseStatus.CANCELLED;
-    await this.expenseRepo.save(expense);
+    await expenseRepo.save(expense);
 
     await this.auditService.log({
       userId,
@@ -677,12 +706,16 @@ export class ExpensesService {
       cancelledBy: userId,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Upload attachments ─── */
-  async addAttachments(expenseId: string, files: Express.Multer.File[], userId: string) {
-    const expense = await this.expenseRepo.findOne({
+  async addAttachments(tenantId: string, expenseId: string, files: Express.Multer.File[], userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+    const attachRepo = ds.getRepository(ExpenseAttachment);
+
+    const expense = await expenseRepo.findOne({
       where: { id: expenseId },
       relations: ['attachments'],
     });
@@ -694,14 +727,14 @@ export class ExpensesService {
     }
 
     const attachments = files.map((f) =>
-      this.attachRepo.create({
+      attachRepo.create({
         expenseId,
         filePath: f.path,
         fileType: f.mimetype,
         originalFilename: f.originalname,
       }),
     );
-    await this.attachRepo.save(attachments);
+    await attachRepo.save(attachments);
 
     await this.auditService.log({
       userId,
@@ -711,12 +744,15 @@ export class ExpensesService {
       newValue: { filesAdded: files.map((f) => f.originalname) },
     });
 
-    return this.findById(expenseId);
+    return this.findById(tenantId, expenseId);
   }
 
   /* ─── Stats / Aggregates ─── */
-  async getStats(filters?: { dateFrom?: string; dateTo?: string; categoryId?: string }) {
-    const qb = this.expenseRepo.createQueryBuilder('e');
+  async getStats(tenantId: string, filters?: { dateFrom?: string; dateTo?: string; categoryId?: string }) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const expenseRepo = ds.getRepository(Expense);
+
+    const qb = expenseRepo.createQueryBuilder('e');
 
     if (filters?.dateFrom) qb.andWhere('e.date >= :dateFrom', { dateFrom: filters.dateFrom });
     if (filters?.dateTo) qb.andWhere('e.date <= :dateTo', { dateTo: filters.dateTo });
@@ -728,7 +764,7 @@ export class ExpensesService {
       .addSelect('COALESCE(SUM(e.amount), 0)', 'total')
       .getRawOne();
 
-    const byStatus = await this.expenseRepo
+    const byStatus = await expenseRepo
       .createQueryBuilder('e')
       .select('e.status', 'status')
       .addSelect('COUNT(*)', 'count')
@@ -738,7 +774,7 @@ export class ExpensesService {
       .groupBy('e.status')
       .getRawMany();
 
-    const byCategory = await this.expenseRepo
+    const byCategory = await expenseRepo
       .createQueryBuilder('e')
       .leftJoin('e.category', 'cat')
       .select('cat.name', 'categoryName')
@@ -751,7 +787,7 @@ export class ExpensesService {
       .addGroupBy('cat.name')
       .getRawMany();
 
-    const byMonth = await this.expenseRepo
+    const byMonth = await expenseRepo
       .createQueryBuilder('e')
       .select("TO_CHAR(e.date, 'YYYY-MM')", 'month')
       .addSelect('COUNT(*)', 'count')
@@ -862,7 +898,7 @@ export class ExpensesService {
    * If a PENDING record already exists (created at submit time), update it;
    * otherwise create a new one.
    */
-  private async upsertApproval(data: {
+  private async upsertApproval(tenantId: string, data: {
     expenseId: string;
     approverId: string;
     level: number;
@@ -870,11 +906,13 @@ export class ExpensesService {
     comment: string | null;
     approvedAt: Date | null;
   }): Promise<ExpenseApproval> {
-    const existing = await this.approvalRepo.findOne({
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const approvalRepo = ds.getRepository(ExpenseApproval);
+    const existing = await approvalRepo.findOne({
       where: { expenseId: data.expenseId, level: data.level },
     });
     if (existing) {
-      await this.approvalRepo.update(existing.id, {
+      await approvalRepo.update(existing.id, {
         approverId: data.approverId,
         status: data.status,
         comment: data.comment,
@@ -882,8 +920,8 @@ export class ExpensesService {
       });
       return { ...existing, ...data } as ExpenseApproval;
     }
-    const approval = this.approvalRepo.create(data);
-    return this.approvalRepo.save(approval);
+    const approval = approvalRepo.create(data);
+    return approvalRepo.save(approval);
   }
 
   private getCurrentApprovalLevel(e: Expense): number | null {

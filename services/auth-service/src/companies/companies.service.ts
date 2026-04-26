@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Company } from '../entities/company.entity';
 import { User } from '../entities/user.entity';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { CreateCompanyDto, UpdateCompanyDto, CompanyResponseDto } from './dto';
@@ -10,27 +9,21 @@ import { CreateCompanyDto, UpdateCompanyDto, CompanyResponseDto } from './dto';
 @Injectable()
 export class CompaniesService {
   constructor(
-    @InjectRepository(Company)
-    private readonly companyRepo: Repository<Company>,
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
   ) {}
 
-  async findAllByTenant(tenantId: string): Promise<CompanyResponseDto[]> {
-    const companies = await this.companyRepo.find({
-      where: { tenantId },
-      order: { name: 'ASC' },
-    });
-    return companies.map((c) => this.toResponseDto(c));
+  async findAll(tenantId: string): Promise<CompanyResponseDto[]> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const companies = await ds.getRepository(Company).find({ order: { name: 'ASC' } });
+    return companies.map((c) => this.toResponseDto(c, tenantId));
   }
 
   async findById(id: string, tenantId: string): Promise<CompanyResponseDto> {
-    const company = await this.companyRepo.findOne({
-      where: { id, tenantId },
-    });
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const company = await ds.getRepository(Company).findOne({ where: { id } });
     if (!company) throw new NotFoundException('Company not found');
-    return this.toResponseDto(company);
+    return this.toResponseDto(company, tenantId);
   }
 
   async create(
@@ -39,13 +32,12 @@ export class CompaniesService {
     actorId: string,
     ip?: string,
   ): Promise<CompanyResponseDto> {
-    const existing = await this.companyRepo.findOne({
-      where: { code: dto.code, tenantId },
-    });
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+
+    const existing = await ds.getRepository(Company).findOne({ where: { code: dto.code } });
     if (existing) throw new ConflictException('Company code already exists for this tenant');
 
-    const company = this.companyRepo.create({
-      tenantId,
+    const company = ds.getRepository(Company).create({
       name: dto.name,
       code: dto.code,
       address: dto.address ?? null,
@@ -56,7 +48,7 @@ export class CompaniesService {
       currency: dto.currency || 'XOF',
     });
 
-    const saved = await this.companyRepo.save(company);
+    const saved = await ds.getRepository(Company).save(company);
 
     await this.auditService.log({
       userId: actorId,
@@ -67,7 +59,7 @@ export class CompaniesService {
       ipAddress: ip,
     });
 
-    return this.toResponseDto(saved);
+    return this.toResponseDto(saved, tenantId);
   }
 
   async update(
@@ -77,9 +69,8 @@ export class CompaniesService {
     actorId: string,
     ip?: string,
   ): Promise<CompanyResponseDto> {
-    const company = await this.companyRepo.findOne({
-      where: { id, tenantId },
-    });
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const company = await ds.getRepository(Company).findOne({ where: { id } });
     if (!company) throw new NotFoundException('Company not found');
 
     const oldValue: Record<string, unknown> = {};
@@ -93,7 +84,7 @@ export class CompaniesService {
       }
     }
 
-    const saved = await this.companyRepo.save(company);
+    const saved = await ds.getRepository(Company).save(company);
 
     await this.auditService.log({
       userId: actorId,
@@ -105,22 +96,20 @@ export class CompaniesService {
       ipAddress: ip,
     });
 
-    return this.toResponseDto(saved);
+    return this.toResponseDto(saved, tenantId);
   }
 
   async switchUserCompany(userId: string, companyId: string, tenantId: string): Promise<void> {
-    const company = await this.companyRepo.findOne({
-      where: { id: companyId, tenantId, isActive: true },
-    });
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const company = await ds.getRepository(Company).findOne({ where: { id: companyId, isActive: true } });
     if (!company) throw new NotFoundException('Company not found or inactive');
-
-    await this.userRepo.update(userId, { companyId });
+    await ds.getRepository(User).update(userId, { companyId });
   }
 
-  private toResponseDto(company: Company): CompanyResponseDto {
+  private toResponseDto(company: Company, tenantId: string): CompanyResponseDto {
     return {
       id: company.id,
-      tenantId: company.tenantId,
+      tenantId,
       name: company.name,
       code: company.code,
       address: company.address,

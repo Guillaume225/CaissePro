@@ -8,19 +8,15 @@ import {
 } from 'typeorm';
 
 @Entity('companies')
-@Index(['tenantId'])
-@Index(['code', 'tenantId'], { unique: true })
+@Index(['code'], { unique: true })
 export class Company {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
-
   @Column({ type: 'varchar', length: 200 })
   name!: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'varchar', length: 20, unique: true })
   code!: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })

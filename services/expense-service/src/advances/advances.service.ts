@@ -1,28 +1,29 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Advance } from '../entities/advance.entity';
 import { AdvanceStatus } from '../entities/enums';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { CreateAdvanceDto, UpdateAdvanceDto, JustifyAdvanceDto, ListAdvancesQueryDto } from './dto';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class AdvancesService {
   private readonly logger = new Logger(AdvancesService.name);
 
   constructor(
-    @InjectRepository(Advance)
-    private readonly advanceRepo: Repository<Advance>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
   ) {}
 
   /* ─── FindAll with pagination ─── */
-  async findAll(query: ListAdvancesQueryDto) {
+  async findAll(tenantId: string, query: ListAdvancesQueryDto) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const advanceRepo = ds.getRepository(Advance);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = this.advanceRepo.createQueryBuilder('a');
+    const qb = advanceRepo.createQueryBuilder('a');
 
     if (query.employeeId) qb.andWhere('a.employee_id = :empId', { empId: query.employeeId });
     if (query.status) qb.andWhere('a.status = :status', { status: query.status });
@@ -48,14 +49,18 @@ export class AdvancesService {
   }
 
   /* ─── FindById ─── */
-  async findById(id: string) {
-    const advance = await this.advanceRepo.findOne({ where: { id } });
+  async findById(tenantId: string, id: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const advance = await ds.getRepository(Advance).findOne({ where: { id } });
     if (!advance) throw new NotFoundException('Advance not found');
     return this.toResponseDto(advance);
   }
 
   /* ─── Create ─── */
-  async create(dto: CreateAdvanceDto, userId: string) {
+  async create(tenantId: string, dto: CreateAdvanceDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const advanceRepo = ds.getRepository(Advance);
+
     const data: Partial<Advance> = {
       employeeId: dto.employeeId,
       amount: dto.amount,
@@ -65,9 +70,8 @@ export class AdvancesService {
       dueDate: dto.dueDate || null,
       justificationDeadline: dto.justificationDeadline || null,
     };
-    const advance = this.advanceRepo.create(data);
-
-    const saved = await this.advanceRepo.save(advance);
+    const advance = advanceRepo.create(data);
+    const saved = await advanceRepo.save(advance);
 
     await this.auditService.log({
       userId,
@@ -81,12 +85,14 @@ export class AdvancesService {
       },
     });
 
-    return this.findById(saved.id);
+    return this.findById(tenantId, saved.id);
   }
 
   /* ─── Update ─── */
-  async update(id: string, dto: UpdateAdvanceDto, userId: string) {
-    const advance = await this.advanceRepo.findOne({ where: { id } });
+  async update(tenantId: string, id: string, dto: UpdateAdvanceDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const advanceRepo = ds.getRepository(Advance);
+    const advance = await advanceRepo.findOne({ where: { id } });
     if (!advance) throw new NotFoundException('Advance not found');
 
     if (advance.status !== AdvanceStatus.PENDING) {
@@ -103,7 +109,7 @@ export class AdvancesService {
     }
 
     Object.assign(advance, dto);
-    await this.advanceRepo.save(advance);
+    await advanceRepo.save(advance);
 
     await this.auditService.log({
       userId,
@@ -114,12 +120,14 @@ export class AdvancesService {
       newValue,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Justify (partial or total) ─── */
-  async justify(id: string, dto: JustifyAdvanceDto, userId: string) {
-    const advance = await this.advanceRepo.findOne({ where: { id } });
+  async justify(tenantId: string, id: string, dto: JustifyAdvanceDto, userId: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const advanceRepo = ds.getRepository(Advance);
+    const advance = await advanceRepo.findOne({ where: { id } });
     if (!advance) throw new NotFoundException('Advance not found');
 
     if (advance.status !== AdvanceStatus.PENDING && advance.status !== AdvanceStatus.PARTIAL) {
@@ -142,7 +150,7 @@ export class AdvancesService {
       advance.status = AdvanceStatus.PARTIAL;
     }
 
-    await this.advanceRepo.save(advance);
+    await advanceRepo.save(advance);
 
     await this.auditService.log({
       userId,
@@ -157,13 +165,19 @@ export class AdvancesService {
       },
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Check overdue advances ─── */
-  async checkOverdue(): Promise<number> {
+  // TODO: This Cron method requires iterating over all tenants.
+  // Implement tenant-aware scheduling once a tenant registry is available.
+  async checkOverdue(tenantId: string): Promise<number> {
+    this.logger.warn('checkOverdue called — tenant-aware scheduling not yet implemented');
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const advanceRepo = ds.getRepository(Advance);
+
     const now = new Date().toISOString().split('T')[0];
-    const result = await this.advanceRepo
+    const result = await advanceRepo
       .createQueryBuilder('a')
       .update()
       .set({ status: AdvanceStatus.OVERDUE })

@@ -11,14 +11,10 @@ import {
 import { User } from '../entities/user.entity';
 
 @Entity('report_configs')
-@Index(['tenantId'])
-@Index(['tenantId', 'reportId'], { unique: true })
+@Index(['reportId'], { unique: true })
 export class ReportConfiguration {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
-
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
 
   @Column({ type: 'varchar', length: 50, name: 'report_id' })
   reportId!: string;

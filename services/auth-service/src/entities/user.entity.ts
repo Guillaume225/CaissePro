@@ -9,7 +9,6 @@ import {
   ManyToMany,
   JoinColumn,
   JoinTable,
-  Index,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { Company } from './company.entity';
@@ -19,7 +18,6 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Index({ unique: true })
   @Column({ type: 'varchar', length: 255, unique: true })
   email!: string;
 
@@ -38,9 +36,6 @@ export class User {
   @ManyToOne(() => Role, (role) => role.users, { eager: true })
   @JoinColumn({ name: 'role_id' })
   role!: Role;
-
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
 
   @Column({ type: 'uuid', name: 'department_id', nullable: true })
   departmentId!: string | null;

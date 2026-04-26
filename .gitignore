@@ -28,3 +28,24 @@ __pycache__/
 # os
 .DS_Store
 Thumbs.db
+
+# secrets / keys
+*.pem
+*.b64
+*-escaped.txt
+jwt-*.txt
+token.txt
+
+# migration scripts (local server tools)
+migrate-*.js
+migrate-*.sql
+bootstrap-tenant-schemas.js
+
+# misc local files
+"Pour video.txt"
+fonctionnalite.txt
+power/
+.claude/
+
+# python egg-info
+*.egg-info/

@@ -17,21 +17,28 @@ import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, ListUsersQueryDto } from './dto';
 import { CurrentUser, Permissions } from '../common/decorators';
 import { PERMISSIONS } from '../common/permissions';
+import { RequireLimit } from '../subscription/subscription.decorator';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  async me(@CurrentUser('id') userId: string) {
-    const data = await this.usersService.findById(userId);
+  async me(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    const data = await this.usersService.getMe(userId, tenantId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   @Get()
   @Permissions(PERMISSIONS.USER_READ)
-  async findAll(@Query() query: ListUsersQueryDto) {
-    const result = await this.usersService.findAll(query);
+  async findAll(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query() query: ListUsersQueryDto,
+  ) {
+    const result = await this.usersService.findAll(tenantId, query);
     return {
       success: true,
       data: result.data,
@@ -42,21 +49,26 @@ export class UsersController {
 
   @Get(':id')
   @Permissions(PERMISSIONS.USER_READ)
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    const data = await this.usersService.findById(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    const data = await this.usersService.findById(id, tenantId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   @Post()
   @Permissions(PERMISSIONS.USER_CREATE)
+  @RequireLimit('max_users')
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: CreateUserDto,
     @CurrentUser('id') actorId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Req() req: Request,
   ) {
     const ip = req.ip || req.socket.remoteAddress || '';
-    const data = await this.usersService.create(dto, actorId, ip);
+    const data = await this.usersService.create(dto, tenantId, actorId, ip);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -66,10 +78,11 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser('id') actorId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Req() req: Request,
   ) {
     const ip = req.ip || req.socket.remoteAddress || '';
-    const data = await this.usersService.update(id, dto, actorId, ip);
+    const data = await this.usersService.update(id, dto, tenantId, actorId, ip);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
@@ -79,10 +92,11 @@ export class UsersController {
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser('id') actorId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Req() req: Request,
   ) {
     const ip = req.ip || req.socket.remoteAddress || '';
-    await this.usersService.softDelete(id, actorId, ip);
+    await this.usersService.softDelete(id, tenantId, actorId, ip);
     return {
       success: true,
       data: { message: 'User deleted successfully' },

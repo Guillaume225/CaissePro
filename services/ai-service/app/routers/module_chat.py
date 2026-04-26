@@ -96,13 +96,13 @@ async def get_suggestions(module: str = "expense") -> list[dict[str, str]]:
 
 
 _CONVERSATIONAL_SYSTEM_PROMPT = (
-    "Tu es un assistant IA conversationnel de culture générale, intégré dans **CaisseFlow Pro**, "
+    "Tu es un assistant IA conversationnel de culture générale, intégré dans **Caisse Pro**, "
     "un logiciel SaaS de gestion de caisse pour les entreprises en Afrique de l'Ouest.\n\n"
     "RÈGLES STRICTES :\n"
     "- Tu peux répondre à des questions de culture générale (histoire, science, géographie, maths, technologie, etc.).\n"
     "- Réponds en français par défaut, sauf si l'utilisateur écrit dans une autre langue.\n"
     "- Sois concis, clair et utile. Utilise le markdown (gras, listes).\n"
-    "- Rappelle régulièrement à l'utilisateur que tu es l'assistant IA de CaisseFlow Pro "
+    "- Rappelle régulièrement à l'utilisateur que tu es l'assistant IA de Caisse Pro "
     "et que pour les questions liées à la gestion de caisse, dépenses, ou l'application, "
     "il faut utiliser le volet **Agent IA**.\n"
     "- Sois empathique et professionnel."
@@ -110,7 +110,7 @@ _CONVERSATIONAL_SYSTEM_PROMPT = (
 
 _LIMIT_REACHED_MESSAGE = (
     "Vous avez atteint la limite de **10 questions** pour le chatbot conversationnel. 🎓\n\n"
-    "N'oubliez pas que je suis avant tout l'assistant IA de **CaisseFlow Pro**, "
+    "N'oubliez pas que je suis avant tout l'assistant IA de **Caisse Pro**, "
     "votre logiciel de gestion de caisse.\n\n"
     "Pour toute question liée à :\n"
     "- 💰 La gestion de caisse et dépenses\n"
@@ -133,7 +133,7 @@ async def conversational_chat(
     """Free-form conversational chatbot endpoint.
 
     Limited to 10 questions per session. Answers general culture
-    questions and reminds the user about the CaisseFlow Pro context.
+    questions and reminds the user about the Caisse Pro context.
     """
     start = time.perf_counter()
     try:
@@ -212,7 +212,7 @@ def _conversational_fallback(message: str) -> str:
         return "De rien ! N'hésitez pas si vous avez d'autres questions. 😊"
     if any(w in msg for w in ["qui es-tu", "qui êtes-vous", "tu es qui", "what are you", "qui es tu"]):
         return (
-            "Je suis l'assistant IA conversationnel de **CaisseFlow Pro**. "
+            "Je suis l'assistant IA conversationnel de **Caisse Pro**. "
             "Je suis là pour discuter, répondre à vos questions, et vous aider "
             "dans vos tâches quotidiennes. Pensez à moi comme votre ChatGPT intégré !"
         )
@@ -237,7 +237,7 @@ def _conversational_fallback(message: str) -> str:
         )
     if any(w in msg for w in ["caisseflow", "application", "logiciel", "app"]):
         return (
-            "**CaisseFlow Pro** est un logiciel SaaS de gestion de caisse complet :\n\n"
+            "**Caisse Pro** est un logiciel SaaS de gestion de caisse complet :\n\n"
             "• **Module Dépenses** — Gestion des dépenses et clôture de caisse\n"
             "• **Module FNE** — Factures normalisées électroniques\n"
             "• **Module Admin** — Gestion des utilisateurs, rôles et sociétés\n"

@@ -25,42 +25,46 @@ export class SalesController {
 
   @Get()
   @Permissions(SALE_PERMISSIONS.READ)
-  findAll(@Query() query: ListSalesQueryDto) {
-    return this.salesService.findAll(query);
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListSalesQueryDto) {
+    return this.salesService.findAll(tenantId, query);
   }
 
   @Get(':id')
   @Permissions(SALE_PERMISSIONS.READ)
-  findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.salesService.findById(id);
+  findById(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.salesService.findById(tenantId, id);
   }
 
   @Post()
   @Permissions(SALE_PERMISSIONS.CREATE)
-  create(@Body() dto: CreateSaleDto, @CurrentUser() user: SalesUser) {
-    return this.salesService.create(dto, user);
+  create(@CurrentUser() user: SalesUser, @Body() dto: CreateSaleDto) {
+    return this.salesService.create(user.tenantId, dto, user);
   }
 
   @Patch(':id')
   @Permissions(SALE_PERMISSIONS.UPDATE)
   update(
+    @CurrentUser() user: SalesUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSaleDto,
-    @CurrentUser() user: SalesUser,
   ) {
-    return this.salesService.update(id, dto, user);
+    return this.salesService.update(user.tenantId, id, dto, user);
   }
 
   @Post(':id/confirm')
   @Permissions(SALE_PERMISSIONS.CONFIRM)
-  confirm(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: SalesUser) {
-    return this.salesService.confirm(id, user);
+  confirm(@CurrentUser() user: SalesUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.salesService.confirm(user.tenantId, id, user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Permissions(SALE_PERMISSIONS.DELETE)
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
-    return this.salesService.remove(id, userId);
+  remove(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.salesService.remove(tenantId, id, userId);
   }
 }

@@ -148,6 +148,7 @@ export interface FneClientRecord {
   companyName: string;
   phone: string;
   email: string;
+  clientCode: string | null;
   ncc: string | null;
   sellerName: string | null;
   accountCode: string | null;
@@ -160,6 +161,7 @@ export interface CreateFneClientPayload {
   companyName: string;
   phone: string;
   email: string;
+  clientCode?: string;
   ncc?: string;
   sellerName?: string;
   accountCode?: string;

@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { FnePointOfSale } from '../entities/fne-point-of-sale.entity';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 export interface CreateFnePointOfSaleDto {
   name: string;
@@ -24,39 +23,44 @@ export interface ListFnePointsOfSaleQuery {
 
 @Injectable()
 export class FnePointsOfSaleService {
-  constructor(
-    @InjectRepository(FnePointOfSale)
-    private readonly repo: Repository<FnePointOfSale>,
-  ) {}
+  constructor(private readonly tenantDsService: TenantDataSourceService) {}
 
-  async create(dto: CreateFnePointOfSaleDto): Promise<FnePointOfSale> {
-    const entity = this.repo.create({
+  async create(tenantId: string, dto: CreateFnePointOfSaleDto): Promise<FnePointOfSale> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FnePointOfSale);
+    const entity = repo.create({
       establishmentId: dto.establishmentId,
       name: dto.name,
       address: dto.address ?? null,
     });
-    return this.repo.save(entity);
+    return repo.save(entity);
   }
 
-  async update(id: string, dto: UpdateFnePointOfSaleDto): Promise<FnePointOfSale> {
-    const entity = await this.repo.findOneBy({ id });
+  async update(tenantId: string, id: string, dto: UpdateFnePointOfSaleDto): Promise<FnePointOfSale> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FnePointOfSale);
+    const entity = await repo.findOneBy({ id });
     if (!entity) throw new NotFoundException('Point de vente introuvable');
     Object.assign(entity, dto);
-    return this.repo.save(entity);
+    return repo.save(entity);
   }
 
-  async findById(id: string): Promise<FnePointOfSale> {
-    const entity = await this.repo.findOneBy({ id });
+  async findById(tenantId: string, id: string): Promise<FnePointOfSale> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const entity = await ds.getRepository(FnePointOfSale).findOneBy({ id });
     if (!entity) throw new NotFoundException('Point de vente introuvable');
     return entity;
   }
 
-  async findAll(query: ListFnePointsOfSaleQuery) {
+  async findAll(tenantId: string, query: ListFnePointsOfSaleQuery) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FnePointOfSale);
+
     const page = Math.max(Number(query.page) || 1, 1);
     const perPage = Math.min(Math.max(Number(query.perPage) || 25, 1), 100);
     const skip = (page - 1) * perPage;
 
-    const qb = this.repo.createQueryBuilder('p').where('p.isActive = 1');
+    const qb = repo.createQueryBuilder('p').where('p.isActive = 1');
 
     if (query.establishmentId) {
       qb.andWhere('p.establishmentId = :establishmentId', {
@@ -74,10 +78,12 @@ export class FnePointsOfSaleService {
     return { data, meta: { total, page, perPage, totalPages: Math.ceil(total / perPage) } };
   }
 
-  async delete(id: string): Promise<void> {
-    const entity = await this.repo.findOneBy({ id });
+  async delete(tenantId: string, id: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FnePointOfSale);
+    const entity = await repo.findOneBy({ id });
     if (!entity) throw new NotFoundException('Point de vente introuvable');
     entity.isActive = false;
-    await this.repo.save(entity);
+    await repo.save(entity);
   }
 }

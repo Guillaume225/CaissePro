@@ -1,27 +1,28 @@
 import { Controller, Get } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
+import { CurrentUser } from '../common/decorators';
 
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('admin/kpis')
-  getAdminKpis() {
-    return this.dashboardService.getAdminKpis();
+  getAdminKpis(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getAdminKpis(tenantId);
   }
 
   @Get('admin/recent-logs')
-  getRecentLogs() {
-    return this.dashboardService.getRecentLogs();
+  getRecentLogs(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getRecentLogs(tenantId);
   }
 
   @Get('admin/role-distribution')
-  getRoleDistribution() {
-    return this.dashboardService.getRoleDistribution();
+  getRoleDistribution(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getRoleDistribution(tenantId);
   }
 
   @Get('admin/hourly-activity')
-  getHourlyActivity() {
-    return this.dashboardService.getHourlyActivity();
+  getHourlyActivity(@CurrentUser('tenantId') tenantId: string) {
+    return this.dashboardService.getHourlyActivity(tenantId);
   }
 }

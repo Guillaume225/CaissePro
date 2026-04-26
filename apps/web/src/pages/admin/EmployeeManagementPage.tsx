@@ -147,7 +147,7 @@ export default function EmployeeManagementPage() {
   };
 
   const copyCredentials = (emp: EmployeeAccount) => {
-    const text = `Matricule: ${emp.matricule}\nEmail: ${emp.email}\nConnexion: http://localhost:5173/demande/login`;
+    const text = `Matricule: ${emp.matricule}\nEmail: ${emp.email}\nConnexion: https://gestion.i-management.website/demande/login`;
     navigator.clipboard.writeText(text);
     setCopied(emp.id);
     setTimeout(() => setCopied(null), 2000);
@@ -297,12 +297,12 @@ export default function EmployeeManagementPage() {
         <p className="text-xs text-gray-400 mt-1">
           Les salariés se connectent sur{' '}
           <a
-            href="http://localhost:5173/demande/login"
+            href="https://gestion.i-management.website/demande/login"
             target="_blank"
             rel="noreferrer"
             className="text-brand-gold underline hover:text-brand-gold-dark"
           >
-            http://localhost:5173/demande/login
+            https://gestion.i-management.website/demande/login
           </a>{' '}
           avec leur <strong>matricule</strong> et <strong>email</strong> pour soumettre des demandes
           de décaissement. Utilisez le bouton <Copy size={10} className="inline" /> pour copier les

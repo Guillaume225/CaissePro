@@ -12,7 +12,7 @@ from __future__ import annotations
 # ── Base system prompt (common to all modules) ──────────────────────────
 
 _BASE_PROMPT = """\
-Tu es l'assistant IA de CaisseFlow Pro, un logiciel SaaS de gestion de caisse \
+Tu es l'assistant IA de Caisse Pro, un logiciel SaaS de gestion de caisse \
 pour les entreprises en Afrique de l'Ouest. Les montants sont en FCFA.
 L'utilisateur a le rôle « {role} » et utilise actuellement le module « {module} ».
 

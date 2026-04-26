@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
 import { ReceivablesService } from './receivables.service';
-import { Permissions } from '../common/decorators';
+import { Permissions, CurrentUser } from '../common/decorators';
 import { RECEIVABLE_PERMISSIONS } from '../common/permissions';
 import { ListReceivablesQueryDto } from './dto';
 
@@ -10,19 +10,19 @@ export class ReceivablesController {
 
   @Get('aging-report')
   @Permissions(RECEIVABLE_PERMISSIONS.READ)
-  getAgingReport() {
-    return this.receivablesService.getAgingReport();
+  getAgingReport(@CurrentUser('tenantId') tenantId: string) {
+    return this.receivablesService.getAgingReport(tenantId);
   }
 
   @Get()
   @Permissions(RECEIVABLE_PERMISSIONS.READ)
-  findAll(@Query() query: ListReceivablesQueryDto) {
-    return this.receivablesService.findAll(query);
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListReceivablesQueryDto) {
+    return this.receivablesService.findAll(tenantId, query);
   }
 
   @Get(':id')
   @Permissions(RECEIVABLE_PERMISSIONS.READ)
-  findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.receivablesService.findById(id);
+  findById(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.receivablesService.findById(tenantId, id);
   }
 }

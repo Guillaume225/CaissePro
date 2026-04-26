@@ -13,31 +13,41 @@ export class FneAccountingController {
 
   @Get()
   @Permissions(FNE_PERMISSIONS.READ)
-  findAll(@Query() query: ListFneAccountingQuery) {
-    return this.fneAccountingService.findAll(query);
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListFneAccountingQuery) {
+    return this.fneAccountingService.findAll(tenantId, query);
   }
 
   @Post('generate')
   @Permissions(FNE_PERMISSIONS.CREATE)
-  generate(@Body() dto: GenerateEntriesDto, @CurrentUser('id') userId: string) {
-    return this.fneAccountingService.generate(dto, userId);
+  generate(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: GenerateEntriesDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.fneAccountingService.generate(tenantId, dto, userId);
   }
 
   @Post('processed-ids')
   @Permissions(FNE_PERMISSIONS.READ)
-  getProcessedIds(@Body() dto: { invoiceIds: string[] }) {
-    return this.fneAccountingService.getProcessedInvoiceIds(dto.invoiceIds);
+  getProcessedIds(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: { invoiceIds: string[] },
+  ) {
+    return this.fneAccountingService.getProcessedInvoiceIds(tenantId, dto.invoiceIds);
   }
 
   @Delete(':invoiceId')
   @Permissions(FNE_PERMISSIONS.UPDATE)
-  deleteByInvoice(@Param('invoiceId', ParseUUIDPipe) invoiceId: string) {
-    return this.fneAccountingService.deleteByInvoice(invoiceId);
+  deleteByInvoice(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('invoiceId', ParseUUIDPipe) invoiceId: string,
+  ) {
+    return this.fneAccountingService.deleteByInvoice(tenantId, invoiceId);
   }
 
   @Delete()
   @Permissions(FNE_PERMISSIONS.UPDATE)
-  deleteAll() {
-    return this.fneAccountingService.deleteAll();
+  deleteAll(@CurrentUser('tenantId') tenantId: string) {
+    return this.fneAccountingService.deleteAll(tenantId);
   }
 }

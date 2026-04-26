@@ -16,6 +16,7 @@ import {
   cashClosingConfig,
 } from './config';
 
+import { TenantDataSourceModule } from './tenant/tenant-datasource.module';
 import { RedisModule } from './redis/redis.module';
 import { AuditModule } from './audit/audit.module';
 import { EventsModule } from './events/events.module';
@@ -33,18 +34,8 @@ import { DisbursementRequestsModule } from './disbursement-requests/disbursement
 import { AdminQueryModule } from './admin-query/admin-query.module';
 import { ReportConfigsModule } from './report-configs/report-configs.module';
 
-// Entities
-import { Expense } from './entities/expense.entity';
-import { ExpenseCategory } from './entities/expense-category.entity';
-import { ExpenseApproval } from './entities/expense-approval.entity';
-import { ExpenseAttachment } from './entities/expense-attachment.entity';
-import { Advance } from './entities/advance.entity';
-import { CashDay } from './entities/cash-day.entity';
-import { CashMovement } from './entities/cash-movement.entity';
-import { DisbursementRequest } from './entities/disbursement-request.entity';
+// Master (dbo) entities only
 import { AuditLog } from './audit/audit-log.entity';
-import { User } from './entities/user.entity';
-import { ReportConfiguration } from './report-configs/report-config.entity';
 
 @Module({
   imports: [
@@ -70,19 +61,7 @@ import { ReportConfiguration } from './report-configs/report-config.entity';
         username: cfg.get<string>('database.username'),
         password: cfg.get<string>('database.password'),
         database: cfg.get<string>('database.database'),
-        entities: [
-          Expense,
-          ExpenseCategory,
-          ExpenseApproval,
-          ExpenseAttachment,
-          Advance,
-          CashDay,
-          CashMovement,
-          DisbursementRequest,
-          AuditLog,
-          User,
-          ReportConfiguration,
-        ],
+        entities: [AuditLog],
         synchronize: false,
         logging: cfg.get<string>('app.nodeEnv') === 'development',
         options: { encrypt: false, trustServerCertificate: true },
@@ -102,6 +81,7 @@ import { ReportConfiguration } from './report-configs/report-config.entity';
       inject: [ConfigService],
     }),
     ScheduleModule.forRoot(),
+    TenantDataSourceModule,
     RedisModule,
     EventsModule,
     AuditModule,

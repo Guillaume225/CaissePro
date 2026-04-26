@@ -5,9 +5,8 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder } from 'typeorm';
 import { Sale } from '../entities/sale.entity';
 import { SaleItem } from '../entities/sale-item.entity';
 import { Product } from '../entities/product.entity';
@@ -18,6 +17,7 @@ import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { EventsService, SalesEvent } from '../events/events.service';
 import { CreateSaleDto, UpdateSaleDto, ListSalesQueryDto, SaleItemDto } from './dto';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 /** Shape produced by JwtStrategy.validate() */
 export interface SalesUser {
@@ -26,6 +26,7 @@ export interface SalesUser {
   roleName: string;
   permissions: string[];
   departmentId: string | null;
+  tenantId: string;
 }
 
 @Injectable()
@@ -33,27 +34,19 @@ export class SalesService {
   private readonly logger = new Logger(SalesService.name);
 
   constructor(
-    @InjectRepository(Sale)
-    private readonly saleRepo: Repository<Sale>,
-    @InjectRepository(SaleItem)
-    private readonly itemRepo: Repository<SaleItem>,
-    @InjectRepository(Product)
-    private readonly productRepo: Repository<Product>,
-    @InjectRepository(Client)
-    private readonly clientRepo: Repository<Client>,
-    @InjectRepository(Receivable)
-    private readonly receivableRepo: Repository<Receivable>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
     private readonly eventsService: EventsService,
     private readonly configService: ConfigService,
   ) {}
 
   /* ─── Reference generation: VTE-YYYY-NNNNN ─── */
-  private async generateReference(): Promise<string> {
+  private async generateReference(tenantId: string): Promise<string> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
     const year = new Date().getFullYear();
     const prefix = `VTE-${year}-`;
 
-    const result = await this.saleRepo
+    const result = await ds.getRepository(Sale)
       .createQueryBuilder('s')
       .select('MAX(CAST(RIGHT(s.reference, 5) AS INT))', 'maxSeq')
       .where('s.reference LIKE :prefix', { prefix: `${prefix}%` })
@@ -122,11 +115,14 @@ export class SalesService {
   }
 
   /* ─── FindAll with advanced filters ─── */
-  async findAll(query: ListSalesQueryDto) {
+  async findAll(tenantId: string, query: ListSalesQueryDto) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(Sale);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = this.saleRepo
+    const qb = repo
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.client', 'client')
       .leftJoinAndSelect('s.items', 'items')
@@ -157,8 +153,9 @@ export class SalesService {
   }
 
   /* ─── FindById ─── */
-  async findById(id: string) {
-    const sale = await this.saleRepo.findOne({
+  async findById(tenantId: string, id: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const sale = await ds.getRepository(Sale).findOne({
       where: { id },
       relations: ['client', 'items', 'items.product', 'payments', 'receivables'],
     });
@@ -167,9 +164,15 @@ export class SalesService {
   }
 
   /* ─── Create ─── */
-  async create(dto: CreateSaleDto, user: SalesUser) {
+  async create(tenantId: string, dto: CreateSaleDto, user: SalesUser) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const saleRepo = ds.getRepository(Sale);
+    const itemRepo = ds.getRepository(SaleItem);
+    const clientRepo = ds.getRepository(Client);
+    const receivableRepo = ds.getRepository(Receivable);
+
     // Validate client
-    const client = await this.clientRepo.findOne({ where: { id: dto.clientId } });
+    const client = await clientRepo.findOne({ where: { id: dto.clientId } });
     if (!client) throw new NotFoundException('Client not found');
     if (!client.isActive) throw new BadRequestException('Client is inactive');
 
@@ -180,16 +183,16 @@ export class SalesService {
     }
 
     // Resolve products & build items
-    const resolvedItems = await this.resolveItems(dto.items, user.roleName);
+    const resolvedItems = await this.resolveItems(tenantId, dto.items, user.roleName);
 
     // Compute totals
     const saleTotals = this.computeSaleTotals(resolvedItems, globalDiscountPct);
 
     // Generate reference
-    const reference = await this.generateReference();
+    const reference = await this.generateReference(tenantId);
 
     // Create sale
-    const sale = this.saleRepo.create({
+    const sale = saleRepo.create({
       reference,
       date: dto.date,
       clientId: dto.clientId,
@@ -204,11 +207,11 @@ export class SalesService {
       createdById: user.id,
       dueDate: dto.dueDate || null,
     });
-    const saved = await this.saleRepo.save(sale);
+    const saved = await saleRepo.save(sale);
 
     // Save items
     const itemEntities = resolvedItems.map((ri) =>
-      this.itemRepo.create({
+      itemRepo.create({
         saleId: saved.id,
         productId: ri.productId,
         quantity: ri.quantity,
@@ -220,7 +223,7 @@ export class SalesService {
         lineTotalTtc: ri.lineTotalTtc,
       }),
     );
-    await this.itemRepo.save(itemEntities);
+    await itemRepo.save(itemEntities);
 
     await this.auditService.log({
       userId: user.id,
@@ -238,12 +241,16 @@ export class SalesService {
       createdById: user.id,
     });
 
-    return this.findById(saved.id);
+    return this.findById(tenantId, saved.id);
   }
 
   /* ─── Update (DRAFT only) ─── */
-  async update(id: string, dto: UpdateSaleDto, user: SalesUser) {
-    const sale = await this.saleRepo.findOne({ where: { id } });
+  async update(tenantId: string, id: string, dto: UpdateSaleDto, user: SalesUser) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const saleRepo = ds.getRepository(Sale);
+    const itemRepo = ds.getRepository(SaleItem);
+
+    const sale = await saleRepo.findOne({ where: { id } });
     if (!sale) throw new NotFoundException('Sale not found');
     if (sale.status !== SaleStatus.DRAFT) {
       throw new BadRequestException('Only DRAFT sales can be updated');
@@ -256,10 +263,10 @@ export class SalesService {
 
     if (dto.items) {
       // Remove old items
-      await this.itemRepo.delete({ saleId: id });
+      await itemRepo.delete({ saleId: id });
 
       // Resolve new items
-      const resolvedItems = await this.resolveItems(dto.items, user.roleName);
+      const resolvedItems = await this.resolveItems(tenantId, dto.items, user.roleName);
       const saleTotals = this.computeSaleTotals(resolvedItems, globalDiscountPct);
 
       sale.subtotalHt = saleTotals.subtotalHt;
@@ -269,7 +276,7 @@ export class SalesService {
       sale.globalDiscountPct = globalDiscountPct;
 
       const itemEntities = resolvedItems.map((ri) =>
-        this.itemRepo.create({
+        itemRepo.create({
           saleId: id,
           productId: ri.productId,
           quantity: ri.quantity,
@@ -281,10 +288,10 @@ export class SalesService {
           lineTotalTtc: ri.lineTotalTtc,
         }),
       );
-      await this.itemRepo.save(itemEntities);
+      await itemRepo.save(itemEntities);
     } else if (dto.globalDiscountPct !== undefined) {
       // Recalculate with existing items
-      const existingItems = await this.itemRepo.find({ where: { saleId: id } });
+      const existingItems = await itemRepo.find({ where: { saleId: id } });
       const saleTotals = this.computeSaleTotals(
         existingItems.map((i) => ({
           lineTotalHt: Number(i.lineTotalHt),
@@ -303,7 +310,7 @@ export class SalesService {
     if (dto.notes !== undefined) sale.notes = dto.notes || null;
     if (dto.dueDate !== undefined) sale.dueDate = dto.dueDate || null;
 
-    await this.saleRepo.save(sale);
+    await saleRepo.save(sale);
 
     await this.auditService.log({
       userId: user.id,
@@ -313,23 +320,27 @@ export class SalesService {
       newValue: { totalTtc: Number(sale.totalTtc) },
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Confirm: DRAFT → CONFIRMED ─── */
-  async confirm(id: string, user: SalesUser) {
-    const sale = await this.saleRepo.findOne({ where: { id } });
+  async confirm(tenantId: string, id: string, user: SalesUser) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const saleRepo = ds.getRepository(Sale);
+    const receivableRepo = ds.getRepository(Receivable);
+
+    const sale = await saleRepo.findOne({ where: { id } });
     if (!sale) throw new NotFoundException('Sale not found');
     if (sale.status !== SaleStatus.DRAFT) {
       throw new BadRequestException('Only DRAFT sales can be confirmed');
     }
 
     sale.status = SaleStatus.CONFIRMED;
-    await this.saleRepo.save(sale);
+    await saleRepo.save(sale);
 
     // Create receivable if dueDate is set
     if (sale.dueDate) {
-      const receivable = this.receivableRepo.create({
+      const receivable = receivableRepo.create({
         saleId: id,
         clientId: sale.clientId,
         totalAmount: sale.totalTtc,
@@ -339,7 +350,7 @@ export class SalesService {
         agingBucket: AgingBucket.CURRENT,
         isSettled: false,
       });
-      await this.receivableRepo.save(receivable);
+      await receivableRepo.save(receivable);
     }
 
     await this.auditService.log({
@@ -359,19 +370,23 @@ export class SalesService {
       confirmedById: user.id,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   /* ─── Soft Delete (DRAFT only) ─── */
-  async remove(id: string, userId: string): Promise<void> {
-    const sale = await this.saleRepo.findOne({ where: { id } });
+  async remove(tenantId: string, id: string, userId: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const saleRepo = ds.getRepository(Sale);
+    const itemRepo = ds.getRepository(SaleItem);
+
+    const sale = await saleRepo.findOne({ where: { id } });
     if (!sale) throw new NotFoundException('Sale not found');
     if (sale.status !== SaleStatus.DRAFT) {
       throw new BadRequestException('Only DRAFT sales can be deleted');
     }
 
-    await this.itemRepo.delete({ saleId: id });
-    await this.saleRepo.softDelete(id);
+    await itemRepo.delete({ saleId: id });
+    await saleRepo.softDelete(id);
 
     await this.auditService.log({
       userId,
@@ -384,6 +399,7 @@ export class SalesService {
 
   /* ─── Private helpers ─── */
   private async resolveItems(
+    tenantId: string,
     dtoItems: SaleItemDto[],
     roleName: string,
   ): Promise<
@@ -398,9 +414,12 @@ export class SalesService {
       lineTotalTtc: number;
     }>
   > {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const productRepo = ds.getRepository(Product);
+
     const resolved = [];
     for (const item of dtoItems) {
-      const product = await this.productRepo.findOne({ where: { id: item.productId } });
+      const product = await productRepo.findOne({ where: { id: item.productId } });
       if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
       if (!product.isActive) throw new BadRequestException(`Product ${product.code} is inactive`);
 

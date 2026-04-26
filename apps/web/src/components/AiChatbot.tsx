@@ -1,6 +1,21 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+
+/** Lightweight markdown → HTML converter for chat bubbles */
+function renderMarkdown(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs">$1</code>')
+    .replace(/^[\-•] (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+    .replace(/(<li[^>]*>.*<\/li>\n?)+/g, '<ul class="my-1">$&</ul>')
+    .replace(/➡️/g, '➡️')
+    .replace(/\n/g, '<br/>');
+}
 import {
   X,
   Send,
@@ -76,7 +91,7 @@ const MODULE_SUGGESTIONS: Record<ModuleId, Array<{ key: string; label: string }>
 
 const CHATBOT_SUGGESTIONS = [
   { key: 'hello', label: 'Bonjour !' },
-  { key: 'about', label: "C'est quoi CaisseFlow ?" },
+  { key: 'about', label: "C'est quoi Caisse Pro ?" },
   { key: 'help', label: 'Que peux-tu faire ?' },
 ];
 
@@ -357,7 +372,10 @@ export function AiChatbot({ open, onClose }: { open: boolean; onClose: () => voi
                 )}
               </span>
 
-              <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+              <div
+                className="whitespace-pre-wrap leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+              />
 
               {/* Inline chart (agent only) */}
               {msg.chartData && (

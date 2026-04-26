@@ -1,22 +1,22 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ExpenseCategory } from '../entities/expense-category.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
 import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto } from './dto';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 @Injectable()
 export class CategoriesService {
   constructor(
-    @InjectRepository(ExpenseCategory)
-    private readonly catRepo: Repository<ExpenseCategory>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
   ) {}
 
-  async findAll(includeInactive = false): Promise<CategoryResponseDto[]> {
+  async findAll(tenantId: string, includeInactive = false): Promise<CategoryResponseDto[]> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const catRepo = ds.getRepository(ExpenseCategory);
     const where = includeInactive ? {} : { isActive: true };
-    const categories = await this.catRepo.find({
+    const categories = await catRepo.find({
       where,
       relations: ['parent', 'children'],
       order: { name: 'ASC' },
@@ -26,44 +26,48 @@ export class CategoriesService {
     return roots.map((r) => this.toTree(r, categories));
   }
 
-  async findById(id: string): Promise<CategoryResponseDto> {
-    const cat = await this.catRepo.findOne({
+  async findById(tenantId: string, id: string): Promise<CategoryResponseDto> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const catRepo = ds.getRepository(ExpenseCategory);
+    const cat = await catRepo.findOne({
       where: { id },
       relations: ['parent', 'children'],
     });
     if (!cat) throw new NotFoundException('Category not found');
-    const allCats = await this.catRepo.find({ relations: ['parent', 'children'] });
+    const allCats = await catRepo.find({ relations: ['parent', 'children'] });
     return this.toTree(cat, allCats);
   }
 
-  async create(dto: CreateCategoryDto, actorId: string, tenantId?: string): Promise<CategoryResponseDto> {
+  async create(tenantId: string, dto: CreateCategoryDto, actorId: string): Promise<CategoryResponseDto> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const catRepo = ds.getRepository(ExpenseCategory);
+
     const code = dto.code || dto.name
       .toUpperCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/[^A-Z0-9]/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '')
       .substring(0, 20);
 
-    const existing = await this.catRepo.findOne({ where: { code } });
+    const existing = await catRepo.findOne({ where: { code } });
     if (existing) throw new ConflictException('Category code already exists');
 
     if (dto.parentId) {
-      const parent = await this.catRepo.findOne({ where: { id: dto.parentId } });
+      const parent = await catRepo.findOne({ where: { id: dto.parentId } });
       if (!parent) throw new NotFoundException('Parent category not found');
     }
 
-    const cat = this.catRepo.create({
+    const cat = catRepo.create({
       name: dto.name,
       code,
       parentId: dto.parentId || null,
       budgetLimit: dto.budgetLimit ?? null,
       accountingDebitAccount: dto.accountingDebitAccount ?? null,
       accountingCreditAccount: dto.accountingCreditAccount ?? null,
-      tenantId: tenantId || '00000000-0000-0000-0000-000000000001',
       ...(dto.direction && { direction: dto.direction }),
     });
-    const saved = await this.catRepo.save(cat);
+    const saved = await catRepo.save(cat);
 
     await this.auditService.log({
       userId: actorId,
@@ -73,11 +77,13 @@ export class CategoriesService {
       newValue: { name: dto.name, code },
     });
 
-    return this.findById(saved.id);
+    return this.findById(tenantId, saved.id);
   }
 
-  async update(id: string, dto: UpdateCategoryDto, actorId: string): Promise<CategoryResponseDto> {
-    const cat = await this.catRepo.findOne({ where: { id } });
+  async update(tenantId: string, id: string, dto: UpdateCategoryDto, actorId: string): Promise<CategoryResponseDto> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const catRepo = ds.getRepository(ExpenseCategory);
+    const cat = await catRepo.findOne({ where: { id } });
     if (!cat) throw new NotFoundException('Category not found');
 
     const oldValue: Record<string, unknown> = {};
@@ -114,7 +120,7 @@ export class CategoriesService {
       cat.direction = dto.direction;
     }
 
-    await this.catRepo.save(cat);
+    await catRepo.save(cat);
 
     await this.auditService.log({
       userId: actorId,
@@ -125,7 +131,7 @@ export class CategoriesService {
       newValue,
     });
 
-    return this.findById(id);
+    return this.findById(tenantId, id);
   }
 
   private toTree(cat: ExpenseCategory, allCats: ExpenseCategory[]): CategoryResponseDto {

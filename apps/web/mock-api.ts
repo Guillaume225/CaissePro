@@ -168,7 +168,7 @@ const notifications = [
     id: 'n5',
     type: 'SYSTEM',
     title: 'Mise à jour système',
-    message: 'CaisseFlow Pro v0.2.0 est disponible avec de nouvelles fonctionnalités IA.',
+    message: 'Caisse Pro v0.2.0 est disponible avec de nouvelles fonctionnalités IA.',
     isRead: true,
     createdAt: new Date(Date.now() - 172_800_000).toISOString(),
   },
@@ -525,7 +525,7 @@ const mockSettings = {
     port: 587,
     user: 'noreply@caisseflow.com',
     password: '••••••••',
-    fromName: 'CaisseFlow Pro',
+    fromName: 'Caisse Pro',
     fromEmail: 'noreply@caisseflow.com',
   },
   company: {

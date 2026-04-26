@@ -9,6 +9,7 @@ export class AdminQueryController {
 
   @Get('search')
   search(
+    @CurrentUser('tenantId') tenantId: string,
     @Query('entity') entity: EntityType,
     @Query('search') search?: string,
     @Query('status') status?: string,
@@ -16,6 +17,7 @@ export class AdminQueryController {
     @Query('perPage') perPage?: string,
   ) {
     return this.service.search(
+      tenantId,
       entity,
       search,
       status,
@@ -26,10 +28,12 @@ export class AdminQueryController {
 
   @Patch('update-status')
   updateStatus(
+    @CurrentUser('tenantId') tenantId: string,
     @Body() dto: { entity: EntityType; ids: string[]; newStatus: string; reason?: string },
     @CurrentUser() user: Record<string, string>,
   ) {
     return this.service.updateStatus(
+      tenantId,
       dto.entity,
       dto.ids,
       dto.newStatus,

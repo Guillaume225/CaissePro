@@ -16,20 +16,20 @@ export class CashClosingController {
 
   @Get('current')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  getCurrent() {
-    return this.cashClosingService.getCurrent();
+  getCurrent(@CurrentUser('tenantId') tenantId: string) {
+    return this.cashClosingService.getCurrent(tenantId);
   }
 
   @Get('state')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  getState() {
-    return this.cashClosingService.getState();
+  getState(@CurrentUser('tenantId') tenantId: string) {
+    return this.cashClosingService.getState(tenantId);
   }
 
   @Get('operations')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  getOperations() {
-    return this.cashClosingService.getOperations();
+  getOperations(@CurrentUser('tenantId') tenantId: string) {
+    return this.cashClosingService.getOperations(tenantId);
   }
 
   @Post('movements')
@@ -56,26 +56,41 @@ export class CashClosingController {
 
   @Post('unlock')
   @Permissions(CASH_CLOSING_PERMISSIONS.OPEN)
-  unlock() {
-    return this.cashClosingService.unlock();
+  unlock(@CurrentUser('tenantId') tenantId: string) {
+    return this.cashClosingService.unlock(tenantId);
   }
 
   @Get('accounting-entries')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  getAccountingEntries(@Query('cashDayId') cashDayId?: string) {
-    return this.cashClosingService.getAccountingEntries(cashDayId);
+  getAccountingEntries(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query('cashDayId') cashDayId?: string,
+  ) {
+    return this.cashClosingService.getAccountingEntries(tenantId, cashDayId);
   }
 
   @Post('accounting-entries/process')
   @Permissions(CASH_CLOSING_PERMISSIONS.CLOSE)
   processAccounting(@Body() dto: { cashDayId: string }, @CurrentUser() user: CashClosingUser) {
-    return this.cashClosingService.processAccountingEntries(dto.cashDayId, user);
+    return this.cashClosingService.processAccountingEntries(user.tenantId, dto.cashDayId, user);
   }
 
   @Post('accounting-entries/cancel')
   @Permissions(CASH_CLOSING_PERMISSIONS.CLOSE)
-  cancelAccounting(@Body() dto: { cashDayId: string }) {
-    return this.cashClosingService.cancelAccountingProcessing(dto.cashDayId);
+  cancelAccounting(
+    @Body() dto: { cashDayId: string },
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    return this.cashClosingService.cancelAccountingProcessing(tenantId, dto.cashDayId);
+  }
+
+  @Post('accounting-entries/post-to-sage')
+  @Permissions(CASH_CLOSING_PERMISSIONS.CLOSE)
+  postToSage(
+    @Body() dto: { cashDayId: string },
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    return this.cashClosingService.postAccountingToSage(tenantId, dto.cashDayId);
   }
 
   @Post('close')
@@ -86,19 +101,19 @@ export class CashClosingController {
 
   @Get('history')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  history(@Query() query: ListCashClosingsQueryDto) {
-    return this.cashClosingService.findAll(query);
+  history(@CurrentUser('tenantId') tenantId: string, @Query() query: ListCashClosingsQueryDto) {
+    return this.cashClosingService.findAll(tenantId, query);
   }
 
   @Get(':id')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  findOne(@Param('id') id: string) {
-    return this.cashClosingService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.cashClosingService.findOne(tenantId, id);
   }
 
   @Get(':id/operations')
   @Permissions(CASH_CLOSING_PERMISSIONS.READ)
-  getOperationsByDay(@Param('id') id: string) {
-    return this.cashClosingService.getOperationsByDay(id);
+  getOperationsByDay(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.cashClosingService.getOperationsByDay(tenantId, id);
   }
 }

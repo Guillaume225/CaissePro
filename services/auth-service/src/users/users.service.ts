@@ -4,6 +4,8 @@ import { Repository, In } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
 import { Company } from '../entities/company.entity';
+import { UserLogin } from '../entities/user-login.entity';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 import { AuthService } from '../auth/auth.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
@@ -12,30 +14,28 @@ import { CreateUserDto, UpdateUserDto, ListUsersQueryDto, UserResponseDto } from
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
-    @InjectRepository(Role)
-    private readonly roleRepo: Repository<Role>,
-    @InjectRepository(Company)
-    private readonly companyRepo: Repository<Company>,
+    @InjectRepository(UserLogin)
+    private readonly userLoginRepo: Repository<UserLogin>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly authService: AuthService,
     private readonly auditService: AuditService,
   ) {}
 
-  async findAll(query: ListUsersQueryDto): Promise<{
+  async findAll(
+    tenantId: string,
+    query: ListUsersQueryDto,
+  ): Promise<{
     data: UserResponseDto[];
     meta: { page: number; perPage: number; total: number; totalPages: number };
   }> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(User);
+
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
     const skip = (page - 1) * perPage;
 
-    const where: Record<string, unknown> = {};
-
-    if (query.roleId) where.roleId = query.roleId;
-    if (query.isActive !== undefined) where.isActive = query.isActive;
-
-    const qb = this.userRepo
+    const qb = repo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
       .leftJoinAndSelect('user.company', 'company')
@@ -44,15 +44,11 @@ export class UsersService {
       .take(perPage)
       .orderBy('user.createdAt', 'DESC');
 
-    if (query.roleId) {
-      qb.andWhere('user.role_id = :roleId', { roleId: query.roleId });
-    }
-    if (query.isActive !== undefined) {
-      qb.andWhere('user.is_active = :isActive', { isActive: query.isActive });
-    }
+    if (query.roleId) qb.andWhere('user.role_id = :roleId', { roleId: query.roleId });
+    if (query.isActive !== undefined) qb.andWhere('user.is_active = :isActive', { isActive: query.isActive });
     if (query.search) {
       qb.andWhere(
-        '(user.first_name ILIKE :search OR user.last_name ILIKE :search OR user.email ILIKE :search)',
+        '(user.first_name LIKE :search OR user.last_name LIKE :search OR user.email LIKE :search)',
         { search: `%${query.search}%` },
       );
     }
@@ -60,7 +56,7 @@ export class UsersService {
     const [users, total] = await qb.getManyAndCount();
 
     return {
-      data: users.map((u) => this.toResponseDto(u)),
+      data: users.map((u) => this.toResponseDto(u, tenantId)),
       meta: {
         page,
         perPage,
@@ -70,54 +66,62 @@ export class UsersService {
     };
   }
 
-  async findById(id: string): Promise<UserResponseDto> {
-    const user = await this.userRepo.findOne({
+  async findById(id: string, tenantId: string): Promise<UserResponseDto> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const user = await ds.getRepository(User).findOne({
       where: { id },
       relations: ['role', 'company', 'companies'],
     });
     if (!user) throw new NotFoundException('User not found');
-    return this.toResponseDto(user);
+    return this.toResponseDto(user, tenantId);
   }
 
-  async create(dto: CreateUserDto, actorId: string, ip?: string): Promise<UserResponseDto> {
-    const existing = await this.userRepo.findOne({ where: { email: dto.email } });
+  async getMe(userId: string, tenantId: string): Promise<UserResponseDto> {
+    return this.findById(userId, tenantId);
+  }
+
+  async create(
+    dto: CreateUserDto,
+    tenantId: string,
+    actorId: string,
+    ip?: string,
+  ): Promise<UserResponseDto> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+
+    const existing = await ds.getRepository(User).findOne({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already in use');
 
-    const role = await this.roleRepo.findOne({ where: { id: dto.roleId } });
+    const role = await ds.getRepository(Role).findOne({ where: { id: dto.roleId } });
     if (!role) throw new NotFoundException('Role not found');
-
-    // Inherit tenantId from the actor (the admin creating this user)
-    const actor = await this.userRepo.findOne({ where: { id: actorId } });
-    if (!actor) throw new NotFoundException('Actor not found');
 
     const passwordHash = await this.authService.hashPassword(dto.password);
 
-    const user = this.userRepo.create({
+    const user = ds.getRepository(User).create({
       email: dto.email,
       passwordHash,
       firstName: dto.firstName,
       lastName: dto.lastName,
       roleId: dto.roleId,
-      tenantId: actor.tenantId,
       departmentId: dto.departmentId || null,
       companyId: dto.companyId || null,
       allowedModules: dto.allowedModules ? JSON.stringify(dto.allowedModules) : null,
     });
 
-    const saved = await this.userRepo.save(user);
+    const saved = await ds.getRepository(User).save(user);
 
-    // Assign companies (many-to-many)
     if (dto.companyIds && dto.companyIds.length > 0) {
-      const companies = await this.companyRepo.find({ where: { id: In(dto.companyIds) } });
+      const companies = await ds.getRepository(Company).find({ where: { id: In(dto.companyIds) } });
       saved.companies = companies;
-      // Set active company to first if not specified
-      if (!saved.companyId && companies.length > 0) {
-        saved.companyId = companies[0].id;
-      }
-      await this.userRepo.save(saved);
+      if (!saved.companyId && companies.length > 0) saved.companyId = companies[0].id;
+      await ds.getRepository(User).save(saved);
     }
 
-    const full = await this.userRepo.findOneOrFail({
+    // Register in global login routing table
+    await this.userLoginRepo.save(
+      this.userLoginRepo.create({ email: dto.email, tenantId, isActive: true }),
+    );
+
+    const full = await ds.getRepository(User).findOneOrFail({
       where: { id: saved.id },
       relations: ['role', 'company', 'companies'],
     });
@@ -127,25 +131,22 @@ export class UsersService {
       action: AuditAction.CREATE,
       entityType: 'user',
       entityId: saved.id,
-      newValue: {
-        email: dto.email,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        roleId: dto.roleId,
-      },
+      newValue: { email: dto.email, firstName: dto.firstName, lastName: dto.lastName, roleId: dto.roleId },
       ipAddress: ip,
     });
 
-    return this.toResponseDto(full);
+    return this.toResponseDto(full, tenantId);
   }
 
   async update(
     id: string,
     dto: UpdateUserDto,
+    tenantId: string,
     actorId: string,
     ip?: string,
   ): Promise<UserResponseDto> {
-    const user = await this.userRepo.findOne({
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const user = await ds.getRepository(User).findOne({
       where: { id },
       relations: ['role', 'company', 'companies'],
     });
@@ -154,79 +155,54 @@ export class UsersService {
     const oldValue: Record<string, unknown> = {};
     const newValue: Record<string, unknown> = {};
 
-    if (dto.firstName !== undefined) {
-      oldValue.firstName = user.firstName;
-      newValue.firstName = dto.firstName;
-    }
-    if (dto.lastName !== undefined) {
-      oldValue.lastName = user.lastName;
-      newValue.lastName = dto.lastName;
-    }
+    if (dto.firstName !== undefined) { oldValue.firstName = user.firstName; newValue.firstName = dto.firstName; }
+    if (dto.lastName !== undefined) { oldValue.lastName = user.lastName; newValue.lastName = dto.lastName; }
     if (dto.roleId !== undefined) {
-      const role = await this.roleRepo.findOne({ where: { id: dto.roleId } });
+      const role = await ds.getRepository(Role).findOne({ where: { id: dto.roleId } });
       if (!role) throw new NotFoundException('Role not found');
-      oldValue.roleId = user.roleId;
-      newValue.roleId = dto.roleId;
+      oldValue.roleId = user.roleId; newValue.roleId = dto.roleId;
     }
-    if (dto.departmentId !== undefined) {
-      oldValue.departmentId = user.departmentId;
-      newValue.departmentId = dto.departmentId;
-    }
-    if (dto.companyId !== undefined) {
-      oldValue.companyId = user.companyId;
-      newValue.companyId = dto.companyId;
-    }
+    if (dto.departmentId !== undefined) { oldValue.departmentId = user.departmentId; newValue.departmentId = dto.departmentId; }
+    if (dto.companyId !== undefined) { oldValue.companyId = user.companyId; newValue.companyId = dto.companyId; }
     if (dto.companyIds !== undefined) {
       oldValue.companyIds = (user.companies || []).map((c) => c.id);
       newValue.companyIds = dto.companyIds;
     }
-    if (dto.isActive !== undefined) {
-      oldValue.isActive = user.isActive;
-      newValue.isActive = dto.isActive;
-    }
-    if (dto.mfaEnabled !== undefined) {
-      oldValue.mfaEnabled = user.mfaEnabled;
-      newValue.mfaEnabled = dto.mfaEnabled;
-    }
-    if (dto.allowedModules !== undefined) {
-      oldValue.allowedModules = user.allowedModules;
-      newValue.allowedModules = dto.allowedModules;
-    }
+    if (dto.isActive !== undefined) { oldValue.isActive = user.isActive; newValue.isActive = dto.isActive; }
+    if (dto.mfaEnabled !== undefined) { oldValue.mfaEnabled = user.mfaEnabled; newValue.mfaEnabled = dto.mfaEnabled; }
+    if (dto.allowedModules !== undefined) { oldValue.allowedModules = user.allowedModules; newValue.allowedModules = dto.allowedModules; }
 
     const updatePayload: Record<string, unknown> = { ...dto };
-    delete updatePayload.companyIds; // handled separately
-    delete updatePayload.mfaConfigured; // derived field, not a column
-    if (dto.allowedModules !== undefined) {
-      updatePayload.allowedModules = JSON.stringify(dto.allowedModules);
-    }
-    // When disabling MFA or resetting configuration, clear the secret
-    if (dto.mfaEnabled === false || dto.mfaConfigured === false) {
-      updatePayload.mfaSecret = null;
-    }
-    await this.userRepo.update(id, updatePayload);
+    delete updatePayload.companyIds;
+    delete updatePayload.mfaConfigured;
+    if (dto.allowedModules !== undefined) updatePayload.allowedModules = JSON.stringify(dto.allowedModules);
+    if (dto.mfaEnabled === false || dto.mfaConfigured === false) updatePayload.mfaSecret = null;
 
-    // Update many-to-many company assignments
+    await ds.getRepository(User).update(id, updatePayload);
+
     if (dto.companyIds !== undefined) {
       const companies =
         dto.companyIds.length > 0
-          ? await this.companyRepo.find({ where: { id: In(dto.companyIds) } })
+          ? await ds.getRepository(Company).find({ where: { id: In(dto.companyIds) } })
           : [];
-      const userToSave = await this.userRepo.findOneOrFail({
-        where: { id },
-        relations: ['companies'],
-      });
+      const userToSave = await ds.getRepository(User).findOneOrFail({ where: { id }, relations: ['companies'] });
       userToSave.companies = companies;
-      // If active company is not in the new list, reset to first
       if (companies.length > 0 && !companies.find((c) => c.id === userToSave.companyId)) {
         userToSave.companyId = companies[0].id;
-        await this.userRepo.update(id, { companyId: companies[0].id });
+        await ds.getRepository(User).update(id, { companyId: companies[0].id });
       } else if (companies.length === 0) {
         userToSave.companyId = null;
-        await this.userRepo.update(id, { companyId: null });
+        await ds.getRepository(User).update(id, { companyId: null });
       }
-      await this.userRepo.save(userToSave);
+      await ds.getRepository(User).save(userToSave);
     }
-    const updated = await this.userRepo.findOneOrFail({
+
+    // Sync active status to login routing table
+    if (dto.isActive !== undefined) {
+      await this.userLoginRepo.update({ email: user.email }, { isActive: dto.isActive });
+    }
+
+    const updated = await ds.getRepository(User).findOneOrFail({
       where: { id },
       relations: ['role', 'company', 'companies'],
     });
@@ -241,14 +217,16 @@ export class UsersService {
       ipAddress: ip,
     });
 
-    return this.toResponseDto(updated);
+    return this.toResponseDto(updated, tenantId);
   }
 
-  async softDelete(id: string, actorId: string, ip?: string): Promise<void> {
-    const user = await this.userRepo.findOne({ where: { id } });
+  async softDelete(id: string, tenantId: string, actorId: string, ip?: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const user = await ds.getRepository(User).findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
-    await this.userRepo.softDelete(id);
+    await ds.getRepository(User).softDelete(id);
+    await this.userLoginRepo.update({ email: user.email }, { isActive: false });
 
     await this.auditService.log({
       userId: actorId,
@@ -260,7 +238,7 @@ export class UsersService {
     });
   }
 
-  private toResponseDto(user: User): UserResponseDto {
+  private toResponseDto(user: User, tenantId: string): UserResponseDto {
     return {
       id: user.id,
       email: user.email,
@@ -270,7 +248,7 @@ export class UsersService {
       roleId: user.roleId,
       roleName: user.role?.name || '',
       permissions: user.role?.permissions || [],
-      tenantId: user.tenantId,
+      tenantId,
       departmentId: user.departmentId,
       companyId: user.companyId,
       companyName: user.company?.name ?? null,

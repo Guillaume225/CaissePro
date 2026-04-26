@@ -22,42 +22,55 @@ export class ProductsController {
 
   @Get()
   @Permissions(PRODUCT_PERMISSIONS.READ)
-  findAll(@Query() query: ListProductsQueryDto) {
-    return this.productsService.findAll(query);
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListProductsQueryDto) {
+    return this.productsService.findAll(tenantId, query);
   }
 
   @Get(':id')
   @Permissions(PRODUCT_PERMISSIONS.READ)
-  findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.productsService.findById(id);
+  findById(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.productsService.findById(tenantId, id);
   }
 
   @Post()
   @Permissions(PRODUCT_PERMISSIONS.CREATE)
-  create(@Body() dto: CreateProductDto, @CurrentUser('id') userId: string) {
-    return this.productsService.create(dto, userId);
+  create(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: CreateProductDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.productsService.create(tenantId, dto, userId);
   }
 
   @Patch(':id')
   @Permissions(PRODUCT_PERMISSIONS.UPDATE)
   update(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProductDto,
     @CurrentUser('id') userId: string,
   ) {
-    return this.productsService.update(id, dto, userId);
+    return this.productsService.update(tenantId, id, dto, userId);
   }
 
   @Patch(':id/toggle-active')
   @Permissions(PRODUCT_PERMISSIONS.UPDATE)
-  toggleActive(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
-    return this.productsService.toggleActive(id, userId);
+  toggleActive(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.productsService.toggleActive(tenantId, id, userId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Permissions(PRODUCT_PERMISSIONS.DELETE)
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
-    return this.productsService.remove(id, userId);
+  remove(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.productsService.remove(tenantId, id, userId);
   }
 }

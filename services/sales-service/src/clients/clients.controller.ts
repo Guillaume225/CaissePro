@@ -22,42 +22,51 @@ export class ClientsController {
 
   @Get()
   @Permissions(CLIENT_PERMISSIONS.READ)
-  findAll(@Query() query: ListClientsQueryDto) {
-    return this.clientsService.findAll(query);
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListClientsQueryDto) {
+    return this.clientsService.findAll(tenantId, query);
   }
 
   @Get(':id')
   @Permissions(CLIENT_PERMISSIONS.READ)
-  findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientsService.findById(id);
+  findById(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.clientsService.findById(tenantId, id);
   }
 
   @Get(':id/statement')
   @Permissions(CLIENT_PERMISSIONS.READ)
-  getStatement(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientsService.getStatement(id);
+  getStatement(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.clientsService.getStatement(tenantId, id);
   }
 
   @Post()
   @Permissions(CLIENT_PERMISSIONS.CREATE)
-  create(@Body() dto: CreateClientDto, @CurrentUser('id') userId: string) {
-    return this.clientsService.create(dto, userId);
+  create(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: CreateClientDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.clientsService.create(tenantId, dto, userId);
   }
 
   @Patch(':id')
   @Permissions(CLIENT_PERMISSIONS.UPDATE)
   update(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateClientDto,
     @CurrentUser('id') userId: string,
   ) {
-    return this.clientsService.update(id, dto, userId);
+    return this.clientsService.update(tenantId, id, dto, userId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Permissions(CLIENT_PERMISSIONS.DELETE)
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
-    return this.clientsService.remove(id, userId);
+  remove(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.clientsService.remove(tenantId, id, userId);
   }
 }

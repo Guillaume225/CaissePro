@@ -6,10 +6,9 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { FneApiLog } from '../entities/fne-api-log.entity';
 import { FneSetting } from '../entities/fne-setting.entity';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 export interface FneSignResponse {
   ncc: string;
@@ -44,10 +43,7 @@ export class FneApiService {
 
   constructor(
     private readonly config: ConfigService,
-    @InjectRepository(FneApiLog)
-    private readonly logRepo: Repository<FneApiLog>,
-    @InjectRepository(FneSetting)
-    private readonly settingRepo: Repository<FneSetting>,
+    private readonly tenantDsService: TenantDataSourceService,
   ) {
     this.defaultApiUrl = this.config.get<string>('fne.apiUrl') || 'http://54.247.95.108/ws';
     this.defaultApiKey = this.config.get<string>('fne.apiKey') || '';
@@ -55,9 +51,10 @@ export class FneApiService {
   }
 
   /** Resolve per-company config or fall back to env defaults */
-  private async resolveConfig(companyId?: string): Promise<FneApiConfig> {
+  private async resolveConfig(tenantId: string, companyId?: string): Promise<FneApiConfig> {
     if (companyId) {
-      const setting = await this.settingRepo.findOneBy({ companyId, isActive: true });
+      const ds = await this.tenantDsService.getDataSource(tenantId);
+      const setting = await ds.getRepository(FneSetting).findOneBy({ companyId, isActive: true });
       if (setting) {
         return {
           apiUrl: setting.apiUrl,
@@ -83,27 +80,30 @@ export class FneApiService {
 
   /** Sign (certify) an invoice — POST /external/invoices/sign */
   async signInvoice(
+    tenantId: string,
     body: Record<string, unknown>,
     invoiceId: string,
     userId: string,
     companyId?: string,
   ): Promise<FneSignResponse> {
-    const cfg = await this.resolveConfig(companyId);
+    const cfg = await this.resolveConfig(tenantId, companyId);
     const url = `${cfg.apiUrl}/external/invoices/sign`;
-    return this.callWithRetry<FneSignResponse>('POST', url, body, invoiceId, userId, cfg);
+    return this.callWithRetry<FneSignResponse>(tenantId, 'POST', url, body, invoiceId, userId, cfg);
   }
 
   /** Refund (credit note) — POST /external/invoices/{id}/refund */
   async refundInvoice(
+    tenantId: string,
     fneInvoiceId: string,
     body: { items: Array<{ id: string; quantity: number }> },
     localInvoiceId: string,
     userId: string,
     companyId?: string,
   ): Promise<FneRefundResponse> {
-    const cfg = await this.resolveConfig(companyId);
+    const cfg = await this.resolveConfig(tenantId, companyId);
     const url = `${cfg.apiUrl}/external/invoices/${fneInvoiceId}/refund`;
     return this.callWithRetry<FneRefundResponse>(
+      tenantId,
       'POST',
       url,
       body as unknown as Record<string, unknown>,
@@ -115,6 +115,7 @@ export class FneApiService {
 
   /** Generic HTTP call with retry for 500 errors */
   private async callWithRetry<T>(
+    tenantId: string,
     method: string,
     url: string,
     body: Record<string, unknown>,
@@ -122,10 +123,12 @@ export class FneApiService {
     userId: string,
     cfg: FneApiConfig,
   ): Promise<T> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const logRepo = ds.getRepository(FneApiLog);
     let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= cfg.maxRetries; attempt++) {
-      const log = this.logRepo.create({
+      const log = logRepo.create({
         invoiceId,
         method,
         url,
@@ -151,7 +154,7 @@ export class FneApiService {
 
         log.responseStatus = res.status;
         log.responseBody = resBody;
-        await this.logRepo.save(log);
+        await logRepo.save(log);
 
         if (res.status === 200 || res.status === 201) {
           return resBody as T;
@@ -182,7 +185,7 @@ export class FneApiService {
         }
 
         log.errorMessage = err instanceof Error ? err.message : String(err);
-        await this.logRepo.save(log).catch(() => {});
+        await logRepo.save(log).catch(() => {});
         lastError = err instanceof Error ? err : new Error(String(err));
 
         if (attempt < cfg.maxRetries) {

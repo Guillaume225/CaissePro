@@ -1,6 +1,5 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { In } from 'typeorm';
 import { FneAccountingEntry } from '../entities/fne-accounting-entry.entity';
 import { FneInvoice } from '../entities/fne-invoice.entity';
 import { FneClient } from '../entities/fne-client.entity';
@@ -9,6 +8,7 @@ import { FneSetting } from '../entities/fne-setting.entity';
 import { FneInvoiceStatus, FneInvoiceType } from '../entities/enums';
 import { SageErpService } from '../erp/sage-erp.service';
 import { ErpSettingsService } from '../erp/erp-settings.service';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 /* ── Default OHADA accounts ── */
 const DEFAULT_CLIENT_ACCOUNT = '411000';
@@ -34,16 +34,7 @@ export class FneAccountingService {
   private readonly logger = new Logger(FneAccountingService.name);
 
   constructor(
-    @InjectRepository(FneAccountingEntry)
-    private readonly entryRepo: Repository<FneAccountingEntry>,
-    @InjectRepository(FneInvoice)
-    private readonly invoiceRepo: Repository<FneInvoice>,
-    @InjectRepository(FneClient)
-    private readonly clientRepo: Repository<FneClient>,
-    @InjectRepository(FneProduct)
-    private readonly productRepo: Repository<FneProduct>,
-    @InjectRepository(FneSetting)
-    private readonly settingRepo: Repository<FneSetting>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly sageErpService: SageErpService,
     private readonly erpSettingsService: ErpSettingsService,
   ) {}
@@ -58,6 +49,7 @@ export class FneAccountingService {
    * For credit notes, debits/credits are reversed.
    */
   async generate(
+    tenantId: string,
     dto: GenerateEntriesDto,
     userId: string,
   ): Promise<{ generated: number; skipped: number; errors: string[] }> {
@@ -68,19 +60,26 @@ export class FneAccountingService {
       throw new BadRequestException('Maximum 500 factures à la fois');
     }
 
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const entryRepo = ds.getRepository(FneAccountingEntry);
+    const invoiceRepo = ds.getRepository(FneInvoice);
+    const clientRepo = ds.getRepository(FneClient);
+    const productRepo = ds.getRepository(FneProduct);
+    const settingRepo = ds.getRepository(FneSetting);
+
     // Load journal codes from settings (first active setting found)
-    const setting = await this.settingRepo.findOne({ where: { isActive: true } });
+    const setting = await settingRepo.findOne({ where: { isActive: true } });
     const journalSales = setting?.journalSales ?? DEFAULT_JOURNAL_SALES;
     const journalCash = setting?.journalCash ?? DEFAULT_JOURNAL_CASH;
 
-    const invoices = await this.invoiceRepo.find({
+    const invoices = await invoiceRepo.find({
       where: { id: In(dto.invoiceIds) },
       relations: ['items'],
     });
 
     // Pre-fetch all clients and products for account codes
-    const allClients = await this.clientRepo.find({ where: { isActive: true } });
-    const allProducts = await this.productRepo.find({ where: { isActive: true } });
+    const allClients = await clientRepo.find({ where: { isActive: true } });
+    const allProducts = await productRepo.find({ where: { isActive: true } });
     const clientByPhone = new Map(allClients.map((c) => [c.phone, c]));
     const clientByName = new Map(allClients.map((c) => [c.companyName, c]));
     const productByRef = new Map(
@@ -91,7 +90,7 @@ export class FneAccountingService {
     // Check which invoices already have entries
     const existingInvoiceIds = new Set(
       (
-        await this.entryRepo
+        await entryRepo
           .createQueryBuilder('e')
           .select('DISTINCT e.invoiceId', 'invoiceId')
           .where('e.invoiceId IN (:...ids)', { ids: dto.invoiceIds })
@@ -231,20 +230,20 @@ export class FneAccountingService {
         });
       }
 
-      await this.entryRepo.save(entries.map((e) => this.entryRepo.create(e)));
+      await entryRepo.save(entries.map((e) => entryRepo.create(e)));
       generated++;
     }
 
     // Auto-post to ERP if configured
     if (generated > 0) {
       try {
-        const erpSetting = await this.erpSettingsService.findActive();
+        const erpSetting = await this.erpSettingsService.findActive(tenantId);
         if (erpSetting?.autoPostOnCertify || erpSetting?.autoPostOnClosing) {
           const successIds = invoices
             .filter((inv) => !existingInvoiceIds.has(inv.id))
             .map((inv) => inv.id);
           if (successIds.length) {
-            const erpResult = await this.sageErpService.postEntries(successIds);
+            const erpResult = await this.sageErpService.postEntries(tenantId, successIds);
             this.logger.log(
               `Auto-post ERP: ${erpResult.entriesPosted} entries posted (${erpResult.message})`,
             );
@@ -260,27 +259,34 @@ export class FneAccountingService {
   }
 
   /** Delete all entries for an invoice (reversal) */
-  async deleteByInvoice(invoiceId: string): Promise<void> {
-    const exists = await this.entryRepo.findOneBy({ invoiceId });
+  async deleteByInvoice(tenantId: string, invoiceId: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const entryRepo = ds.getRepository(FneAccountingEntry);
+    const exists = await entryRepo.findOneBy({ invoiceId });
     if (!exists) throw new NotFoundException('Aucune écriture pour cette facture');
-    await this.entryRepo.delete({ invoiceId });
+    await entryRepo.delete({ invoiceId });
   }
 
   /** Delete all accounting entries */
-  async deleteAll(): Promise<{ deleted: number }> {
-    const count = await this.entryRepo.count();
+  async deleteAll(tenantId: string): Promise<{ deleted: number }> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const entryRepo = ds.getRepository(FneAccountingEntry);
+    const count = await entryRepo.count();
     if (count === 0) throw new NotFoundException('Aucune écriture à supprimer');
-    await this.entryRepo.clear();
+    await entryRepo.clear();
     return { deleted: count };
   }
 
   /** List entries with pagination + filters */
-  async findAll(query: ListFneAccountingQuery) {
+  async findAll(tenantId: string, query: ListFneAccountingQuery) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const entryRepo = ds.getRepository(FneAccountingEntry);
+
     const page = Math.max(Number(query.page) || 1, 1);
     const perPage = Math.min(Math.max(Number(query.perPage) || 50, 1), 200);
     const skip = (page - 1) * perPage;
 
-    const qb = this.entryRepo.createQueryBuilder('e');
+    const qb = entryRepo.createQueryBuilder('e');
 
     if (query.dateFrom) {
       qb.andWhere('e.entryDate >= :from', { from: query.dateFrom });
@@ -303,9 +309,10 @@ export class FneAccountingService {
   }
 
   /** Get invoice IDs that already have entries */
-  async getProcessedInvoiceIds(invoiceIds: string[]): Promise<string[]> {
+  async getProcessedInvoiceIds(tenantId: string, invoiceIds: string[]): Promise<string[]> {
     if (!invoiceIds.length) return [];
-    const rows = await this.entryRepo
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const rows = await ds.getRepository(FneAccountingEntry)
       .createQueryBuilder('e')
       .select('DISTINCT e.invoiceId', 'invoiceId')
       .where('e.invoiceId IN (:...ids)', { ids: invoiceIds })

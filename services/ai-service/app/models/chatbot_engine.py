@@ -585,7 +585,7 @@ class ChatbotEngine:
         """Build the system prompt with RBAC context."""
         modules_str = ", ".join(allowed_modules)
         return (
-            "Tu es l'assistant IA de CaisseFlow Pro, un logiciel de gestion de caisse "
+            "Tu es l'assistant IA de Caisse Pro, un logiciel de gestion de caisse "
             "pour les commerces en Afrique de l'Ouest (FCFA). "
             f"L'utilisateur a le rôle '{user_role}' et accès aux modules : {modules_str}. "
             "Réponds de manière concise et professionnelle en français. "

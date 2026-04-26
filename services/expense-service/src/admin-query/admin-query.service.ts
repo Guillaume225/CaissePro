@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, In } from 'typeorm';
+import { Like, In } from 'typeorm';
 import { Expense } from '../entities/expense.entity';
 import { CashDay } from '../entities/cash-day.entity';
 import { Advance } from '../entities/advance.entity';
@@ -13,6 +12,8 @@ import {
   AdvanceStatus,
   DisbursementRequestStatus,
 } from '../entities/enums';
+import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
+import { DataSource } from 'typeorm'; // used for getRepo parameter type
 
 export type EntityType = 'expense' | 'cashDay' | 'advance' | 'disbursementRequest';
 
@@ -26,34 +27,28 @@ const ALLOWED_STATUSES: Record<EntityType, string[]> = {
 @Injectable()
 export class AdminQueryService {
   constructor(
-    @InjectRepository(Expense)
-    private readonly expenseRepo: Repository<Expense>,
-    @InjectRepository(CashDay)
-    private readonly cashDayRepo: Repository<CashDay>,
-    @InjectRepository(Advance)
-    private readonly advanceRepo: Repository<Advance>,
-    @InjectRepository(DisbursementRequest)
-    private readonly disbursementRepo: Repository<DisbursementRequest>,
+    private readonly tenantDsService: TenantDataSourceService,
     private readonly auditService: AuditService,
   ) {}
 
-  private getRepo(entity: EntityType): Repository<Record<string, any>> {
+  private getRepo(ds: DataSource, entity: EntityType) {
     switch (entity) {
       case 'expense':
-        return this.expenseRepo;
+        return ds.getRepository(Expense);
       case 'cashDay':
-        return this.cashDayRepo;
+        return ds.getRepository(CashDay);
       case 'advance':
-        return this.advanceRepo;
+        return ds.getRepository(Advance);
       case 'disbursementRequest':
-        return this.disbursementRepo;
+        return ds.getRepository(DisbursementRequest);
       default:
         throw new BadRequestException(`Unknown entity type: ${entity}`);
     }
   }
 
-  async search(entity: EntityType, search?: string, status?: string, page = 1, perPage = 50) {
-    const repo = this.getRepo(entity);
+  async search(tenantId: string, entity: EntityType, search?: string, status?: string, page = 1, perPage = 50) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = this.getRepo(ds, entity);
     const where: Record<string, unknown> = {};
 
     if (status) {
@@ -81,6 +76,7 @@ export class AdminQueryService {
   }
 
   async updateStatus(
+    tenantId: string,
     entity: EntityType,
     ids: string[],
     newStatus: string,
@@ -94,7 +90,8 @@ export class AdminQueryService {
       );
     }
 
-    const repo = this.getRepo(entity);
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = this.getRepo(ds, entity);
     const records = await repo.find({ where: { id: In(ids) } });
 
     if (records.length === 0) {
@@ -107,7 +104,7 @@ export class AdminQueryService {
       const rec = record as Record<string, any>;
       const oldStatus = rec.status;
       rec.status = newStatus;
-      await repo.save(rec);
+      await (repo as any).save(rec);
 
       results.push({
         id: rec.id,

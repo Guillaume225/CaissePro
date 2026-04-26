@@ -25,6 +25,9 @@ export const appConfig = registerAs('app', () => ({
   corsOrigin: process.env.CORS_ORIGIN || '*',
   throttleTtl: parseInt(process.env.THROTTLE_TTL || '60', 10),
   throttleLimit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
+  marketplaceUrl: process.env.MARKETPLACE_URL || 'http://marketplace-api',
+  authServiceUrl: process.env.AUTH_SERVICE_URL || 'http://auth-service:3001',
+  internalSecret: process.env.INTERNAL_SECRET || '',
 }));
 
 export const rabbitmqConfig = registerAs('rabbitmq', () => ({

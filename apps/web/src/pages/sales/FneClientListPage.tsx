@@ -34,6 +34,7 @@ export default function FneClientListPage() {
     companyName: '',
     phone: '',
     email: '',
+    clientCode: '',
     ncc: '',
     sellerName: '',
     accountCode: '',
@@ -41,7 +42,7 @@ export default function FneClientListPage() {
 
   const openNew = () => {
     setEditingClient(null);
-    setForm({ companyName: '', phone: '', email: '', ncc: '', sellerName: '', accountCode: '' });
+    setForm({ companyName: '', phone: '', email: '', clientCode: '', ncc: '', sellerName: '', accountCode: '' });
     setShowModal(true);
   };
 
@@ -51,6 +52,7 @@ export default function FneClientListPage() {
       companyName: c.companyName,
       phone: c.phone,
       email: c.email,
+      clientCode: c.clientCode ?? '',
       ncc: c.ncc ?? '',
       sellerName: c.sellerName ?? '',
       accountCode: c.accountCode ?? '',
@@ -61,6 +63,7 @@ export default function FneClientListPage() {
   const handleSave = async () => {
     const payload = {
       ...form,
+      clientCode: form.clientCode || undefined,
       ncc: form.ncc || undefined,
       sellerName: form.sellerName || undefined,
       accountCode: form.accountCode || undefined,
@@ -129,6 +132,7 @@ export default function FneClientListPage() {
           <thead>
             <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
               <th className="px-4 py-3">Nom / Raison sociale</th>
+              <th className="px-4 py-3">Code client</th>
               <th className="px-4 py-3">Téléphone</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">NCC</th>
@@ -140,13 +144,13 @@ export default function FneClientListPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center">
+                <td colSpan={8} className="px-4 py-12 text-center">
                   <Loader2 className="mx-auto h-6 w-6 animate-spin text-brand-gold" />
                 </td>
               </tr>
             ) : clients.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   <Users className="mx-auto mb-2 h-8 w-8 text-gray-300" />
                   {t('fne.noClients', 'Aucun client enregistré')}
                 </td>
@@ -155,6 +159,7 @@ export default function FneClientListPage() {
               clients.map((c) => (
                 <tr key={c.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{c.companyName}</td>
+                  <td className="px-4 py-3 text-gray-500">{c.clientCode || '—'}</td>
                   <td className="px-4 py-3 text-gray-700">{c.phone}</td>
                   <td className="px-4 py-3 text-gray-700">{c.email}</td>
                   <td className="px-4 py-3 text-gray-500">{c.ncc || '—'}</td>
@@ -227,15 +232,26 @@ export default function FneClientListPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">
-                  Nom / Raison sociale *
-                </label>
-                <input
-                  value={form.companyName}
-                  onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
-                  className={INPUT}
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Nom / Raison sociale *
+                  </label>
+                  <input
+                    value={form.companyName}
+                    onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+                    className={INPUT}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-gray-700">Code client</label>
+                  <input
+                    placeholder="ex: CLI001"
+                    value={form.clientCode ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, clientCode: e.target.value }))}
+                    className={INPUT}
+                  />
+                </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">

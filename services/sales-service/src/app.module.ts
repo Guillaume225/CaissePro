@@ -16,12 +16,16 @@ import {
   fneConfig,
 } from './config';
 
+import { TenantDataSourceModule } from './tenant/tenant-datasource.module';
 import { RedisModule } from './redis/redis.module';
 import { AuditModule } from './audit/audit.module';
 import { EventsModule } from './events/events.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard, PermissionsGuard } from './common/guards';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { FeatureGuard } from './subscription/guards/feature.guard';
+import { LimitGuard } from './subscription/guards/limit.guard';
 import { ClientsModule } from './clients/clients.module';
 import { ProductsModule } from './products/products.module';
 import { SalesModule } from './sales/sales.module';
@@ -32,26 +36,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { FneModule } from './fne/fne.module';
 import { ErpModule } from './erp/erp.module';
 
-// Entities
-import { Client } from './entities/client.entity';
-import { Product } from './entities/product.entity';
-import { Sale } from './entities/sale.entity';
-import { SaleItem } from './entities/sale-item.entity';
-import { Payment } from './entities/payment.entity';
-import { Receivable } from './entities/receivable.entity';
-import { CashDay } from './entities/cash-day.entity';
-import { CashMovement } from './entities/cash-movement.entity';
+// Master (dbo) entities only
 import { AuditLog } from './audit/audit-log.entity';
-import { FneInvoice } from './entities/fne-invoice.entity';
-import { FneInvoiceItem } from './entities/fne-invoice-item.entity';
-import { FneApiLog } from './entities/fne-api-log.entity';
-import { FneClient } from './entities/fne-client.entity';
-import { FneProduct } from './entities/fne-product.entity';
-import { FnePointOfSale } from './entities/fne-point-of-sale.entity';
-import { FneEstablishment } from './entities/fne-establishment.entity';
-import { FneSetting } from './entities/fne-setting.entity';
-import { FneAccountingEntry } from './entities/fne-accounting-entry.entity';
-import { ErpSetting } from './entities/erp-setting.entity';
 
 @Module({
   imports: [
@@ -77,27 +63,7 @@ import { ErpSetting } from './entities/erp-setting.entity';
         username: cfg.get<string>('database.username'),
         password: cfg.get<string>('database.password'),
         database: cfg.get<string>('database.database'),
-        entities: [
-          Client,
-          Product,
-          Sale,
-          SaleItem,
-          Payment,
-          Receivable,
-          CashDay,
-          CashMovement,
-          AuditLog,
-          FneInvoice,
-          FneInvoiceItem,
-          FneApiLog,
-          FneClient,
-          FneProduct,
-          FnePointOfSale,
-          FneEstablishment,
-          FneSetting,
-          FneAccountingEntry,
-          ErpSetting,
-        ],
+        entities: [AuditLog],
         synchronize: false,
         logging: cfg.get<string>('app.nodeEnv') === 'development',
         options: { encrypt: false, trustServerCertificate: true },
@@ -117,10 +83,12 @@ import { ErpSetting } from './entities/erp-setting.entity';
       inject: [ConfigService],
     }),
     ScheduleModule.forRoot(),
+    TenantDataSourceModule,
     RedisModule,
     EventsModule,
     AuditModule,
     AuthModule,
+    SubscriptionModule,
     ClientsModule,
     ProductsModule,
     SalesModule,
@@ -135,6 +103,8 @@ import { ErpSetting } from './entities/erp-setting.entity';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
+    { provide: APP_GUARD, useClass: FeatureGuard },
+    { provide: APP_GUARD, useClass: LimitGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

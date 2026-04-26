@@ -22,19 +22,23 @@ export class PaymentsController {
 
   @Get()
   @Permissions(PAYMENT_PERMISSIONS.READ)
-  findAll(@Query() query: ListPaymentsQueryDto) {
-    return this.paymentsService.findAll(query);
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListPaymentsQueryDto) {
+    return this.paymentsService.findAll(tenantId, query);
   }
 
   @Get(':id')
   @Permissions(PAYMENT_PERMISSIONS.READ)
-  findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.paymentsService.findById(id);
+  findById(@CurrentUser('tenantId') tenantId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.paymentsService.findById(tenantId, id);
   }
 
   @Post()
   @Permissions(PAYMENT_PERMISSIONS.CREATE)
-  create(@Body() dto: CreatePaymentDto, @CurrentUser('id') userId: string) {
-    return this.paymentsService.create(dto, userId);
+  create(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: CreatePaymentDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.paymentsService.create(tenantId, dto, userId);
   }
 }

@@ -62,8 +62,11 @@ export class AuthController {
 
   @Post('mfa/setup')
   @HttpCode(HttpStatus.OK)
-  async setupMfa(@CurrentUser('id') userId: string) {
-    const result = await this.authService.setupMfa(userId);
+  async setupMfa(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    const result = await this.authService.setupMfa(userId, tenantId);
     return {
       success: true,
       data: result,

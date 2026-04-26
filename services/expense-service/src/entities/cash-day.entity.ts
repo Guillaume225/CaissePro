@@ -19,9 +19,6 @@ export class CashDay {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
-
   @Column({ type: 'varchar', length: 10, name: 'cash_type' })
   cashType!: CashType;
 
@@ -72,6 +69,12 @@ export class CashDay {
 
   @Column({ type: 'uuid', name: 'accounting_processed_by', nullable: true })
   accountingProcessedBy!: string | null;
+
+  @Column({ type: 'bit', name: 'sage_posted', default: false })
+  sagePosted!: boolean;
+
+  @Column({ type: 'datetimeoffset', name: 'sage_posted_at', nullable: true })
+  sagePostedAt!: Date | null;
 
   @OneToMany(() => CashMovement, (m) => m.cashDay)
   movements!: CashMovement[];

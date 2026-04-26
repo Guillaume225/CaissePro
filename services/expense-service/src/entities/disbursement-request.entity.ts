@@ -9,15 +9,11 @@ import {
 import { DisbursementRequestStatus } from './enums';
 
 @Entity('disbursement_requests')
-@Index(['tenantId'])
 @Index(['status'])
 @Index(['createdAt'])
 export class DisbursementRequest {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
-
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
 
   @Column({ type: 'varchar', length: 20 })
   reference!: string;

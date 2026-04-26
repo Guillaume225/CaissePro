@@ -48,9 +48,6 @@ export class ExpenseCategory {
   @Column({ type: 'varchar', length: 20, name: 'accounting_credit_account', nullable: true })
   accountingCreditAccount!: string | null;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
-  tenantId!: string;
-
   @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 

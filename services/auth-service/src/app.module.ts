@@ -15,9 +15,15 @@ import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
-import { User } from './entities/user.entity';
-import { Role } from './entities/role.entity';
-import { Company } from './entities/company.entity';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { FeatureGuard } from './subscription/guards/feature.guard';
+import { LimitGuard } from './subscription/guards/limit.guard';
+import { PlansModule } from './plans/plans.module';
+import { TenantModule } from './tenant/tenant.module';
+import { TenantDataSourceModule } from './tenant/tenant-datasource.module';
+import { ProvisioningModule } from './provisioning/provisioning.module';
+import { Tenant } from './tenant/tenant.entity';
+import { UserLogin } from './entities/user-login.entity';
 import { AuditLog } from './audit/audit-log.entity';
 
 @Module({
@@ -35,7 +41,7 @@ import { AuditLog } from './audit/audit-log.entity';
         username: config.get<string>('database.username'),
         password: config.get<string>('database.password'),
         database: config.get<string>('database.database'),
-        entities: [User, Role, Company, AuditLog],
+        entities: [Tenant, UserLogin, AuditLog],
         synchronize: false,
         logging: config.get<string>('app.nodeEnv') !== 'production',
         options: { encrypt: false, trustServerCertificate: true },
@@ -54,7 +60,12 @@ import { AuditLog } from './audit/audit-log.entity';
     }),
     RedisModule,
     AuditModule,
+    TenantDataSourceModule,
     AuthModule,
+    PlansModule,
+    TenantModule,
+    SubscriptionModule,
+    ProvisioningModule,
     UsersModule,
     RolesModule,
     CompaniesModule,
@@ -65,6 +76,8 @@ import { AuditLog } from './audit/audit-log.entity';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
+    { provide: APP_GUARD, useClass: FeatureGuard },
+    { provide: APP_GUARD, useClass: LimitGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
