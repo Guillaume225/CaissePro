@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { NotificationType, NotificationChannel } from '@/common/enums';
 
-@Entity('notifications')
+@Entity('notification_events')
 @Index(['recipientId', 'read', 'createdAt'])
 @Index(['recipientId', 'type'])
 @Index(['createdAt'])

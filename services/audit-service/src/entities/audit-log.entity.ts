@@ -4,7 +4,7 @@ import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn } from 
  * Centralized audit log entity — append-only (no UPDATE/DELETE).
  * Each entry is HMAC-SHA256 signed for tamper detection.
  */
-@Entity('audit_logs')
+@Entity('audit_events')
 @Index(['entityType', 'entityId'])
 @Index(['userId', 'timestamp'])
 @Index(['sourceService', 'timestamp'])
