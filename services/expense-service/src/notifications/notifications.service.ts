@@ -9,10 +9,16 @@ export class NotificationsService {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
+  /**
+   * Reads dbo.notification_events — the table actually populated by
+   * notification-service's RabbitMQ consumer. dbo.notifications (the table
+   * this used to query) has no producer anywhere in the codebase; it has
+   * always returned an empty list regardless of what the backend published.
+   */
   async findAll(userId: string, query?: { type?: string; isRead?: string }) {
-    let sql = `SELECT id, type, title, body AS message, entity_type AS entityType,
-               entity_id AS entityId, is_read AS isRead, created_at AS createdAt
-               FROM notifications WHERE user_id = @0`;
+    let sql = `SELECT id, type, title, message, entity_type AS entityType,
+               entity_id AS entityId, [read] AS isRead, created_at AS createdAt
+               FROM notification_events WHERE recipient_id = @0`;
     const params: unknown[] = [userId];
     let idx = 1;
 
@@ -22,7 +28,7 @@ export class NotificationsService {
       idx++;
     }
     if (query?.isRead !== undefined) {
-      sql += ` AND is_read = @${idx}`;
+      sql += ` AND [read] = @${idx}`;
       params.push(query.isRead === 'true' ? 1 : 0);
       idx++;
     }
@@ -35,24 +41,25 @@ export class NotificationsService {
 
   async unreadCount(userId: string) {
     const [row] = await this.ds.query(
-      'SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = @0 AND is_read = 0',
+      'SELECT COUNT(*) AS cnt FROM notification_events WHERE recipient_id = @0 AND [read] = 0',
       [userId],
     );
     return this.wrap(Number(row?.cnt ?? 0));
   }
 
   async markAsRead(id: string, userId: string) {
-    await this.ds.query('UPDATE notifications SET is_read = 1 WHERE id = @0 AND user_id = @1', [
-      id,
-      userId,
-    ]);
+    await this.ds.query(
+      'UPDATE notification_events SET [read] = 1, read_at = SYSDATETIMEOFFSET() WHERE id = @0 AND recipient_id = @1',
+      [id, userId],
+    );
     return this.wrap(null);
   }
 
   async markAllAsRead(userId: string) {
-    await this.ds.query('UPDATE notifications SET is_read = 1 WHERE user_id = @0 AND is_read = 0', [
-      userId,
-    ]);
+    await this.ds.query(
+      'UPDATE notification_events SET [read] = 1, read_at = SYSDATETIMEOFFSET() WHERE recipient_id = @0 AND [read] = 0',
+      [userId],
+    );
     return this.wrap(null);
   }
 
