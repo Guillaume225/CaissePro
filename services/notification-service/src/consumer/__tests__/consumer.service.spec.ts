@@ -174,6 +174,32 @@ describe('ConsumerService', () => {
       expect(notificationsService.create).toHaveBeenCalled();
     });
 
+    it('should unwrap the {event, data, timestamp} envelope real publishers send', async () => {
+      const ack = jest.fn();
+      (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = {
+        ack,
+        nack: jest.fn(),
+      };
+
+      const msg = {
+        fields: { routingKey: 'expense.submitted', exchange: 'expense.events' },
+        content: Buffer.from(
+          JSON.stringify({
+            event: 'expense.submitted',
+            data: { id: 'exp-1', reference: 'DEP-001', approverIds: ['user-1'] },
+            timestamp: '2026-01-01T00:00:00.000Z',
+          }),
+        ),
+      } as unknown as import('amqplib').ConsumeMessage;
+
+      await service.handleMessage(msg);
+
+      expect(ack).toHaveBeenCalledWith(msg);
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientId: 'user-1' }),
+      );
+    });
+
     it('should ack unknown routing keys without creating notifications', async () => {
       const ack = jest.fn();
       (service as unknown as { channel: { ack: jest.Mock; nack: jest.Mock } }).channel = {

@@ -90,7 +90,13 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
 
     try {
       const routingKey = msg.fields.routingKey;
-      const payload = JSON.parse(msg.content.toString()) as Record<string, unknown>;
+      // Publishers (EventsService.publish, every service) wrap the actual
+      // event data as { event, data, timestamp } — unwrap it here, otherwise
+      // every routing rule's getRecipients/getEntityId/template lookups run
+      // against the envelope instead of the real fields and silently find
+      // nothing.
+      const envelope = JSON.parse(msg.content.toString()) as { data?: Record<string, unknown> };
+      const payload = envelope.data ?? (envelope as Record<string, unknown>);
 
       const rule = ROUTING_RULES[routingKey];
       if (!rule) {
