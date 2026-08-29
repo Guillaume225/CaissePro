@@ -2,13 +2,18 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, ShoppingCart } from 'lucide-react';
-import { useMyPurchaseRequests } from '@/hooks/usePurchaseRequests';
+import { useMyPurchaseRequests, useAllPurchaseRequests } from '@/hooks/usePurchaseRequests';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatCFA, formatDate } from '@/lib/format';
 import { ALL_STATUSES, PRIORITY_BADGE_CLASSES, STATUS_BADGE_CLASSES } from './constants';
 import type { PurchaseRequestStatus } from '@/types/demande-achat';
 
-export default function PurchaseRequestListPage() {
+interface PurchaseRequestListPageProps {
+  /** 'mine' (default) = only requests the current user created; 'all' = every request (requires da.view_all). */
+  mode?: 'mine' | 'all';
+}
+
+export default function PurchaseRequestListPage({ mode = 'mine' }: PurchaseRequestListPageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { hasPermission } = useAuthStore();
@@ -16,10 +21,10 @@ export default function PurchaseRequestListPage() {
   const [statusFilter, setStatusFilter] = useState<PurchaseRequestStatus | ''>('');
   const [search, setSearch] = useState('');
 
-  const { data, isLoading } = useMyPurchaseRequests({
-    status: statusFilter || undefined,
-    perPage: 100,
-  });
+  const filters = { status: statusFilter || undefined, perPage: 100 };
+  const mineQuery = useMyPurchaseRequests(filters, mode === 'mine');
+  const allQuery = useAllPurchaseRequests(filters, mode === 'all');
+  const { data, isLoading } = mode === 'all' ? allQuery : mineQuery;
 
   const requests = useMemo(() => {
     const list = data?.data ?? [];
@@ -34,8 +39,12 @@ export default function PurchaseRequestListPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0a2540]">{t('demandeAchat.list.title')}</h1>
-          <p className="text-sm text-[#697386]">{t('demandeAchat.list.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[#0a2540]">
+            {t(mode === 'all' ? 'demandeAchat.list.allTitle' : 'demandeAchat.list.title')}
+          </h1>
+          <p className="text-sm text-[#697386]">
+            {t(mode === 'all' ? 'demandeAchat.list.allSubtitle' : 'demandeAchat.list.subtitle')}
+          </p>
         </div>
         {hasPermission('da.create') && (
           <button className="btn-primary" onClick={() => navigate('/demande-achat/new')}>
@@ -85,6 +94,9 @@ export default function PurchaseRequestListPage() {
                   <tr className="text-left text-xs font-medium text-[#697386]">
                     <th className="px-3 py-2">{t('demandeAchat.fields.number')}</th>
                     <th className="px-3 py-2">{t('demandeAchat.fields.subject')}</th>
+                    {mode === 'all' && (
+                      <th className="px-3 py-2">{t('demandeAchat.fields.requester')}</th>
+                    )}
                     <th className="px-3 py-2">{t('common.amount')}</th>
                     <th className="px-3 py-2">{t('demandeAchat.fields.desiredDate')}</th>
                     <th className="px-3 py-2">{t('demandeAchat.fields.priority')}</th>
@@ -94,7 +106,10 @@ export default function PurchaseRequestListPage() {
                 <tbody>
                   {requests.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-3 py-10 text-center text-sm text-[#aab7c4]">
+                      <td
+                        colSpan={mode === 'all' ? 7 : 6}
+                        className="px-3 py-10 text-center text-sm text-[#aab7c4]"
+                      >
                         <ShoppingCart className="mx-auto mb-2 h-8 w-8 text-[#e0e6eb]" />
                         {t('demandeAchat.list.empty')}
                       </td>
@@ -110,6 +125,9 @@ export default function PurchaseRequestListPage() {
                     >
                       <td className="px-3 py-2 font-mono font-medium text-brand-gold">{r.number}</td>
                       <td className="px-3 py-2 text-[#0a2540]">{r.subject}</td>
+                      {mode === 'all' && (
+                        <td className="px-3 py-2 text-[#697386]">{r.requesterName ?? '—'}</td>
+                      )}
                       <td className="px-3 py-2 font-semibold text-[#0a2540]">
                         {formatCFA(r.totalEstimatedAmount)}
                       </td>

@@ -395,6 +395,14 @@ const router = createBrowserRouter(
               ),
             },
             {
+              path: 'all',
+              element: (
+                <SuspenseWrapper>
+                  <PurchaseRequestListPage mode="all" />
+                </SuspenseWrapper>
+              ),
+            },
+            {
               path: 'dashboard',
               element: (
                 <SuspenseWrapper>

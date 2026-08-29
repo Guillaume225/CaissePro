@@ -16,12 +16,14 @@ const PR_KEYS = {
   all: ['purchase-requests'] as const,
   mineLists: () => [...PR_KEYS.all, 'mine'] as const,
   mine: (filters?: PurchaseRequestFilters) => [...PR_KEYS.mineLists(), filters] as const,
+  allLists: () => [...PR_KEYS.all, 'all'] as const,
+  allList: (filters?: PurchaseRequestFilters) => [...PR_KEYS.allLists(), filters] as const,
   details: () => [...PR_KEYS.all, 'detail'] as const,
   detail: (id: string) => [...PR_KEYS.details(), id] as const,
 };
 
 // ── List: my requests ────────────────────────────────────
-export function useMyPurchaseRequests(filters: PurchaseRequestFilters = {}) {
+export function useMyPurchaseRequests(filters: PurchaseRequestFilters = {}, enabled = true) {
   return useQuery({
     queryKey: PR_KEYS.mine(filters),
     queryFn: async (): Promise<PaginatedPurchaseRequests> => {
@@ -35,6 +37,26 @@ export function useMyPurchaseRequests(filters: PurchaseRequestFilters = {}) {
       const { data } = await api.get('/demandes-achat/mine', { params });
       return data;
     },
+    enabled,
+  });
+}
+
+// ── List: all requests (requires da.view_all) ────────────
+export function useAllPurchaseRequests(filters: PurchaseRequestFilters = {}, enabled = true) {
+  return useQuery({
+    queryKey: PR_KEYS.allList(filters),
+    queryFn: async (): Promise<PaginatedPurchaseRequests> => {
+      const params: Record<string, string | number> = {};
+      if (filters.status) {
+        params.status = Array.isArray(filters.status) ? filters.status.join(',') : filters.status;
+      }
+      if (filters.page) params.page = filters.page;
+      if (filters.perPage) params.perPage = filters.perPage;
+      if (filters.search) params.search = filters.search;
+      const { data } = await api.get('/demandes-achat', { params });
+      return data;
+    },
+    enabled,
   });
 }
 

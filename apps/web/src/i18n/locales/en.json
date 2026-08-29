@@ -137,6 +137,7 @@
       "list": "My requests",
       "toValidate": "To validate",
       "purchasing": "Purchasing",
+      "all": "All requests",
       "dashboard": "Dashboard",
       "circuits": "Approval circuits"
     }
@@ -145,6 +146,8 @@
     "list": {
       "title": "My purchase requests",
       "subtitle": "Track your purchase requests (e-DA)",
+      "allTitle": "All purchase requests",
+      "allSubtitle": "Overview of every purchase request (e-DA)",
       "newRequest": "New request",
       "allStatuses": "All statuses",
       "searchPlaceholder": "Search by number, subject...",

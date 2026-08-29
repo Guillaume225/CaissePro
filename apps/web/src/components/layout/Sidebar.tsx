@@ -36,6 +36,7 @@ import {
   ShoppingCart,
   ClipboardCheck,
   PackageSearch,
+  ListChecks,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -297,6 +298,12 @@ const modules: ModuleDef[] = [
             labelKey: 'modules.demande-achat.purchasing',
             icon: PackageSearch,
             permission: 'da.takeover',
+          },
+          {
+            to: '/demande-achat/all',
+            labelKey: 'modules.demande-achat.all',
+            icon: ListChecks,
+            permission: 'da.view_all',
           },
         ],
       },
