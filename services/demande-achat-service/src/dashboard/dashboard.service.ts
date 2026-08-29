@@ -26,12 +26,11 @@ export class DashboardService {
     `);
 
     return this.wrap({
-      byStatus: byStatusRows.reduce<Record<string, number>>((acc, r) => {
+      counts: byStatusRows.reduce<Record<string, number>>((acc, r) => {
         acc[r.status] = Number(r.count);
         return acc;
       }, {}),
-      totalCount: Number(totalRow?.totalCount ?? 0),
-      totalEstimatedAmount: Number(totalRow?.totalAmount ?? 0),
+      totalAmount: Number(totalRow?.totalAmount ?? 0),
     });
   }
 }
