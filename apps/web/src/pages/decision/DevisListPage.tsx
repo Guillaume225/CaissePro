@@ -1,19 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Send, X, MessageSquare } from 'lucide-react';
-import { Badge, Card } from '@/components/ui';
 import { useFneInvoices, useUpdateDecisionComment } from '@/hooks/useFneInvoices';
 import { formatCFA, formatDate } from '@/lib/format';
 import type { FneInvoice, FneInvoiceStatus } from '@/types/fne';
 
-const STATUS_CONFIG: Record<
-  FneInvoiceStatus,
-  { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }
-> = {
-  DRAFT: { label: 'Brouillon', variant: 'outline' },
-  CERTIFIED: { label: 'Certifiée', variant: 'success' },
-  CREDIT_NOTE: { label: 'Avoir', variant: 'info' },
-  ERROR: { label: 'Erreur', variant: 'destructive' },
+const STATUS_CONFIG: Record<FneInvoiceStatus, { label: string; classes: string }> = {
+  DRAFT: { label: 'Brouillon', classes: 'border border-zinc-300 text-zinc-600' },
+  CERTIFIED: { label: 'Certifiée', classes: 'bg-[#dcfce7] text-[#166534]' },
+  CREDIT_NOTE: { label: 'Avoir', classes: 'bg-[#eff6ff] text-[#1e40af]' },
+  ERROR: { label: 'Erreur', classes: 'bg-[#fee2e2] text-[#991b1b]' },
 };
 
 export default function DevisListPage() {
@@ -63,7 +59,7 @@ export default function DevisListPage() {
         </div>
       </div>
 
-      <Card className="p-0 overflow-hidden">
+      <div className="card overflow-hidden p-0">
         {isLoading && (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-gold border-t-transparent" />
@@ -126,7 +122,11 @@ export default function DevisListPage() {
                           {formatCFA(inv.totalTtc)}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant={st.variant}>{st.label}</Badge>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.classes}`}
+                          >
+                            {st.label}
+                          </span>
                         </td>
                         <td className="px-4 py-3 min-w-[280px]">
                           {isEditing ? (
@@ -184,7 +184,7 @@ export default function DevisListPage() {
             </table>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

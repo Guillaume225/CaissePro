@@ -1,10 +1,54 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Vault, UnlockKeyhole, Clock, CalendarDays } from 'lucide-react';
-import { Button, Input, Modal } from '@/components/ui';
+import { Vault, UnlockKeyhole, Clock, CalendarDays, X } from 'lucide-react';
 import { useOpenCash, useCashState } from '@/hooks/useClosing';
 
 const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-md bg-white text-left shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#e0e6eb] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#0a2540]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function CashDayRequiredPage() {
   const { t } = useTranslation();
@@ -53,17 +97,19 @@ export default function CashDayRequiredPage() {
         </div>
 
         {/* Open button */}
-        <Button className="mt-8 px-8 py-3 text-base" onClick={() => setShowOpenModal(true)}>
-          <UnlockKeyhole className="mr-2 h-5 w-5" />
+        <button
+          className="btn-primary mt-8 px-8 py-3 text-base"
+          onClick={() => setShowOpenModal(true)}
+        >
+          <UnlockKeyhole className="h-5 w-5" />
           {t('closing.openCash')}
-        </Button>
+        </button>
 
         {/* Open Cash Modal */}
-        <Modal
+        <ModalShell
           open={showOpenModal}
           onClose={() => setShowOpenModal(false)}
           title={t('closing.openModal.title')}
-          size="md"
         >
           <div className="space-y-4">
             <div className="rounded-lg bg-emerald-50 p-4">
@@ -78,13 +124,16 @@ export default function CashDayRequiredPage() {
               </div>
             </div>
 
-            <Input
-              label={t('closing.openModal.openingBalance')}
-              type="number"
-              value={openingBalance}
-              onChange={(e) => setOpeningBalance(e.target.value)}
-              placeholder="0"
-            />
+            <div>
+              <label className="label">{t('closing.openModal.openingBalance')}</label>
+              <input
+                className="input"
+                type="number"
+                value={openingBalance}
+                onChange={(e) => setOpeningBalance(e.target.value)}
+                placeholder="0"
+              />
+            </div>
 
             {openingBalance !== '' && (
               <div className="rounded-lg bg-gray-50 p-3">
@@ -96,20 +145,23 @@ export default function CashDayRequiredPage() {
             )}
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="ghost" onClick={() => setShowOpenModal(false)}>
+              <button className="btn-secondary" onClick={() => setShowOpenModal(false)}>
                 {t('common.cancel')}
-              </Button>
-              <Button
+              </button>
+              <button
+                className="btn-primary disabled:opacity-50"
                 onClick={handleOpen}
-                loading={openCash.isPending}
-                disabled={openingBalance === ''}
+                disabled={openingBalance === '' || openCash.isPending}
               >
-                <UnlockKeyhole className="mr-2 h-4 w-4" />
+                {openCash.isPending && (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                )}
+                <UnlockKeyhole className="h-4 w-4" />
                 {t('closing.openCash')}
-              </Button>
+              </button>
             </div>
           </div>
-        </Modal>
+        </ModalShell>
       </div>
     </div>
   );

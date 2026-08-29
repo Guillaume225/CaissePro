@@ -8,18 +8,10 @@ import {
   AlertTriangle,
   Search,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Send,
 } from 'lucide-react';
-import {
-  Button,
-  Badge,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  DataTable,
-} from '@/components/ui';
-import type { Column } from '@/components/ui/DataTable';
 import {
   useAccountingEntries,
   useClosingHistory,
@@ -30,9 +22,8 @@ import {
 import type { AccountingEntry } from '@/types/admin';
 import ExcelJS from 'exceljs';
 
-type AnyRow = Record<string, unknown>;
-
 const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+const PAGE_SIZE = 20;
 
 export default function AccountingEntriesPage() {
   const { t } = useTranslation();
@@ -178,89 +169,20 @@ export default function AccountingEntriesPage() {
     CLOSING_GAP: t('closing.accounting.closingGap'),
   };
 
-  const accountingColumns: Column<Record<string, unknown>>[] = [
-    {
-      key: 'journalCode',
-      header: t('closing.accounting.journalCode'),
-      render: (r) => {
-        const row = r as unknown as AccountingEntry;
-        return (
-          <Badge variant="default" className="text-xs">
-            {row.journalCode}
-          </Badge>
-        );
-      },
-    },
-    {
-      key: 'accountNumber',
-      header: t('closing.accounting.accountNumber'),
-      render: (r) => (
-        <span className="font-mono text-sm">{(r as unknown as AccountingEntry).accountNumber}</span>
-      ),
-    },
-    {
-      key: 'accountLabel',
-      header: t('closing.accounting.accountLabel'),
-    },
-    {
-      key: 'debit',
-      header: t('closing.accounting.debit'),
-      className: 'text-right',
-      render: (r) => {
-        const row = r as unknown as AccountingEntry;
-        return row.debit > 0 ? (
-          <span className="font-medium text-gray-900">{fmt(row.debit)}</span>
-        ) : (
-          <span className="text-gray-300">—</span>
-        );
-      },
-    },
-    {
-      key: 'credit',
-      header: t('closing.accounting.credit'),
-      className: 'text-right',
-      render: (r) => {
-        const row = r as unknown as AccountingEntry;
-        return row.credit > 0 ? (
-          <span className="font-medium text-gray-900">{fmt(row.credit)}</span>
-        ) : (
-          <span className="text-gray-300">—</span>
-        );
-      },
-    },
-    {
-      key: 'reference',
-      header: t('closing.accounting.reference'),
-      render: (r) => (
-        <span className="text-xs text-gray-500">{(r as unknown as AccountingEntry).reference}</span>
-      ),
-    },
-    {
-      key: 'label',
-      header: t('closing.accounting.label'),
-      render: (r) => (
-        <span className="text-sm text-gray-600">{(r as unknown as AccountingEntry).label}</span>
-      ),
-    },
-    {
-      key: 'operationType',
-      header: t('closing.accounting.operationType'),
-      render: (r) => {
-        const row = r as unknown as AccountingEntry;
-        const v: Record<string, 'success' | 'destructive' | 'info' | 'warning'> = {
-          SALE: 'success',
-          EXPENSE: 'destructive',
-          PAYMENT: 'info',
-          CLOSING_GAP: 'warning',
-        };
-        return (
-          <Badge variant={v[row.operationType] || 'default'}>
-            {opTypeLabel[row.operationType] || row.operationType}
-          </Badge>
-        );
-      },
-    },
-  ];
+  const OP_TYPE_CLASSES: Record<string, string> = {
+    SALE: 'bg-[#dcfce7] text-[#166534]',
+    EXPENSE: 'bg-[#fee2e2] text-[#991b1b]',
+    PAYMENT: 'bg-[#eff6ff] text-[#1e40af]',
+    CLOSING_GAP: 'bg-amber-50 text-amber-800',
+  };
+
+  const [entriesPage, setEntriesPage] = useState(1);
+  const allEntries = accountingSummary?.entries ?? [];
+  const totalEntryPages = Math.max(1, Math.ceil(allEntries.length / PAGE_SIZE));
+  const entriesPageData = allEntries.slice(
+    (entriesPage - 1) * PAGE_SIZE,
+    entriesPage * PAGE_SIZE,
+  );
 
   return (
     <div className="space-y-6">
@@ -274,11 +196,11 @@ export default function AccountingEntriesPage() {
       </div>
 
       {/* Cash day selector */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('closing.accounting.selectCashDay')}</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="card">
+        <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+          {t('closing.accounting.selectCashDay')}
+        </h3>
+        <div>
           <div className="flex flex-wrap items-end gap-4">
             <div className="relative min-w-[320px] flex-1" ref={dropdownRef}>
               <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -344,9 +266,9 @@ export default function AccountingEntriesPage() {
                               {new Date(day.closedAt!).toLocaleDateString('fr-FR')}
                             </span>
                             {day.accountingProcessed && (
-                              <Badge variant="success" className="ml-2 text-xs">
+                              <span className="ml-2 rounded-full bg-[#dcfce7] px-2 py-0.5 text-xs font-medium text-[#166534]">
                                 ✓ {t('closing.accounting.processed')}
-                              </Badge>
+                              </span>
                             )}
                           </button>
                         </li>
@@ -357,62 +279,58 @@ export default function AccountingEntriesPage() {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Main card */}
       {selectedCashDayId && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
+        <div className="card">
+          <div className="mb-4 flex flex-row items-center justify-between">
+            <h3 className="flex items-center gap-2 text-base font-semibold text-[#0a2540]">
               <BookOpen className="h-5 w-5 text-brand-gold" />
-              <CardTitle>{t('closing.accounting.generate')}</CardTitle>
-            </div>
+              {t('closing.accounting.generate')}
+            </h3>
             <div className="flex gap-2">
               {accountingSummary && accountingSummary.entries.length > 0 && (
                 <>
                   {!isProcessed ? (
-                    <Button
-                      variant="default"
-                      size="sm"
+                    <button
+                      className="btn-primary px-3 py-1.5 text-xs disabled:opacity-50"
                       onClick={handleProcess}
-                      loading={processAccounting.isPending}
+                      disabled={processAccounting.isPending}
                     >
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      <CheckCircle2 className="h-4 w-4" />
                       {t('closing.accounting.processEntries')}
-                    </Button>
+                    </button>
                   ) : (
-                    <Button
-                      variant={confirmCancel ? 'destructive' : 'outline'}
-                      size="sm"
+                    <button
+                      className={`px-3 py-1.5 text-xs disabled:opacity-50 ${confirmCancel ? 'btn-primary bg-red-600 hover:bg-red-700' : 'btn-secondary'}`}
                       onClick={handleCancelProcessing}
-                      loading={cancelAccounting.isPending}
+                      disabled={cancelAccounting.isPending}
                     >
-                      <XCircle className="mr-2 h-4 w-4" />
+                      <XCircle className="h-4 w-4" />
                       {confirmCancel
                         ? t('closing.accounting.confirmCancelProcessing')
                         : t('closing.accounting.cancelProcessing')}
-                    </Button>
+                    </button>
                   )}
-                  <Button variant="outline" size="sm" onClick={handleExportExcel}>
-                    <Download className="mr-2 h-4 w-4" />
+                  <button className="btn-secondary px-3 py-1.5 text-xs" onClick={handleExportExcel}>
+                    <Download className="h-4 w-4" />
                     {t('closing.accounting.exportExcel')}
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
+                  </button>
+                  <button
+                    className="btn-primary bg-blue-600 px-3 py-1.5 text-xs hover:bg-blue-700 disabled:opacity-50"
                     onClick={handlePostToSage}
-                    loading={postToSage.isPending}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={postToSage.isPending}
                   >
-                    <Send className="mr-2 h-4 w-4" />
+                    <Send className="h-4 w-4" />
                     Comptabiliser vers Sage
-                  </Button>
+                  </button>
                 </>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div>
             {accountingLoading ? (
               <p className="py-6 text-center text-sm text-gray-400">{t('common.loading')}</p>
             ) : accountingSummary ? (
@@ -473,14 +391,15 @@ export default function AccountingEntriesPage() {
                         {accountingSummary.cashDayReference}
                       </span>
                       {accountingSummary.cashDayStatus && (
-                        <Badge
-                          variant={
-                            accountingSummary.cashDayStatus === 'CLOSED' ? 'success' : 'warning'
-                          }
-                          className="ml-2 text-xs"
+                        <span
+                          className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
+                            accountingSummary.cashDayStatus === 'CLOSED'
+                              ? 'bg-[#dcfce7] text-[#166534]'
+                              : 'bg-amber-50 text-amber-800'
+                          }`}
                         >
                           {accountingSummary.cashDayStatus}
-                        </Badge>
+                        </span>
                       )}
                     </div>
                   )}
@@ -501,11 +420,17 @@ export default function AccountingEntriesPage() {
                       count: accountingSummary.entriesCount,
                     })}
                   </div>
-                  <Badge variant={accountingSummary.isBalanced ? 'success' : 'destructive'}>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      accountingSummary.isBalanced
+                        ? 'bg-[#dcfce7] text-[#166534]'
+                        : 'bg-[#fee2e2] text-[#991b1b]'
+                    }`}
+                  >
                     {accountingSummary.isBalanced
                       ? t('closing.accounting.balanced')
                       : t('closing.accounting.unbalanced')}
-                  </Badge>
+                  </span>
                 </div>
 
                 {/* Warning if already processed */}
@@ -516,20 +441,121 @@ export default function AccountingEntriesPage() {
                   </div>
                 )}
 
-                <DataTable
-                  columns={accountingColumns}
-                  data={accountingSummary.entries as unknown as AnyRow[]}
-                  pageSize={20}
-                  emptyMessage={t('closing.accounting.noEntries')}
-                />
+                <div className="overflow-hidden rounded-md border border-[#e0e6eb]">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead className="border-b border-[#e0e6eb] bg-[#f6f9fc]">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                            {t('closing.accounting.journalCode')}
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                            {t('closing.accounting.accountNumber')}
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                            {t('closing.accounting.accountLabel')}
+                          </th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-[#697386]">
+                            {t('closing.accounting.debit')}
+                          </th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-[#697386]">
+                            {t('closing.accounting.credit')}
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                            {t('closing.accounting.reference')}
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                            {t('closing.accounting.label')}
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                            {t('closing.accounting.operationType')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {entriesPageData.length === 0 && (
+                          <tr>
+                            <td colSpan={8} className="px-3 py-8 text-center text-sm text-[#aab7c4]">
+                              {t('closing.accounting.noEntries')}
+                            </td>
+                          </tr>
+                        )}
+                        {entriesPageData.map((row: AccountingEntry, i: number) => (
+                          <tr
+                            key={row.id}
+                            className={`border-b border-[#e0e6eb] ${i % 2 === 1 ? 'bg-[#fafbfc]' : ''}`}
+                          >
+                            <td className="px-3 py-2">
+                              <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-xs font-medium text-[#1e40af]">
+                                {row.journalCode}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 font-mono text-sm text-[#0a2540]">
+                              {row.accountNumber}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-[#0a2540]">{row.accountLabel}</td>
+                            <td className="px-3 py-2 text-right">
+                              {row.debit > 0 ? (
+                                <span className="font-medium text-[#0a2540]">{fmt(row.debit)}</span>
+                              ) : (
+                                <span className="text-[#aab7c4]">—</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {row.credit > 0 ? (
+                                <span className="font-medium text-[#0a2540]">{fmt(row.credit)}</span>
+                              ) : (
+                                <span className="text-[#aab7c4]">—</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-xs text-[#697386]">{row.reference}</td>
+                            <td className="px-3 py-2 text-sm text-[#697386]">{row.label}</td>
+                            <td className="px-3 py-2">
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${OP_TYPE_CLASSES[row.operationType] || 'bg-[#eff6ff] text-[#1e40af]'}`}
+                              >
+                                {opTypeLabel[row.operationType] || row.operationType}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {totalEntryPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-[#e0e6eb] px-3 py-2 text-xs text-[#697386]">
+                      <span>
+                        {(entriesPage - 1) * PAGE_SIZE + 1}–
+                        {Math.min(entriesPage * PAGE_SIZE, allEntries.length)} sur{' '}
+                        {allEntries.length}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="rounded p-1 hover:bg-zinc-100 disabled:opacity-40"
+                          disabled={entriesPage === 1}
+                          onClick={() => setEntriesPage((p) => p - 1)}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="rounded p-1 hover:bg-zinc-100 disabled:opacity-40"
+                          disabled={entriesPage === totalEntryPages}
+                          onClick={() => setEntriesPage((p) => p + 1)}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <p className="py-6 text-center text-sm text-gray-400">
                 {t('closing.accounting.noEntries')}
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -14,8 +14,8 @@ import {
   Pencil,
   Link2,
   Trash2,
+  X,
 } from 'lucide-react';
-import { Button, Badge, Card } from '@/components/ui';
 import {
   useFneInvoice,
   useCreateCreditNote,
@@ -31,14 +31,11 @@ import FneInvoicePrintView from '@/components/fne/FneInvoicePrintView';
 import type { FneInvoiceStatus } from '@/types/fne';
 
 /* ── Status config ────────────────────────────────────── */
-const STATUS_CONFIG: Record<
-  FneInvoiceStatus,
-  { label: string; variant: 'outline' | 'success' | 'warning' | 'destructive'; color: string }
-> = {
-  DRAFT: { label: 'Brouillon', variant: 'outline', color: 'text-gray-500' },
-  CERTIFIED: { label: 'Certifiée', variant: 'success', color: 'text-green-600' },
-  CREDIT_NOTE: { label: 'Avoir émis', variant: 'warning', color: 'text-amber-600' },
-  ERROR: { label: 'Erreur', variant: 'destructive', color: 'text-red-600' },
+const STATUS_CONFIG: Record<FneInvoiceStatus, { label: string; classes: string }> = {
+  DRAFT: { label: 'Brouillon', classes: 'border border-zinc-300 text-zinc-600' },
+  CERTIFIED: { label: 'Certifiée', classes: 'bg-[#dcfce7] text-[#166534]' },
+  CREDIT_NOTE: { label: 'Avoir émis', classes: 'bg-amber-50 text-amber-800' },
+  ERROR: { label: 'Erreur', classes: 'bg-[#fee2e2] text-[#991b1b]' },
 };
 
 const TEMPLATE_LABELS: Record<string, string> = {
@@ -147,14 +144,23 @@ export default function FneInvoiceDetailPage() {
         {/* ── Header ── */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/fne/invoices')}>
+            <button
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+              onClick={() => navigate('/fne/invoices')}
+            >
               <ArrowLeft className="h-4 w-4" />
-            </Button>
+            </button>
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-gray-900">{invoice.reference}</h1>
-                <Badge variant={sc.variant}>{sc.label}</Badge>
-                {isCreditNote && <Badge variant="warning">Avoir</Badge>}
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${sc.classes}`}>
+                  {sc.label}
+                </span>
+                {isCreditNote && (
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+                    Avoir
+                  </span>
+                )}
               </div>
               <p className="text-sm text-gray-500">{formatDateTime(invoice.createdAt)}</p>
               {/* Link to original invoice (if this is a credit note) */}
@@ -175,80 +181,74 @@ export default function FneInvoiceDetailPage() {
                     className="flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 mt-1"
                   >
                     <Link2 className="h-3.5 w-3.5" /> Avoir : {cn.reference}
-                    <Badge
-                      variant={STATUS_CONFIG[cn.status]?.variant ?? 'outline'}
-                      className="text-[10px] px-1.5 py-0"
+                    <span
+                      className={`rounded-full px-1.5 py-0 text-[10px] font-medium ${STATUS_CONFIG[cn.status]?.classes ?? 'border border-zinc-300 text-zinc-600'}`}
                     >
                       {STATUS_CONFIG[cn.status]?.label ?? cn.status}
-                    </Badge>
+                    </span>
                   </button>
                 ))}
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
+            <button
+              className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
               onClick={() => {
                 setPreprinted(false);
                 setTimeout(() => window.print(), 100);
               }}
-              className="text-gray-600 hover:text-gray-800"
             >
-              <Printer className="mr-2 h-4 w-4" /> {t('common.print', 'Imprimer')}
-            </Button>
-            <Button
-              variant="ghost"
+              <Printer className="h-4 w-4" /> {t('common.print', 'Imprimer')}
+            </button>
+            <button
+              className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
               onClick={() => {
                 setPreprinted(true);
                 setTimeout(() => window.print(), 100);
               }}
-              className="text-gray-600 hover:text-gray-800"
             >
-              <Printer className="mr-2 h-4 w-4" /> Préimprimé
-            </Button>
+              <Printer className="h-4 w-4" /> Préimprimé
+            </button>
             {!readOnly && canCertify && (
-              <Button
-                variant="outline"
+              <button
+                className="btn-secondary text-brand-gold border-brand-gold hover:bg-brand-gold/5"
                 onClick={() => navigate(`/fne/invoices/${invoice.id}/edit`)}
-                className="text-brand-gold border-brand-gold hover:bg-brand-gold/5"
               >
-                <Pencil className="mr-2 h-4 w-4" /> {t('common.edit', 'Modifier')}
-              </Button>
+                <Pencil className="h-4 w-4" /> {t('common.edit', 'Modifier')}
+              </button>
             )}
             {!readOnly && canCertify && (
-              <Button
+              <button
+                className="btn-primary disabled:opacity-50"
                 onClick={handleCertify}
                 disabled={certifyMutation.isPending}
-                className="bg-brand-gold text-white hover:bg-brand-gold/90"
               >
                 {certifyMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Certification…
+                    <Loader2 className="h-4 w-4 animate-spin" /> Certification…
                   </>
                 ) : (
                   <>
-                    <FileCheck2 className="mr-2 h-4 w-4" /> Certifier
+                    <FileCheck2 className="h-4 w-4" /> Certifier
                   </>
                 )}
-              </Button>
+              </button>
             )}
             {!readOnly && canCreditNote && (
-              <Button
-                variant="ghost"
+              <button
+                className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-50"
                 onClick={() => setShowCreditModal(true)}
-                className="text-amber-600 hover:text-amber-700"
               >
-                <Undo2 className="mr-2 h-4 w-4" /> {t('fne.creditNote', 'Avoir')}
-              </Button>
+                <Undo2 className="h-4 w-4" /> {t('fne.creditNote', 'Avoir')}
+              </button>
             )}
             {!readOnly && canDelete && (
-              <Button
-                variant="ghost"
+              <button
+                className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
-                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
-              </Button>
+                <Trash2 className="h-4 w-4" /> Supprimer
+              </button>
             )}
           </div>
         </div>
@@ -270,7 +270,7 @@ export default function FneInvoiceDetailPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* ── Left: Client & params + FNE info ── */}
           <div className="space-y-4">
-            <Card className="p-5 space-y-4">
+            <div className="card space-y-4">
               <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
                 {t('fne.clientInfo', 'Client')}
               </h3>
@@ -306,11 +306,11 @@ export default function FneInvoiceDetailPage() {
                   />
                 )}
               </div>
-            </Card>
+            </div>
 
             {/* ── QR code / FNE info ── */}
             {invoice.status === 'CERTIFIED' && (
-              <Card className="p-5">
+              <div className="card">
                 <div className="flex flex-col gap-4">
                   {/* QR Code */}
                   {invoice.fneToken && (
@@ -360,13 +360,13 @@ export default function FneInvoiceDetailPage() {
                     )}
                   </div>
                 </div>
-              </Card>
+              </div>
             )}
           </div>
 
           {/* ── Right: Items & totals ── */}
           <div className="lg:col-span-2 space-y-4">
-            <Card className="overflow-hidden">
+            <div className="card overflow-hidden p-0">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
@@ -397,9 +397,12 @@ export default function FneInvoiceDetailPage() {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
                           {item.taxes?.map((t) => (
-                            <Badge key={t} variant="outline" className="text-xs">
+                            <span
+                              key={t}
+                              className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600"
+                            >
                               {t}
-                            </Badge>
+                            </span>
                           ))}
                         </div>
                       </td>
@@ -410,10 +413,10 @@ export default function FneInvoiceDetailPage() {
                   ))}
                 </tbody>
               </table>
-            </Card>
+            </div>
 
             {/* Totals card */}
-            <Card className="p-5 space-y-2">
+            <div className="card space-y-2">
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Sous-total HT</span>
                 <span>{formatCFA(invoice.subtotalHt)}</span>
@@ -440,90 +443,104 @@ export default function FneInvoiceDetailPage() {
                 <span>Total TTC</span>
                 <span>{formatCFA(invoice.totalTtc)}</span>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
 
         {/* ── Credit Note Modal ── */}
         {showCreditModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="w-full max-w-xl rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                {t('fne.createCreditNote', 'Créer un avoir')}
-              </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                {t('fne.creditNoteDesc', 'Sélectionnez les articles et quantités à retourner.')}
-              </p>
-
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {invoice.items
-                  .filter((it) => it.fneItemId)
-                  .map((item) => {
-                    const remaining = item.quantity - item.quantityReturned;
-                    if (remaining <= 0) return null;
-                    return (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-4 rounded-lg border border-gray-200 p-3"
-                      >
-                        <div className="flex-1">
-                          <div className="text-sm text-gray-900">{item.description}</div>
-                          <div className="text-xs text-gray-500">
-                            Disponible: {remaining} / {item.quantity}
-                          </div>
-                        </div>
-                        <input
-                          type="number"
-                          min={0}
-                          max={remaining}
-                          value={refundItems[item.fneItemId!] ?? 0}
-                          onChange={(e) =>
-                            setRefundItems((p) => ({
-                              ...p,
-                              [item.fneItemId!]: Math.min(Number(e.target.value), remaining),
-                            }))
-                          }
-                          className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 text-center shadow-sm focus:border-brand-gold focus:ring-1 focus:ring-brand-gold focus:outline-none"
-                        />
-                      </div>
-                    );
-                  })}
-              </div>
-
-              {creditNoteMutation.isError && (
-                <div className="mt-3 text-sm text-red-600">
-                  {(creditNoteMutation.error as Error)?.message ||
-                    "Erreur lors de la création de l'avoir"}
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-                <Button
-                  variant="ghost"
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-md border border-[#e0e6eb] w-full max-w-xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e6eb]">
+                <h2 className="text-sm font-semibold text-[#0a2540]">
+                  {t('fne.createCreditNote', 'Créer un avoir')}
+                </h2>
+                <button
                   onClick={() => {
                     setShowCreditModal(false);
                     setRefundItems({});
                   }}
+                  className="rounded-md p-1 text-[#697386] hover:bg-zinc-100"
                 >
-                  {t('common.cancel', 'Annuler')}
-                </Button>
-                <Button
-                  onClick={handleCreditNote}
-                  disabled={
-                    !Object.values(refundItems).some((v) => v > 0) || creditNoteMutation.isPending
-                  }
-                  className="bg-amber-600 hover:bg-amber-700"
-                >
-                  {creditNoteMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Envoi…
-                    </>
-                  ) : (
-                    <>
-                      <Undo2 className="mr-2 h-4 w-4" /> Créer l'avoir
-                    </>
-                  )}
-                </Button>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-[#697386] mb-4">
+                  {t('fne.creditNoteDesc', 'Sélectionnez les articles et quantités à retourner.')}
+                </p>
+
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {invoice.items
+                    .filter((it) => it.fneItemId)
+                    .map((item) => {
+                      const remaining = item.quantity - item.quantityReturned;
+                      if (remaining <= 0) return null;
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-4 rounded-md border border-[#e0e6eb] p-3"
+                        >
+                          <div className="flex-1">
+                            <div className="text-sm text-gray-900">{item.description}</div>
+                            <div className="text-xs text-gray-500">
+                              Disponible: {remaining} / {item.quantity}
+                            </div>
+                          </div>
+                          <input
+                            type="number"
+                            min={0}
+                            max={remaining}
+                            value={refundItems[item.fneItemId!] ?? 0}
+                            onChange={(e) =>
+                              setRefundItems((p) => ({
+                                ...p,
+                                [item.fneItemId!]: Math.min(Number(e.target.value), remaining),
+                              }))
+                            }
+                            className="input w-20 text-center"
+                          />
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {creditNoteMutation.isError && (
+                  <div className="mt-3 border-l-2 border-red-400 bg-[#fee2e2] px-3 py-2 text-xs text-[#991b1b] rounded-sm">
+                    {(creditNoteMutation.error as Error)?.message ||
+                      "Erreur lors de la création de l'avoir"}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-[#e0e6eb]">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => {
+                      setShowCreditModal(false);
+                      setRefundItems({});
+                    }}
+                  >
+                    {t('common.cancel', 'Annuler')}
+                  </button>
+                  <button
+                    className="btn-primary bg-amber-600 hover:bg-amber-700 disabled:opacity-50"
+                    onClick={handleCreditNote}
+                    disabled={
+                      !Object.values(refundItems).some((v) => v > 0) ||
+                      creditNoteMutation.isPending
+                    }
+                  >
+                    {creditNoteMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Envoi…
+                      </>
+                    ) : (
+                      <>
+                        <Undo2 className="h-4 w-4" /> Créer l'avoir
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -531,40 +548,48 @@ export default function FneInvoiceDetailPage() {
 
         {/* ── Delete confirmation dialog ── */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                  <Trash2 className="h-5 w-5 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Supprimer la facture</h3>
-                  <p className="text-sm text-gray-500">Cette action est irréversible</p>
-                </div>
-              </div>
-              <p className="text-sm text-gray-700">
-                Êtes-vous sûr de vouloir supprimer la facture{' '}
-                <span className="font-semibold">{invoice.reference}</span> ?
-              </p>
-              <div className="flex justify-end gap-3">
-                <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)}>
-                  Annuler
-                </Button>
-                <Button
-                  onClick={handleDelete}
-                  disabled={deleteMutation.isPending}
-                  className="bg-red-600 text-white hover:bg-red-700"
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-md border border-[#e0e6eb] w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e6eb]">
+                <h3 className="text-sm font-semibold text-[#0a2540]">Supprimer la facture</h3>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="rounded-md p-1 text-[#697386] hover:bg-zinc-100"
                 >
-                  {deleteMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Suppression…
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="mr-2 h-4 w-4" /> Supprimer
-                    </>
-                  )}
-                </Button>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                    <Trash2 className="h-5 w-5 text-red-600" />
+                  </div>
+                  <p className="text-sm text-[#697386]">Cette action est irréversible</p>
+                </div>
+                <p className="text-sm text-gray-700">
+                  Êtes-vous sûr de vouloir supprimer la facture{' '}
+                  <span className="font-semibold">{invoice.reference}</span> ?
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)}>
+                    Annuler
+                  </button>
+                  <button
+                    className="btn-primary bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                    onClick={handleDelete}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Suppression…
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4" /> Supprimer
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

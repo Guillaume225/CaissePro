@@ -15,8 +15,16 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { FileText, TrendingUp, Stamp, ReceiptText, AlertTriangle, FileEdit } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, Stat } from '@/components/ui';
+import {
+  FileText,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Stamp,
+  ReceiptText,
+  AlertTriangle,
+  FileEdit,
+} from 'lucide-react';
 import {
   useFneDashboardKpis,
   useFneMonthlyTrend,
@@ -53,6 +61,58 @@ function EmptyChart() {
   );
 }
 
+function StatTile({
+  label,
+  value,
+  icon,
+  trend,
+  trendLabel,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  trend?: number;
+  trendLabel?: string;
+}) {
+  const trendDirection = trend === undefined ? null : trend > 0 ? 'up' : trend < 0 ? 'down' : 'flat';
+  return (
+    <div className="card">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-[#697386]">{label}</p>
+          <p className="mt-1 text-2xl font-bold text-[#0a2540]">{value}</p>
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold/10 text-brand-gold">
+          {icon}
+        </div>
+      </div>
+      {trendDirection && (
+        <div className="mt-3 flex items-center gap-1.5">
+          {trendDirection === 'up' && (
+            <div className="flex items-center gap-0.5 text-green-600">
+              <TrendingUp className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">+{trend}%</span>
+            </div>
+          )}
+          {trendDirection === 'down' && (
+            <div className="flex items-center gap-0.5 text-red-600">
+              <TrendingDown className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">{trend}%</span>
+            </div>
+          )}
+          {trendDirection === 'flat' && (
+            <div className="flex items-center gap-0.5 text-gray-400">
+              <Minus className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">0%</span>
+            </div>
+          )}
+          {trendLabel && <span className="text-xs text-gray-400">{trendLabel}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FneDashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -79,26 +139,26 @@ export default function FneDashboardPage() {
 
       {/* ═══ KPI Cards ══════════════════════════ */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
+        <StatTile
           label={t('modules.fne.kpi.monthInvoices', 'Factures ce mois')}
           value={kpis?.monthInvoices?.toString() ?? '—'}
           icon={<FileText className="h-5 w-5" />}
           trend={kpis?.invoicesTrend}
           trendLabel={t('dashboard.vsLastMonth', 'vs mois dernier')}
         />
-        <Stat
+        <StatTile
           label={t('modules.fne.kpi.monthRevenue', 'CA certifié (mois)')}
           value={kpis ? formatCFA(kpis.monthRevenue) : '—'}
           icon={<TrendingUp className="h-5 w-5" />}
           trend={kpis?.revenueTrend}
           trendLabel={t('dashboard.vsLastMonth', 'vs mois dernier')}
         />
-        <Stat
+        <StatTile
           label={t('modules.fne.kpi.monthCertified', 'Certifiées (mois)')}
           value={kpis?.monthCertified?.toString() ?? '—'}
           icon={<Stamp className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('modules.fne.kpi.monthCreditNotes', 'Avoirs (mois)')}
           value={kpis?.monthCreditNotes?.toString() ?? '—'}
           icon={<ReceiptText className="h-5 w-5" />}
@@ -107,17 +167,17 @@ export default function FneDashboardPage() {
 
       {/* ── Secondary KPIs ── */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat
+        <StatTile
           label={t('modules.fne.kpi.monthDrafts', 'Brouillons')}
           value={kpis?.monthDrafts?.toString() ?? '—'}
           icon={<FileEdit className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('modules.fne.kpi.monthErrors', 'Erreurs')}
           value={kpis?.monthErrors?.toString() ?? '—'}
           icon={<AlertTriangle className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('modules.fne.kpi.totalRevenue', 'CA total certifié')}
           value={kpis ? formatCFA(kpis.totalRevenue) : '—'}
           icon={<TrendingUp className="h-5 w-5" />}
@@ -127,13 +187,11 @@ export default function FneDashboardPage() {
       {/* ═══ Charts Section ═════════════════════ */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ── Area: Monthly revenue ──────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {t('modules.fne.chart.revenueEvolution', 'Évolution du CA certifié')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+            {t('modules.fne.chart.revenueEvolution', 'Évolution du CA certifié')}
+          </h3>
+          <div>
             {monthlyTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <AreaChart data={monthlyTrend}>
@@ -178,17 +236,15 @@ export default function FneDashboardPage() {
             ) : (
               <EmptyChart />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ── Pie: Status breakdown ──────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {t('modules.fne.chart.statusBreakdown', 'Répartition par statut')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+            {t('modules.fne.chart.statusBreakdown', 'Répartition par statut')}
+          </h3>
+          <div>
             {statusBreakdown.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <PieChart>
@@ -203,7 +259,7 @@ export default function FneDashboardPage() {
                     outerRadius={100}
                     paddingAngle={3}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                   >
                     {statusBreakdown.map((s, i) => (
                       <Cell key={i} fill={STATUS_COLORS[s.status] ?? '#9CA3AF'} />
@@ -216,17 +272,15 @@ export default function FneDashboardPage() {
             ) : (
               <EmptyChart />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ── Bar: Monthly invoice count ── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {t('modules.fne.chart.invoiceCount', 'Nombre de factures par mois')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+            {t('modules.fne.chart.invoiceCount', 'Nombre de factures par mois')}
+          </h3>
+          <div>
             {monthlyTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <BarChart data={monthlyTrend}>
@@ -256,15 +310,15 @@ export default function FneDashboardPage() {
             ) : (
               <EmptyChart />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ── Top 5 clients ──────────────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('modules.fne.chart.topClients', 'Top 5 clients FNE')}</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+            {t('modules.fne.chart.topClients', 'Top 5 clients FNE')}
+          </h3>
+          <div>
             {topClients.length > 0 ? (
               <div className="space-y-4">
                 {topClients.slice(0, 5).map((client, i) => {
@@ -297,8 +351,8 @@ export default function FneDashboardPage() {
             ) : (
               <EmptyChart />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* ── Quick links ──────────────────── */}

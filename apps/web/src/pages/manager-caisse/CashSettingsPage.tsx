@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Save, ShieldAlert, BadgeDollarSign } from 'lucide-react';
-import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { useSettings, useUpdateSettings } from '@/hooks/useAdmin';
 import type { AppSettings } from '@/types/admin';
 
@@ -51,70 +50,85 @@ export default function CashSettingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Limites & Paramètres de caisse</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-[#0a2540]">Limites & Paramètres de caisse</h1>
+          <p className="text-sm text-[#697386]">
             Configurez les seuils de validation, montants limites et paramètres financiers
           </p>
         </div>
-        <Button onClick={handleSave} loading={updateSettings.isPending}>
-          <Save className="mr-2 h-4 w-4" />
+        <button
+          className="btn-primary disabled:opacity-50"
+          onClick={handleSave}
+          disabled={updateSettings.isPending}
+        >
+          {updateSettings.isPending && (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          )}
+          <Save className="h-4 w-4" />
           {saved ? t('common.success') : t('common.save')}
-        </Button>
+        </button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Validation thresholds */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <ShieldAlert className="h-4 w-4 text-brand-gold" />
-              {t('admin.settings.validationSection')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              label={t('admin.settings.maxDisbursement')}
-              type="number"
-              value={form.validation.maxDisbursementAmount}
-              onChange={(e) => updateNested('validation', 'maxDisbursementAmount', +e.target.value)}
-              hint={t('admin.settings.maxDisbursementHint')}
-            />
-            <Input
-              label={t('admin.settings.advanceDays')}
-              type="number"
-              value={form.validation.advanceJustificationDays}
-              onChange={(e) =>
-                updateNested('validation', 'advanceJustificationDays', +e.target.value)
-              }
-              hint={t('admin.settings.advanceDaysHint')}
-            />
-          </CardContent>
-        </Card>
+        <div className="card">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#0a2540]">
+            <ShieldAlert className="h-4 w-4 text-brand-gold" />
+            {t('admin.settings.validationSection')}
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className="label">{t('admin.settings.maxDisbursement')}</label>
+              <input
+                className="input"
+                type="number"
+                value={form.validation.maxDisbursementAmount}
+                onChange={(e) =>
+                  updateNested('validation', 'maxDisbursementAmount', +e.target.value)
+                }
+              />
+              <p className="mt-1 text-xs text-[#aab7c4]">
+                {t('admin.settings.maxDisbursementHint')}
+              </p>
+            </div>
+            <div>
+              <label className="label">{t('admin.settings.advanceDays')}</label>
+              <input
+                className="input"
+                type="number"
+                value={form.validation.advanceJustificationDays}
+                onChange={(e) =>
+                  updateNested('validation', 'advanceJustificationDays', +e.target.value)
+                }
+              />
+              <p className="mt-1 text-xs text-[#aab7c4]">{t('admin.settings.advanceDaysHint')}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Finance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <BadgeDollarSign className="h-4 w-4 text-brand-gold" />
-              {t('admin.settings.financeSection')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              label={t('admin.settings.defaultTva')}
-              type="number"
-              value={form.finance.defaultTvaRate}
-              onChange={(e) => updateNested('finance', 'defaultTvaRate', +e.target.value)}
-              hint={t('admin.settings.defaultTvaHint')}
-            />
+        <div className="card">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#0a2540]">
+            <BadgeDollarSign className="h-4 w-4 text-brand-gold" />
+            {t('admin.settings.financeSection')}
+          </h3>
+          <div className="space-y-4">
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">
-                {t('admin.settings.maxDiscounts')}
-              </p>
+              <label className="label">{t('admin.settings.defaultTva')}</label>
+              <input
+                className="input"
+                type="number"
+                value={form.finance.defaultTvaRate}
+                onChange={(e) => updateNested('finance', 'defaultTvaRate', +e.target.value)}
+              />
+              <p className="mt-1 text-xs text-[#aab7c4]">{t('admin.settings.defaultTvaHint')}</p>
+            </div>
+            <div>
+              <p className="label">{t('admin.settings.maxDiscounts')}</p>
               {Object.entries(form.finance.maxDiscountByRole).map(([role, val]) => (
-                <div key={role} className="flex items-center gap-3 mb-2">
-                  <span className="w-24 text-xs text-gray-500 capitalize">{role}</span>
-                  <Input
+                <div key={role} className="mb-2 flex items-center gap-3">
+                  <span className="w-24 text-xs capitalize text-[#697386]">{role}</span>
+                  <input
+                    className="input max-w-[100px]"
                     type="number"
                     value={val}
                     onChange={(e) =>
@@ -133,14 +147,13 @@ export default function CashSettingsPage() {
                           : f,
                       )
                     }
-                    className="max-w-[100px]"
                   />
-                  <span className="text-xs text-gray-400">%</span>
+                  <span className="text-xs text-[#aab7c4]">%</span>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

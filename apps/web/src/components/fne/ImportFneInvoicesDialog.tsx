@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from 'lucide-react';
-import { Button, Badge } from '@/components/ui';
 import { useImportFneInvoices } from '@/hooks/useFneInvoices';
 import type {
   CreateFneInvoicePayload,
@@ -285,18 +284,22 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            <FileSpreadsheet className="inline-block mr-2 h-5 w-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-md border border-[#e0e6eb] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e6eb]">
+          <h3 className="text-sm font-semibold text-[#0a2540]">
+            <FileSpreadsheet className="inline-block mr-2 h-4 w-4" />
             Importer des factures
           </h3>
-          <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
-            <X className="h-5 w-5" />
+          <button
+            onClick={handleClose}
+            className="rounded-md p-1 text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
 
+        <div className="p-5">
         {/* ── Step 1: Upload ── */}
         {step === 'upload' && (
           <div className="space-y-4">
@@ -317,22 +320,22 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
                 onChange={handleFile}
                 className="hidden"
               />
-              <Button variant="ghost" onClick={() => fileInputRef.current?.click()}>
+              <button className="btn-secondary" onClick={() => fileInputRef.current?.click()}>
                 Choisir un fichier
-              </Button>
+              </button>
             </div>
 
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <p className="text-sm font-medium text-blue-800 mb-2">
+            <div className="rounded-md bg-[#eff6ff] p-4">
+              <p className="text-sm font-medium text-[#1e40af] mb-2">
                 Format attendu (séparateur: point-virgule ;)
               </p>
-              <p className="text-xs text-blue-700 mb-2">
+              <p className="text-xs text-[#1e40af] mb-2">
                 Colonnes :{' '}
-                <code className="bg-blue-100 px-1 rounded">
+                <code className="bg-white/60 px-1 rounded">
                   template;paymentMethod;clientCompanyName;clientPhone;clientEmail;clientNcc;pointOfSale;establishment;discount;itemDescription;itemReference;itemQuantity;itemAmount;itemDiscount;itemTax;itemUnit
                 </code>
               </p>
-              <ul className="text-xs text-blue-700 space-y-1 mb-3">
+              <ul className="text-xs text-[#1e40af] space-y-1 mb-3">
                 <li>
                   • <strong>Première ligne</strong> d'une facture : remplissez tous les champs
                 </li>
@@ -350,14 +353,12 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
                   • <strong>itemTax</strong> : TVA (18%), TVAB (9%), TVAC (0%), TVAD (0%), TVAE
                 </li>
               </ul>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-[#1e40af] hover:bg-white/60"
                 onClick={downloadTemplate}
-                className="text-blue-600"
               >
-                <Download className="mr-2 h-4 w-4" /> Télécharger le modèle CSV
-              </Button>
+                <Download className="h-4 w-4" /> Télécharger le modèle CSV
+              </button>
             </div>
           </div>
         )}
@@ -366,7 +367,9 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
         {step === 'preview' && (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <Badge variant="outline">{fileName}</Badge>
+              <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                {fileName}
+              </span>
               <span className="text-sm text-gray-600">
                 {parsed.length} facture{parsed.length > 1 ? 's' : ''} détectée
                 {parsed.length > 1 ? 's' : ''}(
@@ -376,12 +379,12 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
 
             {/* Parse warnings */}
             {parseErrors.length > 0 && (
-              <div className="max-h-32 overflow-y-auto rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="text-sm font-medium text-amber-800 mb-1">
+              <div className="max-h-32 overflow-y-auto rounded-md border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs font-medium text-amber-800 mb-1">
                   <AlertTriangle className="inline-block mr-1 h-4 w-4" />
                   {parseErrors.length} avertissement{parseErrors.length > 1 ? 's' : ''} :
                 </p>
-                <ul className="text-xs text-amber-700 space-y-0.5">
+                <ul className="text-xs text-amber-800 space-y-0.5">
                   {parseErrors.map((e, i) => (
                     <li key={i}>• {e}</li>
                   ))}
@@ -413,7 +416,9 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
                           <td className="px-3 py-2 text-gray-500">{idx + 1}</td>
                           <td className="px-3 py-2 text-gray-900">{p.invoice.clientCompanyName}</td>
                           <td className="px-3 py-2">
-                            <Badge variant="outline">{p.invoice.template}</Badge>
+                            <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                              {p.invoice.template}
+                            </span>
                           </td>
                           <td className="px-3 py-2 text-gray-600">
                             {p.invoice.items.length} article{p.invoice.items.length > 1 ? 's' : ''}
@@ -430,30 +435,30 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
             )}
 
             {parsed.length === 0 && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
-                <AlertTriangle className="mx-auto h-8 w-8 text-red-400 mb-2" />
-                <p className="text-sm text-red-700">
+              <div className="border-l-2 border-red-400 bg-[#fee2e2] px-3 py-2 rounded-sm text-center">
+                <AlertTriangle className="mx-auto h-8 w-8 text-[#991b1b] mb-2" />
+                <p className="text-xs text-[#991b1b]">
                   Aucune facture valide détectée dans le fichier.
                 </p>
               </div>
             )}
 
             <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-              <Button variant="ghost" onClick={reset}>
+              <button className="btn-secondary" onClick={reset}>
                 Changer de fichier
-              </Button>
-              <Button
+              </button>
+              <button
+                className="btn-primary disabled:opacity-50"
                 onClick={handleImport}
                 disabled={parsed.length === 0 || importMutation.isPending}
-                className="bg-brand-gold text-white hover:bg-brand-gold/90"
               >
                 {importMutation.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Upload className="mr-2 h-4 w-4" />
+                  <Upload className="h-4 w-4" />
                 )}
                 Importer {parsed.length} facture{parsed.length > 1 ? 's' : ''}
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -461,25 +466,25 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
         {/* ── Step 3: Result ── */}
         {step === 'result' && importResult && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
-              <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
+            <div className="flex items-center gap-3 rounded-md bg-[#dcfce7] p-4">
+              <CheckCircle2 className="h-6 w-6 text-[#166534] shrink-0" />
               <div>
-                <p className="text-sm font-medium text-green-800">
+                <p className="text-sm font-medium text-[#166534]">
                   {importResult.imported} facture{importResult.imported > 1 ? 's' : ''} importée
                   {importResult.imported > 1 ? 's' : ''} en brouillon.
                 </p>
-                <p className="text-xs text-green-600 mt-0.5">
+                <p className="text-xs text-[#166534] mt-0.5">
                   Vous pouvez les certifier individuellement ou en masse depuis la liste.
                 </p>
               </div>
             </div>
 
             {importResult.errors.length > 0 && (
-              <div className="max-h-48 overflow-y-auto rounded-lg border border-red-200 bg-red-50 p-3">
-                <p className="text-sm font-medium text-red-800 mb-2">
+              <div className="max-h-48 overflow-y-auto border-l-2 border-red-400 bg-[#fee2e2] px-3 py-2 rounded-sm">
+                <p className="text-xs font-medium text-[#991b1b] mb-2">
                   {importResult.errors.length} erreur{importResult.errors.length > 1 ? 's' : ''} :
                 </p>
-                <ul className="text-xs text-red-700 space-y-1">
+                <ul className="text-xs text-[#991b1b] space-y-1">
                   {importResult.errors.map((e, i) => (
                     <li key={i}>
                       • Facture #{e.index} : {e.error}
@@ -490,10 +495,13 @@ export default function ImportFneInvoicesDialog({ open, onClose }: Props) {
             )}
 
             <div className="flex justify-end pt-2 border-t border-gray-100">
-              <Button onClick={handleClose}>Fermer</Button>
+              <button className="btn-primary" onClick={handleClose}>
+                Fermer
+              </button>
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

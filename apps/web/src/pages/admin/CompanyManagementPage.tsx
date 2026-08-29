@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Building2,
@@ -12,7 +12,6 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { Button, Input, Modal, Badge } from '@/components/ui';
 import {
   useCompanies,
   useCreateCompany,
@@ -20,6 +19,51 @@ import {
   useUploadCompanyLogo,
 } from '@/hooks/useAdmin';
 import type { Company, CreateCompanyDto, UpdateCompanyDto } from '@/types/admin';
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-2xl rounded-md bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#e0e6eb] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#0a2540]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="max-h-[75vh] overflow-y-auto px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 type FormState = CreateCompanyDto & { isActive?: boolean };
 
@@ -132,10 +176,10 @@ export default function CompanyManagementPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t('admin.companies.title')}</h1>
           <p className="text-sm text-gray-500">{t('admin.companies.subtitle')}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="mr-2 h-4 w-4" />
+        <button className="btn-primary" onClick={openCreate}>
+          <Plus className="h-4 w-4" />
           {t('admin.companies.addCompany')}
-        </Button>
+        </button>
       </div>
 
       {/* Company cards */}
@@ -145,10 +189,10 @@ export default function CompanyManagementPage() {
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 py-16">
           <Building2 className="mb-3 h-10 w-10 text-gray-300" />
           <p className="text-sm text-gray-500">{t('admin.companies.empty')}</p>
-          <Button onClick={openCreate} className="mt-4" variant="ghost">
-            <Plus className="mr-2 h-4 w-4" />
+          <button className="btn-secondary mt-4" onClick={openCreate}>
+            <Plus className="h-4 w-4" />
             {t('admin.companies.addCompany')}
-          </Button>
+          </button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -180,9 +224,15 @@ export default function CompanyManagementPage() {
                   <h3 className="truncate text-sm font-semibold text-gray-900">{c.name}</h3>
                   <div className="mt-0.5 flex items-center gap-2">
                     <span className="text-xs font-mono text-gray-500">{c.code}</span>
-                    <Badge variant={c.isActive ? 'success' : 'outline'} className="text-[10px]">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        c.isActive
+                          ? 'bg-[#dcfce7] text-[#166534]'
+                          : 'border border-zinc-300 text-zinc-600'
+                      }`}
+                    >
                       {c.isActive ? t('admin.companies.active') : t('admin.companies.inactive')}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -226,67 +276,90 @@ export default function CompanyManagementPage() {
       )}
 
       {/* Create / Edit Modal */}
-      <Modal
+      <ModalShell
         open={showModal}
         onClose={() => setShowModal(false)}
         title={editCompany ? t('admin.companies.editCompany') : t('admin.companies.addCompany')}
-        size="lg"
       >
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label={t('admin.companies.name')}
-              value={form.name}
-              onChange={(e) => set('name', e.target.value)}
-              required
-            />
-            <Input
-              label={t('admin.companies.code')}
-              value={form.code}
-              onChange={(e) => set('code', e.target.value.toUpperCase())}
-              placeholder="SOC-01"
-              disabled={!!editCompany}
-              required
+            <div>
+              <label className="label">{t('admin.companies.name')}</label>
+              <input
+                className="input"
+                value={form.name}
+                onChange={(e) => set('name', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="label">{t('admin.companies.code')}</label>
+              <input
+                className="input"
+                value={form.code}
+                onChange={(e) => set('code', e.target.value.toUpperCase())}
+                placeholder="SOC-01"
+                disabled={!!editCompany}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="label">{t('admin.companies.address')}</label>
+            <input
+              className="input"
+              value={form.address || ''}
+              onChange={(e) => set('address', e.target.value)}
             />
           </div>
 
-          <Input
-            label={t('admin.companies.address')}
-            value={form.address || ''}
-            onChange={(e) => set('address', e.target.value)}
-          />
-
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label={t('admin.companies.phone')}
-              value={form.phone || ''}
-              onChange={(e) => set('phone', e.target.value)}
-            />
-            <Input
-              label={t('admin.companies.email')}
-              type="email"
-              value={form.email || ''}
-              onChange={(e) => set('email', e.target.value)}
-            />
+            <div>
+              <label className="label">{t('admin.companies.phone')}</label>
+              <input
+                className="input"
+                value={form.phone || ''}
+                onChange={(e) => set('phone', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">{t('admin.companies.email')}</label>
+              <input
+                className="input"
+                type="email"
+                value={form.email || ''}
+                onChange={(e) => set('email', e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Input
-              label={t('admin.companies.taxId')}
-              value={form.taxId || ''}
-              onChange={(e) => set('taxId', e.target.value)}
-            />
-            <Input
-              label={t('admin.companies.tradeRegister')}
-              value={form.tradeRegister || ''}
-              onChange={(e) => set('tradeRegister', e.target.value)}
-            />
-            <Input
-              label={t('admin.companies.currency')}
-              value={form.currency || 'XOF'}
-              onChange={(e) => set('currency', e.target.value.toUpperCase())}
-              maxLength={3}
-            />
+            <div>
+              <label className="label">{t('admin.companies.taxId')}</label>
+              <input
+                className="input"
+                value={form.taxId || ''}
+                onChange={(e) => set('taxId', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">{t('admin.companies.tradeRegister')}</label>
+              <input
+                className="input"
+                value={form.tradeRegister || ''}
+                onChange={(e) => set('tradeRegister', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">{t('admin.companies.currency')}</label>
+              <input
+                className="input"
+                value={form.currency || 'XOF'}
+                onChange={(e) => set('currency', e.target.value.toUpperCase())}
+                maxLength={3}
+              />
+            </div>
           </div>
 
           {editCompany && (
@@ -349,15 +422,14 @@ export default function CompanyManagementPage() {
                     }
                   }}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
+                  className="btn-secondary px-3 py-1.5 text-xs"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Upload className="mr-1.5 h-3.5 w-3.5" />
+                  <Upload className="h-3.5 w-3.5" />
                   {logoPreview ? 'Changer le logo' : 'Charger un logo'}
-                </Button>
+                </button>
                 <p className="mt-1 text-xs text-gray-400">PNG, JPEG, WebP ou SVG — max 2 Mo</p>
               </div>
             </div>
@@ -370,19 +442,22 @@ export default function CompanyManagementPage() {
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowModal(false)}>
+            <button className="btn-secondary" onClick={() => setShowModal(false)}>
               {t('common.cancel')}
-            </Button>
-            <Button
+            </button>
+            <button
+              className="btn-primary disabled:opacity-50"
               onClick={handleSubmit}
-              disabled={!form.name || !form.code}
-              loading={createCompany.isPending || updateCompany.isPending}
+              disabled={!form.name || !form.code || createCompany.isPending || updateCompany.isPending}
             >
+              {(createCompany.isPending || updateCompany.isPending) && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               {editCompany ? t('common.save') : t('common.create')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
     </div>
   );
 }

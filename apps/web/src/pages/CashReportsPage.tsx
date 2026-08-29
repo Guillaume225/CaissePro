@@ -11,7 +11,6 @@ import {
   ChevronDown,
   CheckCircle2,
 } from 'lucide-react';
-import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import {
   useClosingHistory,
   useCashDayDetail,
@@ -980,11 +979,11 @@ export default function CashReportsPage() {
         </div>
 
         {/* Cash day selector */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('cashReports.selectCashDay')}</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+            {t('cashReports.selectCashDay')}
+          </h3>
+          <div>
             <div className="relative max-w-md" ref={dropdownRef}>
               <button
                 type="button"
@@ -1041,12 +1040,15 @@ export default function CashReportsPage() {
                               {new Date(day.closedAt || day.openedAt).toLocaleDateString('fr-FR')}
                             </span>
                             {day.status !== 'CLOSED' && (
-                              <Badge
-                                variant={day.status === 'OPEN' ? 'info' : 'warning'}
-                                className="ml-2 text-[10px] px-1.5 py-0"
+                              <span
+                                className={`ml-2 rounded-full px-1.5 py-0 text-[10px] font-medium ${
+                                  day.status === 'OPEN'
+                                    ? 'bg-[#eff6ff] text-[#1e40af]'
+                                    : 'bg-amber-50 text-amber-800'
+                                }`}
                               >
                                 {day.status === 'OPEN' ? 'En cours' : 'En attente'}
-                              </Badge>
+                              </span>
                             )}
                           </button>
                         </li>
@@ -1056,8 +1058,8 @@ export default function CashReportsPage() {
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Report selector + content */}
         {selectedCashDayId && dayDetail && opsData && (
@@ -1093,20 +1095,18 @@ export default function CashReportsPage() {
 
             {/* Cash counting form (only for "comptage" tab) */}
             {activeReport === 'comptage' && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">
-                      {t('cashReports.comptage.formTitle')}
-                    </CardTitle>
-                    {!isDayOpen && (
-                      <Badge variant="default" className="text-xs">
-                        Lecture seule — journée clôturée
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
+              <div className="card">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-[#0a2540]">
+                    {t('cashReports.comptage.formTitle')}
+                  </h3>
+                  {!isDayOpen && (
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                      Lecture seule — journée clôturée
+                    </span>
+                  )}
+                </div>
+                <div>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                       {DENOMINATIONS.map((d) => (
@@ -1184,27 +1184,29 @@ export default function CashReportsPage() {
                       </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {/* Print button */}
             <div className="flex justify-end">
-              <Button onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" />
+              <button className="btn-primary" onClick={handlePrint}>
+                <Printer className="h-4 w-4" />
                 {t('cashReports.print')}
-              </Button>
+              </button>
             </div>
 
             {/* Report preview */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{t('cashReports.preview')}</CardTitle>
-                  <Badge variant="info">{reports.find((r) => r.id === activeReport)?.label}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
+            <div className="card">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-base font-semibold text-[#0a2540]">
+                  {t('cashReports.preview')}
+                </h3>
+                <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-xs font-medium text-[#1e40af]">
+                  {reports.find((r) => r.id === activeReport)?.label}
+                </span>
+              </div>
+              <div>
                 <div ref={printRef} className="rounded border bg-white p-6">
                   {activeReport === 'journal' && (
                     <JournalDeCaisse
@@ -1263,8 +1265,8 @@ export default function CashReportsPage() {
                     />
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </>
         )}
       </div>

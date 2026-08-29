@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Query, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Query, Body } from '@nestjs/common';
 import {
   FneSettingsService,
   CreateFneSettingDto,
@@ -20,10 +20,25 @@ export class FneSettingsController {
     return this.service.findByCompany(tenantId, companyId);
   }
 
+  @Get('active')
+  @Permissions(FNE_PERMISSIONS.READ)
+  findActive(@CurrentUser('tenantId') tenantId: string) {
+    return this.service.findActive(tenantId);
+  }
+
   @Post()
   @Permissions(FNE_PERMISSIONS.CREATE)
   upsert(@CurrentUser('tenantId') tenantId: string, @Body() dto: CreateFneSettingDto) {
     return this.service.upsert(tenantId, dto);
+  }
+
+  @Patch('credit-note-sense')
+  @Permissions(FNE_PERMISSIONS.CREATE)
+  updateCreditNoteSense(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body('enabled') enabled: boolean,
+  ) {
+    return this.service.updateCreditNoteSense(tenantId, enabled);
   }
 
   @Put()

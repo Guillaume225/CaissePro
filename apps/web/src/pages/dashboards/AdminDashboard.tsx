@@ -14,7 +14,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Users, UserCheck, Shield, ClipboardList, ArrowRight } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, Stat, Badge } from '@/components/ui';
 import {
   useAdminDashKpis,
   useRecentAuditLogs,
@@ -30,16 +29,16 @@ const TOOLTIP_STYLE = {
   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
 };
 
-const ACTION_VARIANTS: Record<string, 'success' | 'warning' | 'destructive' | 'default'> = {
-  CREATE: 'success',
-  UPDATE: 'warning',
-  DELETE: 'destructive',
-  LOGIN: 'default',
-  APPROVE: 'success',
-  REJECT: 'destructive',
-  SUBMIT: 'warning',
-  EXPORT: 'default',
-  PAY: 'success',
+const ACTION_CLASSES: Record<string, string> = {
+  CREATE: 'bg-[#dcfce7] text-[#166534]',
+  UPDATE: 'bg-amber-50 text-amber-800',
+  DELETE: 'bg-[#fee2e2] text-[#991b1b]',
+  LOGIN: 'bg-[#eff6ff] text-[#1e40af]',
+  APPROVE: 'bg-[#dcfce7] text-[#166534]',
+  REJECT: 'bg-[#fee2e2] text-[#991b1b]',
+  SUBMIT: 'bg-amber-50 text-amber-800',
+  EXPORT: 'bg-[#eff6ff] text-[#1e40af]',
+  PAY: 'bg-[#dcfce7] text-[#166534]',
 };
 
 function timeAgo(iso: string): string {
@@ -72,22 +71,22 @@ export default function AdminDashboard() {
 
       {/* ═══ KPI Cards ══════════════════════════ */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
+        <StatTile
           label={t('dashboards.admin.totalUsers')}
           value={kpis?.totalUsers?.toString() ?? '—'}
           icon={<Users className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('dashboards.admin.activeUsers')}
           value={kpis?.activeUsers?.toString() ?? '—'}
           icon={<UserCheck className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('dashboards.admin.totalRoles')}
           value={kpis?.totalRoles?.toString() ?? '—'}
           icon={<Shield className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('dashboards.admin.auditEventsToday')}
           value={kpis?.auditEventsToday?.toString() ?? '—'}
           icon={<ClipboardList className="h-5 w-5" />}
@@ -97,11 +96,11 @@ export default function AdminDashboard() {
       {/* ═══ Charts Section ═════════════════════ */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ── Bar: Hourly activity ──────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboards.admin.hourlyActivity')}</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+            {t('dashboards.admin.hourlyActivity')}
+          </h3>
+          <div>
             {hourlyActivity.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <BarChart data={hourlyActivity}>
@@ -132,15 +131,15 @@ export default function AdminDashboard() {
             ) : (
               <EmptyChart />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ── Pie: Role distribution ─────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboards.admin.roleDistribution')}</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+            {t('dashboards.admin.roleDistribution')}
+          </h3>
+          <div>
             {roleDistrib.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <PieChart>
@@ -172,25 +171,25 @@ export default function AdminDashboard() {
             ) : (
               <EmptyChart />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* ═══ Recent Audit Logs ════════════════════ */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+      <div className="card">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-base font-semibold text-[#0a2540]">
             <ClipboardList className="h-5 w-5 text-emerald-500" />
             {t('dashboards.admin.recentAuditLogs')}
-          </CardTitle>
+          </h3>
           <button
             onClick={() => navigate('/admin/audit')}
             className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700"
           >
             {t('dashboards.admin.viewAll')} <ArrowRight className="h-4 w-4" />
           </button>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div>
           {recentLogs.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -207,12 +206,11 @@ export default function AdminDashboard() {
                     <tr key={log.id} className="border-b border-gray-50 last:border-0">
                       <td className="py-2.5 font-medium text-gray-700">{log.userName}</td>
                       <td className="py-2.5">
-                        <Badge
-                          variant={ACTION_VARIANTS[log.action] ?? 'default'}
-                          className="text-[10px]"
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${ACTION_CLASSES[log.action] ?? 'bg-[#eff6ff] text-[#1e40af]'}`}
                         >
                           {log.action}
-                        </Badge>
+                        </span>
                       </td>
                       <td className="py-2.5 text-gray-500 max-w-[300px] truncate">
                         {log.description}
@@ -228,8 +226,30 @@ export default function AdminDashboard() {
           ) : (
             <EmptyChart />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="card flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-[#697386]">{label}</p>
+        <p className="mt-1 text-2xl font-bold text-[#0a2540]">{value}</p>
+      </div>
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold/10 text-brand-gold">
+        {icon}
+      </div>
     </div>
   );
 }

@@ -32,3 +32,29 @@ export function useUpsertFneSetting() {
     },
   });
 }
+
+/** The first active FNE setting — same lookup used when generating accounting entries. */
+export function useActiveFneSetting() {
+  return useQuery({
+    queryKey: [...FNE_SETTINGS_KEYS.all, 'active'],
+    queryFn: async () => {
+      const { data } = await api.get<FneSettingRecord | null>('/fne-settings/active');
+      return data;
+    },
+  });
+}
+
+export function useUpdateCreditNoteSense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const { data } = await api.patch<FneSettingRecord>('/fne-settings/credit-note-sense', {
+        enabled,
+      });
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: FNE_SETTINGS_KEYS.all });
+    },
+  });
+}

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ShieldCheck,
@@ -9,11 +9,56 @@ import {
   AlertTriangle,
   Loader2,
   KeyRound,
+  X,
 } from 'lucide-react';
-import { Button, Modal, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMfaSetup, useMfaVerify, useMfaDisable } from '@/hooks/useAdmin';
 import api from '@/lib/api';
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-md bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#e0e6eb] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#0a2540]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function SecurityPage() {
   const { t } = useTranslation();
@@ -170,9 +215,13 @@ export default function SecurityPage() {
             <div>
               <div className="flex items-center gap-3">
                 <h3 className="text-lg font-semibold text-gray-900">{t('security.mfa.title')}</h3>
-                <Badge variant={mfaEnabled ? 'success' : 'warning'}>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    mfaEnabled ? 'bg-[#dcfce7] text-[#166534]' : 'bg-amber-50 text-amber-800'
+                  }`}
+                >
                   {mfaEnabled ? t('security.mfa.enabled') : t('security.mfa.disabled')}
-                </Badge>
+                </span>
               </div>
               <p className="mt-1 text-sm text-gray-500">{t('security.mfa.description')}</p>
             </div>
@@ -216,19 +265,19 @@ export default function SecurityPage() {
         {/* Action button */}
         <div className="mt-6">
           {mfaEnabled ? (
-            <Button variant="outline" onClick={() => setShowDisableModal(true)}>
-              <Shield className="mr-2 h-4 w-4" />
+            <button className="btn-secondary" onClick={() => setShowDisableModal(true)}>
+              <Shield className="h-4 w-4" />
               {t('security.mfa.disableButton')}
-            </Button>
+            </button>
           ) : (
-            <Button onClick={startSetup} disabled={mfaSetup.isPending}>
+            <button className="btn-primary disabled:opacity-50" onClick={startSetup} disabled={mfaSetup.isPending}>
               {mfaSetup.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <ShieldCheck className="mr-2 h-4 w-4" />
+                <ShieldCheck className="h-4 w-4" />
               )}
               {t('security.mfa.enableButton')}
-            </Button>
+            </button>
           )}
         </div>
       </div>
@@ -259,13 +308,12 @@ export default function SecurityPage() {
       </div>
 
       {/* ── Setup Modal ─────────────────────────────────── */}
-      <Modal
+      <ModalShell
         open={showSetupModal}
         onClose={() => {
           if (setupStep !== 'verify') setShowSetupModal(false);
         }}
         title={t('security.mfa.setupTitle')}
-        size="md"
       >
         {setupStep === 'qr' && qrData && (
           <div className="space-y-5">
@@ -302,15 +350,15 @@ export default function SecurityPage() {
               </div>
             </div>
 
-            <Button
-              className="w-full"
+            <button
+              className="btn-primary w-full"
               onClick={() => {
                 setSetupStep('verify');
                 setTimeout(() => inputRefs.current[0]?.focus(), 100);
               }}
             >
               {t('security.mfa.continueToVerify')}
-            </Button>
+            </button>
           </div>
         )}
 
@@ -346,18 +394,18 @@ export default function SecurityPage() {
               )}
             </div>
 
-            <Button
-              className="w-full"
+            <button
+              className="btn-primary w-full disabled:opacity-50"
               onClick={handleVerify}
               disabled={verifyCode.join('').length !== 6 || mfaVerify.isPending}
             >
               {mfaVerify.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <ShieldCheck className="mr-2 h-4 w-4" />
+                <ShieldCheck className="h-4 w-4" />
               )}
               {t('security.mfa.activateButton')}
-            </Button>
+            </button>
           </div>
         )}
 
@@ -372,19 +420,18 @@ export default function SecurityPage() {
               </h3>
               <p className="mt-1 text-sm text-gray-500">{t('security.mfa.successDesc')}</p>
             </div>
-            <Button className="w-full" onClick={() => setShowSetupModal(false)}>
+            <button className="btn-primary w-full" onClick={() => setShowSetupModal(false)}>
               {t('common.close')}
-            </Button>
+            </button>
           </div>
         )}
-      </Modal>
+      </ModalShell>
 
       {/* ── Disable Confirmation Modal ──────────────────── */}
-      <Modal
+      <ModalShell
         open={showDisableModal}
         onClose={() => setShowDisableModal(false)}
         title={t('security.mfa.disableTitle')}
-        size="sm"
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-lg bg-red-50 p-4">
@@ -393,21 +440,23 @@ export default function SecurityPage() {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => setShowDisableModal(false)}>
+            <button
+              className="btn-secondary flex-1"
+              onClick={() => setShowDisableModal(false)}
+            >
               {t('common.cancel')}
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1"
+            </button>
+            <button
+              className="btn-primary flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50"
               onClick={handleDisable}
               disabled={mfaDisable.isPending}
             >
-              {mfaDisable.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {mfaDisable.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {t('security.mfa.confirmDisable')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
     </div>
   );
 }

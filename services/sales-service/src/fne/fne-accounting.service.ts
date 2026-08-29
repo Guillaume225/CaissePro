@@ -46,7 +46,9 @@ export class FneAccountingService {
    *   2. Crédit Ventes (701xxx) = HT
    *   3. Crédit TVA (443xxx)    = TVA (if > 0)
    *
-   * For credit notes, debits/credits are reversed.
+   * For credit notes, debits/credits are reversed by default. If the active
+   * FNE setting has creditNoteSameSense enabled, credit notes instead keep the
+   * same debit/credit column as the original invoice, with a negative amount.
    */
   async generate(
     tenantId: string,
@@ -71,6 +73,7 @@ export class FneAccountingService {
     const setting = await settingRepo.findOne({ where: { isActive: true } });
     const journalSales = setting?.journalSales ?? DEFAULT_JOURNAL_SALES;
     const journalCash = setting?.journalCash ?? DEFAULT_JOURNAL_CASH;
+    const creditNoteSameSense = setting?.creditNoteSameSense ?? false;
 
     const invoices = await invoiceRepo.find({
       where: { id: In(dto.invoiceIds) },
@@ -181,7 +184,8 @@ export class FneAccountingService {
       const ttc = Number(invoice.totalTtc) || totalHt + totalVat;
       const entries: Partial<FneAccountingEntry>[] = [];
 
-      // Line 1: Débit Client = TTC (or Crédit for credit note)
+      // Line 1: Débit Client = TTC (or Crédit for credit note, unless same-sense mode)
+      const clientAmounts = this.creditNoteAmounts(ttc, 0, isCreditNote, creditNoteSameSense);
       entries.push({
         invoiceId: invoice.id,
         invoiceReference: ref,
@@ -189,15 +193,16 @@ export class FneAccountingService {
         entryDate,
         accountNumber: clientAccount,
         accountLabel: clientLabel,
-        debit: isCreditNote ? 0 : ttc,
-        credit: isCreditNote ? ttc : 0,
+        debit: clientAmounts.debit,
+        credit: clientAmounts.credit,
         label: `${isCreditNote ? 'Avoir' : 'Facture'} ${ref} – ${invoice.clientCompanyName}`,
         operationType: opType,
         createdBy: userId,
       });
 
-      // Line 2+: Crédit Ventes HT (grouped by account) — or Débit for credit note
+      // Line 2+: Crédit Ventes HT (grouped by account) — or Débit for credit note, unless same-sense mode
       for (const pe of productEntries) {
+        const amounts = this.creditNoteAmounts(0, pe.amount, isCreditNote, creditNoteSameSense);
         entries.push({
           invoiceId: invoice.id,
           invoiceReference: ref,
@@ -205,16 +210,17 @@ export class FneAccountingService {
           entryDate,
           accountNumber: pe.account,
           accountLabel: pe.label,
-          debit: isCreditNote ? pe.amount : 0,
-          credit: isCreditNote ? 0 : pe.amount,
+          debit: amounts.debit,
+          credit: amounts.credit,
           label: `${isCreditNote ? 'Avoir' : 'Facture'} ${ref} – Vente HT`,
           operationType: opType,
           createdBy: userId,
         });
       }
 
-      // Line 3+: Crédit TVA (if any) — or Débit for credit note
+      // Line 3+: Crédit TVA (if any) — or Débit for credit note, unless same-sense mode
       for (const ve of vatEntries) {
+        const amounts = this.creditNoteAmounts(0, ve.amount, isCreditNote, creditNoteSameSense);
         entries.push({
           invoiceId: invoice.id,
           invoiceReference: ref,
@@ -222,8 +228,8 @@ export class FneAccountingService {
           entryDate,
           accountNumber: ve.account,
           accountLabel: ve.label,
-          debit: isCreditNote ? ve.amount : 0,
-          credit: isCreditNote ? 0 : ve.amount,
+          debit: amounts.debit,
+          credit: amounts.credit,
           label: `${isCreditNote ? 'Avoir' : 'Facture'} ${ref} – ${ve.label}`,
           operationType: opType,
           createdBy: userId,
@@ -258,23 +264,124 @@ export class FneAccountingService {
     return { generated, skipped: skipped.length, errors };
   }
 
-  /** Delete all entries for an invoice (reversal) */
-  async deleteByInvoice(tenantId: string, invoiceId: string): Promise<void> {
-    const ds = await this.tenantDsService.getDataSource(tenantId);
-    const entryRepo = ds.getRepository(FneAccountingEntry);
-    const exists = await entryRepo.findOneBy({ invoiceId });
-    if (!exists) throw new NotFoundException('Aucune écriture pour cette facture');
-    await entryRepo.delete({ invoiceId });
+  /**
+   * Resolve the debit/credit for a line given its normal (sale) amounts.
+   * - Sale: unchanged.
+   * - Credit note, default: debit and credit swapped.
+   * - Credit note, same-sense: same column as the sale, amount negated.
+   */
+  private creditNoteAmounts(
+    normalDebit: number,
+    normalCredit: number,
+    isCreditNote: boolean,
+    sameSense: boolean,
+  ): { debit: number; credit: number } {
+    if (!isCreditNote) return { debit: normalDebit, credit: normalCredit };
+    if (sameSense) {
+      return {
+        debit: normalDebit ? -normalDebit : 0,
+        credit: normalCredit ? -normalCredit : 0,
+      };
+    }
+    return { debit: normalCredit, credit: normalDebit };
   }
 
-  /** Delete all accounting entries */
-  async deleteAll(tenantId: string): Promise<{ deleted: number }> {
+  /**
+   * Delete the (un-generated-to-ERP) entries for an invoice.
+   * Entries already posted to Sage are never deleted — use reverseAllPosted
+   * to cancel them via a proper accounting contre-passation instead.
+   */
+  async deleteByInvoice(
+    tenantId: string,
+    invoiceId: string,
+  ): Promise<{ deleted: number; protected: number }> {
     const ds = await this.tenantDsService.getDataSource(tenantId);
     const entryRepo = ds.getRepository(FneAccountingEntry);
-    const count = await entryRepo.count();
-    if (count === 0) throw new NotFoundException('Aucune écriture à supprimer');
-    await entryRepo.clear();
-    return { deleted: count };
+    const all = await entryRepo.find({ where: { invoiceId } });
+    if (!all.length) throw new NotFoundException('Aucune écriture pour cette facture');
+
+    const deletable = all.filter((e) => !e.erpPosted);
+    const protectedCount = all.length - deletable.length;
+    if (deletable.length) {
+      await entryRepo.delete({ id: In(deletable.map((e) => e.id)) });
+    }
+    return { deleted: deletable.length, protected: protectedCount };
+  }
+
+  /**
+   * Delete all non-posted accounting entries.
+   * Entries already posted to Sage are never deleted — use reverseAllPosted
+   * to cancel them via a proper accounting contre-passation instead.
+   */
+  async deleteAll(tenantId: string): Promise<{ deleted: number; protected: number }> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const entryRepo = ds.getRepository(FneAccountingEntry);
+    const total = await entryRepo.count();
+    if (total === 0) throw new NotFoundException('Aucune écriture à supprimer');
+
+    const protectedCount = await entryRepo.count({ where: { erpPosted: true } });
+    const deleted = total - protectedCount;
+    if (deleted === 0) {
+      throw new BadRequestException(
+        'Toutes les écritures ont déjà été envoyées à Sage — utilisez la contre-passation pour les annuler.',
+      );
+    }
+    await entryRepo.delete({ erpPosted: false });
+    return { deleted, protected: protectedCount };
+  }
+
+  /** Count of posted entries that can still be reversed (not already reversed). */
+  async countReversible(tenantId: string): Promise<{ count: number }> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const entryRepo = ds.getRepository(FneAccountingEntry);
+    const count = await entryRepo.count({ where: { erpPosted: true, reversed: false } });
+    return { count };
+  }
+
+  /**
+   * Cancel entries already posted to Sage via a proper accounting contre-passation:
+   * generates new entries with debit/credit swapped (same account, opposite sense)
+   * instead of deleting the originals. The reversal entries themselves are NOT
+   * posted to Sage yet — post them via the normal "Comptabiliser dans Sage" action.
+   */
+  async reverseAllPosted(
+    tenantId: string,
+    userId: string,
+  ): Promise<{ reversed: number; invoicesAffected: number }> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const entryRepo = ds.getRepository(FneAccountingEntry);
+
+    const toReverse = await entryRepo.find({ where: { erpPosted: true, reversed: false } });
+    if (!toReverse.length) {
+      throw new NotFoundException('Aucune écriture envoyée à Sage à contre-passer');
+    }
+
+    const now = new Date();
+    const reversalEntries = toReverse.map((original) =>
+      entryRepo.create({
+        invoiceId: original.invoiceId,
+        invoiceReference: original.invoiceReference,
+        journalCode: original.journalCode,
+        entryDate: now,
+        accountNumber: original.accountNumber,
+        accountLabel: original.accountLabel,
+        debit: original.credit,
+        credit: original.debit,
+        label: `Contre-passation – ${original.label}`,
+        operationType: 'REVERSAL',
+        createdBy: userId,
+        reversalOfEntryId: original.id,
+      }),
+    );
+    await entryRepo.save(reversalEntries);
+
+    await entryRepo.update(
+      { id: In(toReverse.map((e) => e.id)) },
+      { reversed: true, reversedAt: now },
+    );
+
+    const invoicesAffected = new Set(toReverse.map((e) => e.invoiceId)).size;
+    return { reversed: reversalEntries.length, invoicesAffected };
   }
 
   /** List entries with pagination + filters */

@@ -14,17 +14,19 @@ import {
   CheckCircle2,
   Trash2,
   Send,
+  Undo2,
 } from 'lucide-react';
-import { Button, Card, Badge } from '@/components/ui';
 import {
   useFneAccountingEntries,
   useGenerateFneAccounting,
   useDeleteAllFneAccounting,
+  useReversibleFneAccountingCount,
+  useReverseFneAccounting,
 } from '@/hooks/useFneAccounting';
 import { useFneInvoices } from '@/hooks/useFneInvoices';
+import { useActiveFneSetting, useUpdateCreditNoteSense } from '@/hooks/useFneSettings';
 import { usePostAllToErp } from '@/hooks/useErpSettings';
 import { formatCFA, formatDate } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import type { GenerateEntriesResult } from '@/types/fne';
 
 export default function FneAccountingPage() {
@@ -61,32 +63,64 @@ export default function FneAccountingPage() {
   const generateMutation = useGenerateFneAccounting();
   const deleteAllMutation = useDeleteAllFneAccounting();
   const postAllToErp = usePostAllToErp();
+  const { data: reversibleData } = useReversibleFneAccountingCount();
+  const reverseMutation = useReverseFneAccounting();
+  const reversibleCount = reversibleData?.count ?? 0;
+
+  /* ── Credit-note sense setting ── */
+  const { data: activeFneSetting } = useActiveFneSetting();
+  const updateCreditNoteSense = useUpdateCreditNoteSense();
+  const creditNoteSameSense = activeFneSetting?.creditNoteSameSense ?? false;
 
   /* ── ERP post state ── */
-  const [erpResult, setErpResult] = useState<string | null>(null);
+  const [erpResult, setErpResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const handlePostAllToErp = async () => {
     try {
       const res = await postAllToErp.mutateAsync();
-      setErpResult(
-        res.success
-          ? `${res.entriesPosted} écritures envoyées à Sage`
-          : `Erreur: ${res.message}`,
-      );
-      setTimeout(() => setErpResult(null), 5000);
-    } catch {
-      setErpResult('Erreur de connexion ERP');
-      setTimeout(() => setErpResult(null), 5000);
+      setErpResult({
+        success: res.success,
+        message: res.success ? `${res.entriesPosted} écritures envoyées à Sage` : res.message,
+      });
+      if (res.success) setTimeout(() => setErpResult(null), 5000);
+    } catch (err) {
+      const detail =
+        err instanceof Error && 'response' in err
+          ? // Axios error: surface the backend's message if present
+            ((err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+            err.message)
+          : 'Erreur inconnue';
+      setErpResult({ success: false, message: `Erreur de connexion ERP : ${detail}` });
     }
   };
 
   /* ── Cancel dialog ── */
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelResult, setCancelResult] = useState<{
+    deleted: number;
+    protected: number;
+  } | null>(null);
 
   const handleDeleteAll = async () => {
     try {
-      await deleteAllMutation.mutateAsync();
-      setShowCancelDialog(false);
+      const result = await deleteAllMutation.mutateAsync();
+      setCancelResult(result);
+    } catch {
+      // Error shown via toast
+    }
+  };
+
+  /* ── Reverse (contre-passation) dialog ── */
+  const [showReverseDialog, setShowReverseDialog] = useState(false);
+  const [reverseResult, setReverseResult] = useState<{
+    reversed: number;
+    invoicesAffected: number;
+  } | null>(null);
+
+  const handleReverseAll = async () => {
+    try {
+      const result = await reverseMutation.mutateAsync();
+      setReverseResult(result);
     } catch {
       // Error shown via toast
     }
@@ -144,9 +178,6 @@ export default function FneAccountingPage() {
     URL.revokeObjectURL(url);
   };
 
-  const INPUT =
-    'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
-
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -166,46 +197,78 @@ export default function FneAccountingPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport} disabled={!entries.length}>
-            <Download className="mr-2 h-4 w-4" /> Exporter CSV
-          </Button>
-          <Button
-            variant="outline"
+          <button
+            className="btn-secondary disabled:opacity-50"
+            onClick={handleExport}
+            disabled={!entries.length}
+          >
+            <Download className="h-4 w-4" /> Exporter CSV
+          </button>
+          <button
+            className="btn-secondary text-blue-600 border-blue-300 hover:bg-blue-50 disabled:opacity-50"
             onClick={handlePostAllToErp}
             disabled={!entries.length || postAllToErp.isPending}
-            className="text-blue-600 border-blue-300 hover:bg-blue-50"
           >
             {postAllToErp.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="mr-2 h-4 w-4" />
+              <Send className="h-4 w-4" />
             )}
             Comptabiliser dans Sage
-          </Button>
-          {erpResult && (
-            <span className="text-sm font-medium text-blue-600">{erpResult}</span>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => setShowCancelDialog(true)}
+          </button>
+          <button
+            className="btn-secondary text-red-600 border-red-300 hover:bg-red-50 disabled:opacity-50"
+            onClick={() => {
+              setShowCancelDialog(true);
+              setCancelResult(null);
+            }}
             disabled={!entries.length}
-            className="text-red-600 border-red-300 hover:bg-red-50"
           >
-            <Trash2 className="mr-2 h-4 w-4" /> Annuler les écritures
-          </Button>
-          <Button
+            <Trash2 className="h-4 w-4" /> Annuler les écritures
+          </button>
+          <button
+            className="btn-secondary text-amber-700 border-amber-300 hover:bg-amber-50 disabled:opacity-50"
+            onClick={() => {
+              setShowReverseDialog(true);
+              setReverseResult(null);
+            }}
+            disabled={!reversibleCount}
+          >
+            <Undo2 className="h-4 w-4" /> Contre-passer (envoyées à Sage)
+          </button>
+          <button
+            className="btn-primary"
             onClick={() => {
               setShowGenerateDialog(true);
               setGenerateResult(null);
             }}
           >
-            <Play className="mr-2 h-4 w-4" /> Générer les écritures
-          </Button>
+            <Play className="h-4 w-4" /> Générer les écritures
+          </button>
         </div>
       </div>
 
+      {/* ── ERP post result ── */}
+      {erpResult && (
+        <div
+          className={`flex items-start justify-between gap-3 rounded-md border p-3 text-sm ${
+            erpResult.success
+              ? 'border-green-200 bg-[#dcfce7] text-[#166534]'
+              : 'border-red-200 bg-[#fee2e2] text-[#991b1b]'
+          }`}
+        >
+          <p className="whitespace-pre-wrap break-words">{erpResult.message}</p>
+          <button
+            onClick={() => setErpResult(null)}
+            className="shrink-0 rounded-md p-0.5 hover:bg-black/5"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* ── Filters ── */}
-      <Card className="p-4">
+      <div className="card">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -216,7 +279,7 @@ export default function FneAccountingPage() {
                 setPage(1);
               }}
               placeholder="Rechercher par réf. facture..."
-              className={cn(INPUT, 'pl-10')}
+              className="input pl-10"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -228,7 +291,7 @@ export default function FneAccountingPage() {
                 setDateFrom(e.target.value);
                 setPage(1);
               }}
-              className={cn(INPUT, 'max-w-[160px]')}
+              className="input max-w-[160px]"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -240,13 +303,12 @@ export default function FneAccountingPage() {
                 setDateTo(e.target.value);
                 setPage(1);
               }}
-              className={cn(INPUT, 'max-w-[160px]')}
+              className="input max-w-[160px]"
             />
           </div>
           {(searchRef || dateFrom || dateTo) && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
+              className="flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-[#697386] hover:bg-zinc-100"
               onClick={() => {
                 setSearchRef('');
                 setDateFrom('');
@@ -254,14 +316,14 @@ export default function FneAccountingPage() {
                 setPage(1);
               }}
             >
-              <X className="mr-1 h-4 w-4" /> Réinitialiser
-            </Button>
+              <X className="h-4 w-4" /> Réinitialiser
+            </button>
           )}
         </div>
-      </Card>
+      </div>
 
       {/* ── Table ── */}
-      <Card className="overflow-hidden">
+      <div className="card overflow-hidden p-0">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
@@ -296,9 +358,9 @@ export default function FneAccountingPage() {
                 {entries.map((e) => (
                   <tr key={e.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-2.5">
-                      <Badge variant="outline" className="text-xs font-mono">
+                      <span className="rounded-full border border-zinc-300 px-2 py-0.5 font-mono text-xs font-medium text-zinc-600">
                         {e.journalCode}
-                      </Badge>
+                      </span>
                     </td>
                     <td className="px-4 py-2.5 text-gray-700 text-xs">{formatDate(e.entryDate)}</td>
                     <td className="px-4 py-2.5 font-mono text-gray-900 font-medium">
@@ -306,10 +368,10 @@ export default function FneAccountingPage() {
                     </td>
                     <td className="px-4 py-2.5 text-gray-700">{e.accountLabel}</td>
                     <td className="px-4 py-2.5 text-right font-mono text-gray-900">
-                      {Number(e.debit) > 0 ? formatCFA(e.debit) : ''}
+                      {Number(e.debit) !== 0 ? formatCFA(e.debit) : ''}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-gray-900">
-                      {Number(e.credit) > 0 ? formatCFA(e.credit) : ''}
+                      {Number(e.credit) !== 0 ? formatCFA(e.credit) : ''}
                     </td>
                     <td className="px-4 py-2.5 text-gray-600 text-xs max-w-[200px] truncate">
                       {e.label}
@@ -318,22 +380,36 @@ export default function FneAccountingPage() {
                       {e.invoiceReference}
                     </td>
                     <td className="px-4 py-2.5">
-                      <Badge
-                        variant={e.operationType === 'CREDIT_NOTE' ? 'warning' : 'success'}
-                        className="text-xs"
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          e.operationType === 'REVERSAL'
+                            ? 'bg-purple-50 text-purple-700'
+                            : e.operationType === 'CREDIT_NOTE'
+                              ? 'bg-amber-50 text-amber-800'
+                              : 'bg-[#dcfce7] text-[#166534]'
+                        }`}
                       >
-                        {e.operationType === 'CREDIT_NOTE' ? 'Avoir' : 'Vente'}
-                      </Badge>
+                        {e.operationType === 'REVERSAL'
+                          ? 'Contre-passation'
+                          : e.operationType === 'CREDIT_NOTE'
+                            ? 'Avoir'
+                            : 'Vente'}
+                      </span>
                     </td>
                     <td className="px-4 py-2.5">
                       {e.erpPosted ? (
-                        <Badge variant="success" className="text-xs">
-                          <CheckCircle2 className="mr-1 h-3 w-3" /> Envoyé
-                        </Badge>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#dcfce7] px-2 py-0.5 text-xs font-medium text-[#166534]">
+                          <CheckCircle2 className="h-3 w-3" /> Envoyé
+                        </span>
                       ) : (
-                        <Badge variant="outline" className="text-xs text-gray-400">
+                        <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-500">
                           En attente
-                        </Badge>
+                        </span>
+                      )}
+                      {e.reversed && (
+                        <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
+                          <Undo2 className="h-3 w-3" /> Contre-passée
+                        </span>
                       )}
                     </td>
                   </tr>
@@ -356,7 +432,7 @@ export default function FneAccountingPage() {
             )}
           </tbody>
         </table>
-      </Card>
+      </div>
 
       {/* ── Pagination ── */}
       {meta && meta.totalPages > 1 && (
@@ -365,161 +441,311 @@ export default function FneAccountingPage() {
             Page {meta.page} / {meta.totalPages} — {meta.total} écriture{meta.total > 1 ? 's' : ''}
           </span>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
               Précédent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+            <button
+              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
               disabled={page >= meta.totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
               Suivant
-            </Button>
+            </button>
           </div>
         </div>
       )}
 
       {/* ── Generate Dialog ── */}
       {showGenerateDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-md border border-[#e0e6eb] w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e6eb]">
+              <h2 className="text-sm font-semibold text-[#0a2540]">
                 Générer les écritures comptables
               </h2>
               <button
                 onClick={() => setShowGenerateDialog(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="rounded-md p-1 text-[#697386] hover:bg-zinc-100"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            {!generateResult ? (
-              <>
-                <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 mb-5">
-                  <p className="text-sm text-blue-800">
-                    Cette action va générer les écritures comptables (journal <strong>VF</strong>)
-                    pour toutes les factures certifiées qui n'ont pas encore été traitées.
-                  </p>
-                  <p className="text-sm text-blue-700 mt-2">
-                    {loadingInvoices
-                      ? 'Chargement...'
-                      : `${certifiedInvoices.length} facture(s) certifiée(s) trouvée(s).`}
-                  </p>
-                </div>
-                <p className="text-xs text-gray-500 mb-5">
-                  Pour chaque facture : Débit Client (TTC) — Crédit Ventes (HT) — Crédit TVA
-                  collectée (si applicable). Les avoirs inversent les sens débit/crédit.
-                </p>
-                <div className="flex justify-end gap-3">
-                  <Button variant="ghost" onClick={() => setShowGenerateDialog(false)}>
-                    Annuler
-                  </Button>
-                  <Button
-                    onClick={handleGenerateAll}
-                    disabled={generateMutation.isPending || !certifiedInvoices.length}
-                  >
-                    {generateMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Génération...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="mr-2 h-4 w-4" /> Générer
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-3 mb-5">
-                  <div className="flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-                    <p className="text-sm text-green-800">
-                      <strong>{generateResult.generated}</strong> facture(s) traitée(s) avec succès.
+            <div className="p-5">
+              {!generateResult ? (
+                <>
+                  <div className="rounded-md bg-[#eff6ff] p-4 mb-5">
+                    <p className="text-sm text-[#1e40af]">
+                      Cette action va générer les écritures comptables (journal <strong>VF</strong>)
+                      pour toutes les factures certifiées qui n'ont pas encore été traitées.
+                    </p>
+                    <p className="text-sm text-[#1e40af] mt-2">
+                      {loadingInvoices
+                        ? 'Chargement...'
+                        : `${certifiedInvoices.length} facture(s) certifiée(s) trouvée(s).`}
                     </p>
                   </div>
-                  {generateResult.skipped > 0 && (
-                    <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3">
-                      <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
-                      <p className="text-sm text-amber-800">
-                        <strong>{generateResult.skipped}</strong> facture(s) déjà traitée(s)
-                        (ignorées).
+                  <p className="text-xs text-gray-500 mb-3">
+                    Pour chaque facture : Débit Client (TTC) — Crédit Ventes (HT) — Crédit TVA
+                    collectée (si applicable).
+                  </p>
+                  <label className="flex items-start gap-2 rounded-md border border-[#e0e6eb] p-3 mb-5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={creditNoteSameSense}
+                      onChange={(e) => updateCreditNoteSense.mutate(e.target.checked)}
+                      disabled={updateCreditNoteSense.isPending || !activeFneSetting}
+                    />
+                    <span className="text-xs text-gray-600">
+                      <span className="font-medium text-gray-800">
+                        Garder le même sens que la facture d'origine pour les avoirs
+                      </span>
+                      <br />
+                      {creditNoteSameSense
+                        ? 'Activé : les avoirs utilisent les mêmes comptes en débit/crédit que la facture, avec un montant négatif ( - ).'
+                        : "Désactivé : les avoirs inversent les sens débit/crédit (comportement par défaut)."}
+                    </span>
+                  </label>
+                  {!activeFneSetting && (
+                    <p className="text-xs text-amber-600 mb-5">
+                      Configurez d'abord la connexion FNE pour pouvoir modifier ce réglage.
+                    </p>
+                  )}
+                  <div className="flex justify-end gap-3">
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setShowGenerateDialog(false)}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      className="btn-primary disabled:opacity-50"
+                      onClick={handleGenerateAll}
+                      disabled={generateMutation.isPending || !certifiedInvoices.length}
+                    >
+                      {generateMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Génération...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4" /> Générer
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-3 mb-5">
+                    <div className="flex items-center gap-2 rounded-md bg-[#dcfce7] p-3">
+                      <CheckCircle2 className="h-5 w-5 text-[#166534] shrink-0" />
+                      <p className="text-sm text-[#166534]">
+                        <strong>{generateResult.generated}</strong> facture(s) traitée(s) avec
+                        succès.
                       </p>
                     </div>
-                  )}
-                  {generateResult.errors.length > 0 && (
-                    <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-                      <p className="text-sm text-red-800 font-medium mb-1">Erreurs :</p>
-                      <ul className="text-xs text-red-700 space-y-1">
-                        {generateResult.errors.map((err, i) => (
-                          <li key={i}>• {err}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={() => setShowGenerateDialog(false)}>Fermer</Button>
-                </div>
-              </>
-            )}
+                    {generateResult.skipped > 0 && (
+                      <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                        <p className="text-sm text-amber-800">
+                          <strong>{generateResult.skipped}</strong> facture(s) déjà traitée(s)
+                          (ignorées).
+                        </p>
+                      </div>
+                    )}
+                    {generateResult.errors.length > 0 && (
+                      <div className="border-l-2 border-red-400 bg-[#fee2e2] px-3 py-2 rounded-sm">
+                        <p className="text-xs font-medium text-[#991b1b] mb-1">Erreurs :</p>
+                        <ul className="text-xs text-[#991b1b] space-y-1">
+                          {generateResult.errors.map((err, i) => (
+                            <li key={i}>• {err}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <button className="btn-primary" onClick={() => setShowGenerateDialog(false)}>
+                      Fermer
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
       {/* ── Cancel All Dialog ── */}
       {showCancelDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Annuler les écritures comptables
-                </h2>
-                <p className="text-sm text-gray-500">Cette action est irréversible</p>
-              </div>
-            </div>
-
-            <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-5">
-              <p className="text-sm text-red-800">
-                Toutes les écritures comptables générées seront supprimées. Les factures concernées
-                pourront être re-générées ultérieurement.
-              </p>
-              <p className="text-sm text-red-700 mt-2 font-medium">
-                {meta?.total ?? entries.length} écriture(s) seront supprimée(s).
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowCancelDialog(false)}>
-                Annuler
-              </Button>
-              <Button
-                onClick={handleDeleteAll}
-                disabled={deleteAllMutation.isPending}
-                className="bg-red-600 text-white hover:bg-red-700"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-md border border-[#e0e6eb] w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e6eb]">
+              <h2 className="text-sm font-semibold text-[#0a2540]">
+                Annuler les écritures comptables
+              </h2>
+              <button
+                onClick={() => setShowCancelDialog(false)}
+                className="rounded-md p-1 text-[#697386] hover:bg-zinc-100"
               >
-                {deleteAllMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Suppression...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="mr-2 h-4 w-4" /> Confirmer la suppression
-                  </>
-                )}
-              </Button>
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5">
+              {!cancelResult ? (
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                      <Trash2 className="h-5 w-5 text-red-600" />
+                    </div>
+                    <p className="text-sm text-[#697386]">Cette action est irréversible</p>
+                  </div>
+
+                  <div className="border-l-2 border-red-400 bg-[#fee2e2] px-3 py-2 rounded-sm mb-5">
+                    <p className="text-xs text-[#991b1b]">
+                      Les écritures pas encore envoyées à Sage seront supprimées. Les factures
+                      concernées pourront être re-générées ultérieurement.
+                    </p>
+                    <p className="text-xs text-[#991b1b] mt-2">
+                      Les écritures déjà envoyées à Sage ne sont <strong>jamais</strong> supprimées
+                      — utilisez « Contre-passer » pour les annuler.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end gap-3">
+                    <button className="btn-secondary" onClick={() => setShowCancelDialog(false)}>
+                      Annuler
+                    </button>
+                    <button
+                      className="btn-primary bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                      onClick={handleDeleteAll}
+                      disabled={deleteAllMutation.isPending}
+                    >
+                      {deleteAllMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Suppression...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" /> Confirmer la suppression
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-3 mb-5">
+                    <div className="flex items-center gap-2 rounded-md bg-[#dcfce7] p-3">
+                      <CheckCircle2 className="h-5 w-5 text-[#166534] shrink-0" />
+                      <p className="text-sm text-[#166534]">
+                        <strong>{cancelResult.deleted}</strong> écriture(s) supprimée(s).
+                      </p>
+                    </div>
+                    {cancelResult.protected > 0 && (
+                      <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                        <p className="text-sm text-amber-800">
+                          <strong>{cancelResult.protected}</strong> écriture(s) déjà envoyée(s) à
+                          Sage ont été conservée(s).
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      className="btn-primary"
+                      onClick={() => setShowCancelDialog(false)}
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reverse (contre-passation) Dialog ── */}
+      {showReverseDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-md border border-[#e0e6eb] w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e6eb]">
+              <h2 className="text-sm font-semibold text-[#0a2540]">
+                Contre-passer les écritures envoyées à Sage
+              </h2>
+              <button
+                onClick={() => setShowReverseDialog(false)}
+                className="rounded-md p-1 text-[#697386] hover:bg-zinc-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5">
+              {!reverseResult ? (
+                <>
+                  <div className="rounded-md bg-[#eff6ff] p-4 mb-5">
+                    <p className="text-sm text-[#1e40af]">
+                      Pour chaque écriture déjà envoyée à Sage, une écriture de contre-passation
+                      est créée sur le même compte avec le débit et le crédit inversés. L'écriture
+                      d'origine n'est pas supprimée — elle reste tracée comme « Contre-passée ».
+                    </p>
+                    <p className="text-sm text-[#1e40af] mt-2">
+                      Les écritures de contre-passation ne sont pas envoyées à Sage
+                      automatiquement — utilisez « Comptabiliser dans Sage » ensuite.
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-5">
+                    <strong>{reversibleCount}</strong> écriture(s) envoyée(s) à Sage seront
+                    contre-passées.
+                  </p>
+                  <div className="flex justify-end gap-3">
+                    <button className="btn-secondary" onClick={() => setShowReverseDialog(false)}>
+                      Annuler
+                    </button>
+                    <button
+                      className="btn-primary bg-amber-600 hover:bg-amber-700 disabled:opacity-50"
+                      onClick={handleReverseAll}
+                      disabled={reverseMutation.isPending || !reversibleCount}
+                    >
+                      {reverseMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Contre-passation...
+                        </>
+                      ) : (
+                        <>
+                          <Undo2 className="h-4 w-4" /> Confirmer la contre-passation
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-3 mb-5">
+                    <div className="flex items-center gap-2 rounded-md bg-[#dcfce7] p-3">
+                      <CheckCircle2 className="h-5 w-5 text-[#166534] shrink-0" />
+                      <p className="text-sm text-[#166534]">
+                        <strong>{reverseResult.reversed}</strong> écriture(s) contre-passée(s) sur{' '}
+                        <strong>{reverseResult.invoicesAffected}</strong> facture(s).
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button className="btn-primary" onClick={() => setShowReverseDialog(false)}>
+                      Fermer
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

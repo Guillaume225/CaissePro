@@ -59,7 +59,36 @@ export function useDeleteAllFneAccounting() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { data } = await api.delete<{ deleted: number }>('/fne-accounting');
+      const { data } = await api.delete<{ deleted: number; protected: number }>(
+        '/fne-accounting',
+      );
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK] });
+    },
+  });
+}
+
+/** Count of Sage-posted entries that can still be reversed (contre-passation). */
+export function useReversibleFneAccountingCount() {
+  return useQuery({
+    queryKey: [QK, 'reversible-count'],
+    queryFn: async () => {
+      const { data } = await api.get<{ count: number }>('/fne-accounting/reversible-count');
+      return data;
+    },
+  });
+}
+
+/** Cancel all Sage-posted entries via a contre-passation (reversal entries), not deletion. */
+export function useReverseFneAccounting() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<{ reversed: number; invoicesAffected: number }>(
+        '/fne-accounting/reverse',
+      );
       return data;
     },
     onSuccess: () => {

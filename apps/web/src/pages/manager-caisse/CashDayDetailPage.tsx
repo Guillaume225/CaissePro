@@ -1,4 +1,4 @@
-import { useMemo, useState, Fragment } from 'react';
+import { useMemo, useState, Fragment, type ReactNode } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -13,6 +13,9 @@ import {
   Banknote,
   ChevronRight,
   ChevronDown,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   Search,
   X,
   Eye,
@@ -23,8 +26,7 @@ import {
   LockKeyhole,
   AlertTriangle,
 } from 'lucide-react';
-import { Badge, Button, Input, Card, CardContent, Stat, DataTable, Modal } from '@/components/ui';
-import type { Column } from '@/components/ui/DataTable';
+import { cn } from '@/lib/utils';
 import {
   useCashDayDetail,
   useCashDayOperations,
@@ -35,6 +37,90 @@ import {
 import { useExpense } from '@/hooks/useExpenses';
 
 type AnyRow = Record<string, unknown>;
+type BadgeVariant = 'success' | 'destructive' | 'warning' | 'info' | 'outline' | 'default';
+
+const BADGE_CLASSES: Record<BadgeVariant, string> = {
+  success: 'bg-[#dcfce7] text-[#166534]',
+  destructive: 'bg-[#fee2e2] text-[#991b1b]',
+  warning: 'bg-amber-50 text-amber-800',
+  info: 'bg-[#eff6ff] text-[#1e40af]',
+  outline: 'border border-gray-300 text-gray-600',
+  default: 'bg-brand-gold/10 text-brand-gold',
+};
+
+function Badge({
+  variant = 'default',
+  className,
+  children,
+}: {
+  variant?: BadgeVariant;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+        BADGE_CLASSES[variant],
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+interface Column<T> {
+  key: string;
+  header: string;
+  render?: (row: T) => ReactNode;
+  className?: string;
+}
+
+function StatTile({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
+  return (
+    <div className="card flex items-center gap-3 py-4">
+      <div className="text-brand-gold">{icon}</div>
+      <div>
+        <p className="text-xs text-[#697386]">{label}</p>
+        <p className="text-lg font-semibold text-[#0a2540]">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  children: ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-xl bg-white shadow-2xl">
+        {title && (
+          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <div className="px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
 
@@ -201,6 +287,9 @@ export default function CashDayDetailPage() {
     setFilterDirection('ALL');
   };
 
+  // ── Movements table pagination ─────────────────────────
+  const [mvPage, setMvPage] = useState(0);
+
   // ── Expense detail popup ───────────────────────────────
   const [selectedExpense, setSelectedExpense] = useState<CashDayExpense | null>(null);
   const { data: fullExpense, isLoading: expenseLoading } = useExpense(selectedExpense?.id ?? '');
@@ -333,8 +422,8 @@ export default function CashDayDetailPage() {
           </p>
         </div>
         {day.status === 'PENDING_CLOSE' && (
-          <Button
-            variant="destructive"
+          <button
+            className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-600"
             onClick={() => {
               setCloseError(null);
               setShowCloseModal(true);
@@ -342,7 +431,7 @@ export default function CashDayDetailPage() {
           >
             <LockKeyhole className="mr-2 h-4 w-4" />
             {t('closing.closeCash')}
-          </Button>
+          </button>
         )}
         {day.status === 'OPEN' && (
           <Badge variant="info" className="text-sm px-3 py-1">
@@ -353,46 +442,44 @@ export default function CashDayDetailPage() {
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Card className="border-l-4 border-l-brand-gold">
-          <CardContent className="flex items-center gap-3 py-4">
-            <Vault className="h-8 w-8 text-brand-gold" />
-            <div>
-              <p className="text-xs text-gray-500">{t('closing.status')}</p>
-              <Badge
-                variant={
-                  day.status === 'OPEN'
-                    ? 'success'
-                    : day.status === 'PENDING_CLOSE'
-                      ? 'warning'
-                      : 'default'
-                }
-                className="mt-1"
-              >
-                {day.status === 'OPEN'
-                  ? t('closing.statusOpen')
+        <div className="card flex items-center gap-3 border-l-4 border-l-brand-gold py-4">
+          <Vault className="h-8 w-8 text-brand-gold" />
+          <div>
+            <p className="text-xs text-gray-500">{t('closing.status')}</p>
+            <Badge
+              variant={
+                day.status === 'OPEN'
+                  ? 'success'
                   : day.status === 'PENDING_CLOSE'
-                    ? t('closing.statusPendingClose')
-                    : t('closing.statusClosed')}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-        <Stat
+                    ? 'warning'
+                    : 'default'
+              }
+              className="mt-1"
+            >
+              {day.status === 'OPEN'
+                ? t('closing.statusOpen')
+                : day.status === 'PENDING_CLOSE'
+                  ? t('closing.statusPendingClose')
+                  : t('closing.statusClosed')}
+            </Badge>
+          </div>
+        </div>
+        <StatTile
           label={t('closing.openModal.openingBalance')}
           value={fmt(day.openingBalance)}
           icon={<UnlockKeyhole className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('closing.theoreticalBalance')}
           value={fmt(day.theoreticalBalance)}
           icon={<Vault className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('closing.todayEntries')}
           value={fmt(day.totalEntries)}
           icon={<ArrowUpRight className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('closing.todayExits')}
           value={fmt(day.totalExits)}
           icon={<ArrowDownRight className="h-5 w-5" />}
@@ -401,33 +488,31 @@ export default function CashDayDetailPage() {
 
       {/* Expense summary */}
       {expenses.length > 0 && (
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Receipt className="h-5 w-5 text-blue-600" />
-              <h3 className="text-sm font-semibold text-gray-800">
-                {t('cashDayDetail.expenseSummary', { count: expenses.length })}
-              </h3>
+        <div className="card py-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Receipt className="h-5 w-5 text-blue-600" />
+            <h3 className="text-sm font-semibold text-gray-800">
+              {t('cashDayDetail.expenseSummary', { count: expenses.length })}
+            </h3>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-center">
+              <ArrowUpRight className="mx-auto mb-1 h-5 w-5 text-green-600" />
+              <p className="text-lg font-bold text-green-700">{expenseStats.entries}</p>
+              <p className="text-[11px] text-green-600">{t('closing.expenseStats.entries')}</p>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-center">
-                <ArrowUpRight className="mx-auto mb-1 h-5 w-5 text-green-600" />
-                <p className="text-lg font-bold text-green-700">{expenseStats.entries}</p>
-                <p className="text-[11px] text-green-600">{t('closing.expenseStats.entries')}</p>
-              </div>
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center">
-                <ArrowDownRight className="mx-auto mb-1 h-5 w-5 text-red-600" />
-                <p className="text-lg font-bold text-red-700">{expenseStats.exits}</p>
-                <p className="text-[11px] text-red-600">{t('closing.expenseStats.exits')}</p>
-              </div>
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-center">
-                <Banknote className="mx-auto mb-1 h-5 w-5 text-blue-600" />
-                <p className="text-lg font-bold text-blue-700">{fmt(expenseStats.totalAmount)}</p>
-                <p className="text-[11px] text-blue-600">{t('cashDayDetail.totalExpenses')}</p>
-              </div>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center">
+              <ArrowDownRight className="mx-auto mb-1 h-5 w-5 text-red-600" />
+              <p className="text-lg font-bold text-red-700">{expenseStats.exits}</p>
+              <p className="text-[11px] text-red-600">{t('closing.expenseStats.exits')}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-center">
+              <Banknote className="mx-auto mb-1 h-5 w-5 text-blue-600" />
+              <p className="text-lg font-bold text-blue-700">{fmt(expenseStats.totalAmount)}</p>
+              <p className="text-[11px] text-blue-600">{t('cashDayDetail.totalExpenses')}</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Expenses grouped by status */}
@@ -625,12 +710,100 @@ export default function CashDayDetailPage() {
             <Banknote className="h-5 w-5 text-amber-500" />
             {t('cashDayDetail.movementsTitle')} ({movements.length})
           </h2>
-          <DataTable
-            columns={mvColumns}
-            data={movements as unknown as AnyRow[]}
-            pageSize={15}
-            emptyMessage={t('cashDayDetail.noMovements')}
-          />
+          {(() => {
+            const mvData = movements as unknown as AnyRow[];
+            const mvTotalPages = Math.max(1, Math.ceil(mvData.length / 15));
+            const mvPaginated = mvData.slice(mvPage * 15, (mvPage + 1) * 15);
+            return (
+              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 bg-gray-50/50">
+                        {mvColumns.map((col) => (
+                          <th
+                            key={col.key}
+                            className={cn(
+                              'px-4 py-3 text-left font-medium text-gray-500',
+                              col.className,
+                            )}
+                          >
+                            {col.header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mvPaginated.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={mvColumns.length}
+                            className="px-4 py-12 text-center text-gray-400"
+                          >
+                            {t('cashDayDetail.noMovements')}
+                          </td>
+                        </tr>
+                      ) : (
+                        mvPaginated.map((row, i) => (
+                          <tr key={i} className="border-b border-gray-50 transition-colors">
+                            {mvColumns.map((col) => (
+                              <td
+                                key={col.key}
+                                className={cn('px-4 py-3 text-gray-700', col.className)}
+                              >
+                                {col.render ? col.render(row) : (row[col.key] as ReactNode)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {mvData.length > 15 && (
+                  <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
+                    <p className="text-xs text-gray-500">
+                      {mvPage * 15 + 1}–{Math.min((mvPage + 1) * 15, mvData.length)} sur{' '}
+                      {mvData.length}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setMvPage(0)}
+                        disabled={mvPage === 0}
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronsLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setMvPage((p) => p - 1)}
+                        disabled={mvPage === 0}
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <span className="px-2 text-xs font-medium text-gray-600">
+                        {mvPage + 1} / {mvTotalPages}
+                      </span>
+                      <button
+                        onClick={() => setMvPage((p) => p + 1)}
+                        disabled={mvPage >= mvTotalPages - 1}
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setMvPage(mvTotalPages - 1)}
+                        disabled={mvPage >= mvTotalPages - 1}
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronsRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -829,11 +1002,10 @@ export default function CashDayDetailPage() {
       )}
 
       {/* Close Cash Modal */}
-      <Modal
+      <ModalShell
         open={showCloseModal}
         onClose={() => setShowCloseModal(false)}
         title={t('closing.closeModal.title')}
-        size="md"
       >
         <div className="space-y-4">
           {/* Error display */}
@@ -848,13 +1020,16 @@ export default function CashDayDetailPage() {
             <p className="text-lg font-bold text-gray-900">{fmt(day?.theoreticalBalance ?? 0)}</p>
           </div>
 
-          <Input
-            label={t('closing.closeModal.actualBalance')}
-            type="number"
-            value={actualBalance}
-            onChange={(e) => setActualBalance(e.target.value)}
-            placeholder="0"
-          />
+          <div className="space-y-1.5">
+            <label className="label">{t('closing.closeModal.actualBalance')}</label>
+            <input
+              className="input"
+              type="number"
+              value={actualBalance}
+              onChange={(e) => setActualBalance(e.target.value)}
+              placeholder="0"
+            />
+          </div>
 
           {/* Gap display */}
           {gap !== null && (
@@ -895,21 +1070,27 @@ export default function CashDayDetailPage() {
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowCloseModal(false)}>
+            <button className="btn-secondary" onClick={() => setShowCloseModal(false)}>
               {t('common.cancel')}
-            </Button>
-            <Button
-              variant="destructive"
+            </button>
+            <button
+              className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
               onClick={handleClose}
-              loading={closeCash.isPending}
-              disabled={actualBalance === '' || (gap !== null && gap !== 0 && !closeComment.trim())}
+              disabled={
+                closeCash.isPending ||
+                actualBalance === '' ||
+                (gap !== null && gap !== 0 && !closeComment.trim())
+              }
             >
+              {closeCash.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               <LockKeyhole className="mr-2 h-4 w-4" />
               {t('closing.closeCash')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
     </div>
   );
 }

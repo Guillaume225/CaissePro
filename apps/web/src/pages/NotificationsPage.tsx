@@ -13,7 +13,6 @@ import {
   Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge, Button } from '@/components/ui';
 import {
   useNotifications,
   useUnreadCount,
@@ -76,15 +75,17 @@ export default function NotificationsPage() {
           <p className="mt-1 text-sm text-gray-500">{t('notifications.subtitle')}</p>
         </div>
         {unreadCount > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
             onClick={() => markAllAsRead.mutate()}
-            loading={markAllAsRead.isPending}
+            disabled={markAllAsRead.isPending}
           >
-            <CheckCheck className="mr-1.5 h-4 w-4" />
+            {markAllAsRead.isPending && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            )}
+            <CheckCheck className="h-4 w-4" />
             {t('notifications.markAllRead')}
-          </Button>
+          </button>
         )}
       </div>
 
@@ -160,9 +161,9 @@ export default function NotificationsPage() {
                           {notif.title}
                         </span>
                         {!notif.isRead && (
-                          <Badge variant="default" className="text-[10px] shrink-0">
+                          <span className="shrink-0 rounded-full bg-brand-gold px-2 py-0.5 text-[10px] font-medium text-white">
                             New
-                          </Badge>
+                          </span>
                         )}
                       </div>
                       <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{notif.message}</p>

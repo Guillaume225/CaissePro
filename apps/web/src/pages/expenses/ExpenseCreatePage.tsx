@@ -14,7 +14,6 @@ import {
   Send,
   FileText,
 } from 'lucide-react';
-import { Button, Card, Badge, Input } from '@/components/ui';
 import {
   useCreateExpense,
   useExpenseCategories,
@@ -150,7 +149,7 @@ export default function ExpenseCreatePage() {
     // When moving to summary (step 3), trigger AI checks if service is available
     if (currentStep === 2) {
       const amount = parseFloat(watchedAmount);
-      if (amount > 0 && appSettings?.ai?.enabled) {
+      if (amount > 0 && (appSettings?.ai as { enabled?: boolean } | undefined)?.enabled) {
         // AI category suggestion
         aiCategoryMutation.mutate({
           description: watchedDescription,
@@ -313,19 +312,24 @@ export default function ExpenseCreatePage() {
       </div>
 
       {/* Step content */}
-      <Card>
+      <div className="card">
         {/* ── Step 1: General info ──────── */}
         {currentStep === 0 && (
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-gray-900">{t('expenses.step1')}</h2>
 
-            <Input
-              id="date"
-              type="date"
-              label={t('common.date')}
-              error={errors.date?.message}
-              {...register('date', { required: t('expenses.dateRequired') })}
-            />
+            <div>
+              <label className="label">{t('common.date')}</label>
+              <input
+                id="date"
+                type="date"
+                className="input"
+                {...register('date', { required: t('expenses.dateRequired') })}
+              />
+              {errors.date?.message && (
+                <p className="mt-1 text-xs text-red-500">{errors.date.message}</p>
+              )}
+            </div>
 
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-gray-700">
@@ -390,24 +394,32 @@ export default function ExpenseCreatePage() {
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-gray-900">{t('expenses.step2')}</h2>
 
-            <Input
-              id="beneficiary"
-              label={t('expenses.beneficiary')}
-              placeholder={t('expenses.beneficiaryPlaceholder')}
-              {...register('beneficiary')}
-            />
+            <div>
+              <label className="label">{t('expenses.beneficiary')}</label>
+              <input
+                id="beneficiary"
+                className="input"
+                placeholder={t('expenses.beneficiaryPlaceholder')}
+                {...register('beneficiary')}
+              />
+            </div>
 
-            <Input
-              id="amount"
-              type="number"
-              label={`${t('common.amount')} (FCFA) *`}
-              placeholder="0"
-              error={errors.amount?.message}
-              {...register('amount', {
-                required: t('expenses.amountRequired'),
-                min: { value: 1, message: t('expenses.amountMin') },
-              })}
-            />
+            <div>
+              <label className="label">{`${t('common.amount')} (FCFA) *`}</label>
+              <input
+                id="amount"
+                type="number"
+                className="input"
+                placeholder="0"
+                {...register('amount', {
+                  required: t('expenses.amountRequired'),
+                  min: { value: 1, message: t('expenses.amountMin') },
+                })}
+              />
+              {errors.amount?.message && (
+                <p className="mt-1 text-xs text-red-500">{errors.amount.message}</p>
+              )}
+            </div>
             {isOverLimit && (
               <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -431,12 +443,15 @@ export default function ExpenseCreatePage() {
               </select>
             </div>
 
-            <Input
-              id="description"
-              label={t('expenses.description')}
-              placeholder={t('expenses.descriptionPlaceholder')}
-              {...register('description')}
-            />
+            <div>
+              <label className="label">{t('expenses.description')}</label>
+              <input
+                id="description"
+                className="input"
+                placeholder={t('expenses.descriptionPlaceholder')}
+                {...register('description')}
+              />
+            </div>
 
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-gray-700">
@@ -529,9 +544,9 @@ export default function ExpenseCreatePage() {
                       <p className="truncate text-xs font-medium text-gray-700">{f.file.name}</p>
                       <p className="text-xs text-gray-400">{(f.file.size / 1024).toFixed(0)} KB</p>
                       {f.ocrDetectedAmount && (
-                        <Badge variant="warning" className="mt-1">
+                        <span className="mt-1 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
                           OCR: {formatCFA(f.ocrDetectedAmount)}
-                        </Badge>
+                        </span>
                       )}
                     </div>
                     <button
@@ -589,7 +604,9 @@ export default function ExpenseCreatePage() {
                   {t('expenses.aiCategorySuggestion')}
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="info">{aiCategoryMutation.data.categoryName}</Badge>
+                  <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-xs font-medium text-[#1e40af]">
+                    {aiCategoryMutation.data.categoryName}
+                  </span>
                   <span className="text-xs text-blue-600">
                     {t('expenses.confidence')}:{' '}
                     {Math.round(aiCategoryMutation.data.confidence * 100)}%
@@ -656,41 +673,41 @@ export default function ExpenseCreatePage() {
         <div className="mt-8 flex items-center justify-between border-t border-gray-100 pt-5">
           <div>
             {currentStep > 0 && (
-              <Button variant="outline" onClick={prevStep}>
+              <button className="btn-secondary" onClick={prevStep}>
                 <ArrowLeft className="h-4 w-4" />
                 {t('common.previous')}
-              </Button>
+              </button>
             )}
           </div>
           <div className="flex items-center gap-3">
             {currentStep === STEPS.length - 1 ? (
               <>
-                <Button
-                  variant="outline"
-                  onClick={() => onSubmit(true)}
-                  loading={createMutation.isPending}
+                <button
+                  className="btn-secondary disabled:opacity-50"
+                  onClick={() => onSubmit()}
+                  disabled={createMutation.isPending}
                 >
                   <Save className="h-4 w-4" />
                   {t('expenses.saveDraft')}
-                </Button>
-                <Button
-                  onClick={() => onSubmit(false)}
-                  loading={createMutation.isPending}
-                  disabled={isOverLimit}
+                </button>
+                <button
+                  className="btn-primary disabled:opacity-50"
+                  onClick={() => onSubmit()}
+                  disabled={createMutation.isPending || isOverLimit}
                 >
                   <Send className="h-4 w-4" />
                   {t('expenses.submitForApproval')}
-                </Button>
+                </button>
               </>
             ) : (
-              <Button onClick={nextStep}>
+              <button className="btn-primary" onClick={nextStep}>
                 {t('common.next')}
                 <ArrowRight className="h-4 w-4" />
-              </Button>
+              </button>
             )}
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

@@ -37,6 +37,25 @@ export class FneSettingsService {
     return ds.getRepository(FneSetting).findOneBy({ companyId });
   }
 
+  /** First active FNE setting — same lookup used by accounting-entry generation. */
+  async findActive(tenantId: string): Promise<FneSetting | null> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    return ds.getRepository(FneSetting).findOne({ where: { isActive: true } });
+  }
+
+  async updateCreditNoteSense(tenantId: string, creditNoteSameSense: boolean): Promise<FneSetting> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const repo = ds.getRepository(FneSetting);
+    const entity = await repo.findOne({ where: { isActive: true } });
+    if (!entity) {
+      throw new NotFoundException(
+        'Aucune configuration FNE active — configurez d\'abord la connexion FNE.',
+      );
+    }
+    entity.creditNoteSameSense = creditNoteSameSense;
+    return repo.save(entity);
+  }
+
   async create(tenantId: string, dto: CreateFneSettingDto): Promise<FneSetting> {
     const ds = await this.tenantDsService.getDataSource(tenantId);
     const repo = ds.getRepository(FneSetting);

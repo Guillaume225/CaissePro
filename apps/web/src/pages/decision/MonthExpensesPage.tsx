@@ -2,22 +2,18 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Eye, Receipt } from 'lucide-react';
-import { Badge, Card } from '@/components/ui';
 import { useExpenses } from '@/hooks/useExpenses';
 import { formatCFA, formatDate } from '@/lib/format';
 import type { ExpenseFilters } from '@/types/expense';
 
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }
-> = {
-  DRAFT: { label: 'Brouillon', variant: 'outline' },
-  PENDING: { label: 'En attente', variant: 'warning' },
-  APPROVED_L1: { label: 'Approuvée N1', variant: 'info' },
-  APPROVED_L2: { label: 'Approuvée N2', variant: 'info' },
-  PAID: { label: 'Payée', variant: 'success' },
-  REJECTED: { label: 'Rejetée', variant: 'destructive' },
-  CANCELLED: { label: 'Annulée', variant: 'outline' },
+const STATUS_CONFIG: Record<string, { label: string; classes: string }> = {
+  DRAFT: { label: 'Brouillon', classes: 'border border-zinc-300 text-zinc-600' },
+  PENDING: { label: 'En attente', classes: 'bg-amber-50 text-amber-800' },
+  APPROVED_L1: { label: 'Approuvée N1', classes: 'bg-[#eff6ff] text-[#1e40af]' },
+  APPROVED_L2: { label: 'Approuvée N2', classes: 'bg-[#eff6ff] text-[#1e40af]' },
+  PAID: { label: 'Payée', classes: 'bg-[#dcfce7] text-[#166534]' },
+  REJECTED: { label: 'Rejetée', classes: 'bg-[#fee2e2] text-[#991b1b]' },
+  CANCELLED: { label: 'Annulée', classes: 'border border-zinc-300 text-zinc-600' },
 };
 
 export default function MonthExpensesPage() {
@@ -62,7 +58,7 @@ export default function MonthExpensesPage() {
         </div>
       </div>
 
-      <Card className="p-0 overflow-hidden">
+      <div className="card overflow-hidden p-0">
         {isLoading && (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-gold border-t-transparent" />
@@ -115,7 +111,7 @@ export default function MonthExpensesPage() {
                   expenses.map((exp) => {
                     const st = STATUS_CONFIG[exp.status] ?? {
                       label: exp.status,
-                      variant: 'outline' as const,
+                      classes: 'border border-zinc-300 text-zinc-600',
                     };
                     return (
                       <tr
@@ -131,7 +127,11 @@ export default function MonthExpensesPage() {
                           {formatCFA(exp.amount)}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant={st.variant}>{st.label}</Badge>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.classes}`}
+                          >
+                            {st.label}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
@@ -153,7 +153,7 @@ export default function MonthExpensesPage() {
             </table>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

@@ -34,6 +34,11 @@ export class FneSetting {
   @Column({ type: 'varchar', length: 10, name: 'journal_cash', default: 'CA' })
   journalCash!: string;
 
+  /** When true, credit-note entries keep the same debit/credit column as the original
+   *  invoice but with a negative amount, instead of swapping debit and credit. */
+  @Column({ type: 'bit', name: 'credit_note_same_sense', default: false })
+  creditNoteSameSense!: boolean;
+
   @Column({ type: 'varchar', length: 100, name: 'regime_imposition', nullable: true })
   regimeImposition!: string | null;
 

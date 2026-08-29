@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, Check, X, Pencil, ChevronRight, ChevronDown, AlertTriangle } from 'lucide-react';
-import { Input, Badge } from '@/components/ui';
 import { useCategories, useUpdateCategoryAccounting } from '@/hooks/useAdmin';
 import type { ExpenseCategory } from '@/types/admin';
 
@@ -157,9 +156,9 @@ export default function AccountingConfigPage() {
                     {cat.name}
                   </span>
                   {!cat.isActive && (
-                    <Badge variant="outline" className="ml-1 text-[10px]">
+                    <span className="ml-1 rounded-full border border-zinc-300 px-2 py-0.5 text-[10px] font-medium text-zinc-600">
                       {t('admin.categories.inactive')}
-                    </Badge>
+                    </span>
                   )}
                   {missingAccount && !isEditing && (
                     <span
@@ -179,11 +178,11 @@ export default function AccountingConfigPage() {
                 {/* Debit Account */}
                 <div className="col-span-3 text-center">
                   {isEditing ? (
-                    <Input
+                    <input
+                      className={`input text-center font-mono text-sm ${!isValidAccount(editing.debit) ? 'border-red-300' : ''}`}
                       value={editing.debit}
                       onChange={(e) => setEditing({ ...editing, debit: e.target.value })}
                       placeholder="601000"
-                      className={`text-center font-mono text-sm ${!isValidAccount(editing.debit) ? 'border-red-300' : ''}`}
                     />
                   ) : (
                     <span
@@ -197,11 +196,11 @@ export default function AccountingConfigPage() {
                 {/* Credit Account */}
                 <div className="col-span-3 text-center">
                   {isEditing ? (
-                    <Input
+                    <input
+                      className={`input text-center font-mono text-sm ${!isValidAccount(editing.credit) ? 'border-red-300' : ''}`}
                       value={editing.credit}
                       onChange={(e) => setEditing({ ...editing, credit: e.target.value })}
                       placeholder="512000"
-                      className={`text-center font-mono text-sm ${!isValidAccount(editing.credit) ? 'border-red-300' : ''}`}
                     />
                   ) : (
                     <span

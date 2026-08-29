@@ -2,14 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus, Search, Edit2, Trash2, ArrowLeft, Loader2, X, Check, Users } from 'lucide-react';
-import { Button, Card } from '@/components/ui';
 import {
   useFneClients,
   useCreateFneClient,
   useUpdateFneClient,
   useDeleteFneClient,
 } from '@/hooks/useFneClients';
-import { cn } from '@/lib/utils';
 import type { FneClientRecord, CreateFneClientPayload } from '@/types/fne';
 
 export default function FneClientListPage() {
@@ -83,9 +81,6 @@ export default function FneClientListPage() {
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const formValid = form.companyName && form.phone && form.email;
 
-  const INPUT =
-    'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold';
-
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -107,9 +102,9 @@ export default function FneClientListPage() {
             </p>
           </div>
         </div>
-        <Button onClick={openNew}>
-          <Plus className="mr-2 h-4 w-4" /> {t('fne.addClient', 'Nouveau client')}
-        </Button>
+        <button className="btn-primary" onClick={openNew}>
+          <Plus className="h-4 w-4" /> {t('fne.addClient', 'Nouveau client')}
+        </button>
       </div>
 
       {/* ── Search ── */}
@@ -122,12 +117,12 @@ export default function FneClientListPage() {
             setPage(1);
           }}
           placeholder={t('fne.searchClients', 'Rechercher un client...')}
-          className={cn(INPUT, 'pl-10')}
+          className="input pl-10"
         />
       </div>
 
       {/* ── Table ── */}
-      <Card className="overflow-hidden">
+      <div className="card overflow-hidden p-0">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
@@ -186,7 +181,7 @@ export default function FneClientListPage() {
             )}
           </tbody>
         </table>
-      </Card>
+      </div>
 
       {/* ── Pagination ── */}
       {meta && meta.totalPages > 1 && (
@@ -195,127 +190,127 @@ export default function FneClientListPage() {
             Page {meta.page} / {meta.totalPages} — {meta.total} client{meta.total > 1 ? 's' : ''}
           </span>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
               Précédent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+            <button
+              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
               disabled={page >= meta.totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
               Suivant
-            </Button>
+            </button>
           </div>
         </div>
       )}
 
       {/* ── Modal ── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-md border border-[#e0e6eb] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e6eb]">
+              <h2 className="text-sm font-semibold text-[#0a2540]">
                 {editingClient ? 'Modifier le client' : 'Nouveau client'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="rounded-md p-1 text-[#697386] hover:bg-zinc-100"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Nom / Raison sociale *
-                  </label>
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Nom / Raison sociale *</label>
                   <input
                     value={form.companyName}
                     onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
-                    className={INPUT}
+                    className="input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">Code client</label>
+                <div>
+                  <label className="label">Code client</label>
                   <input
                     placeholder="ex: CLI001"
                     value={form.clientCode ?? ''}
                     onChange={(e) => setForm((f) => ({ ...f, clientCode: e.target.value }))}
-                    className={INPUT}
+                    className="input"
                   />
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">Téléphone *</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Téléphone *</label>
                   <input
                     value={form.phone}
                     onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                    className={INPUT}
+                    className="input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">Email *</label>
+                <div>
+                  <label className="label">Email *</label>
                   <input
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    className={INPUT}
+                    className="input"
                   />
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">NCC</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">NCC</label>
                   <input
                     value={form.ncc ?? ''}
                     onChange={(e) => setForm((f) => ({ ...f, ncc: e.target.value }))}
-                    className={INPUT}
+                    className="input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-700">Vendeur</label>
+                <div>
+                  <label className="label">Vendeur</label>
                   <input
                     value={form.sellerName ?? ''}
                     onChange={(e) => setForm((f) => ({ ...f, sellerName: e.target.value }))}
-                    className={INPUT}
+                    className="input"
                   />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700">Compte comptable</label>
+              <div>
+                <label className="label">Compte comptable</label>
                 <input
                   placeholder="ex: 411000"
                   value={form.accountCode ?? ''}
                   onChange={(e) => setForm((f) => ({ ...f, accountCode: e.target.value }))}
-                  className={INPUT}
+                  className="input"
                 />
               </div>
-            </div>
 
-            <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-              <Button variant="ghost" onClick={() => setShowModal(false)}>
-                Annuler
-              </Button>
-              <Button onClick={handleSave} disabled={!formValid || isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enregistrement...
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" /> {editingClient ? 'Modifier' : 'Créer'}
-                  </>
-                )}
-              </Button>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#e0e6eb]">
+                <button className="btn-secondary" onClick={() => setShowModal(false)}>
+                  Annuler
+                </button>
+                <button
+                  className="btn-primary disabled:opacity-50"
+                  onClick={handleSave}
+                  disabled={!formValid || isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" /> {editingClient ? 'Modifier' : 'Créer'}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

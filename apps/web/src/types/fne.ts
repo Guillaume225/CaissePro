@@ -265,6 +265,7 @@ export interface FneSettingRecord {
   maxRetries: number;
   journalSales: string;
   journalCash: string;
+  creditNoteSameSense: boolean;
   regimeImposition: string | null;
   centreImpots: string | null;
   bankRef: string | null;
@@ -303,6 +304,9 @@ export interface FneAccountingEntryRecord {
   erpPostedAt: string | null;
   erpResponse: string | null;
   erpError: string | null;
+  reversed: boolean;
+  reversedAt: string | null;
+  reversalOfEntryId: string | null;
   createdBy: string;
   createdAt: string;
 }

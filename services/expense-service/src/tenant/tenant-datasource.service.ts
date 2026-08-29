@@ -57,7 +57,7 @@ export class TenantDataSourceService implements OnModuleDestroy {
       database: this.configService.get<string>('database.database')!,
       schema,
       entities: TENANT_ENTITIES,
-      synchronize: true,
+      synchronize: false,
       options: { encrypt: false, trustServerCertificate: true },
     });
 

@@ -47,12 +47,12 @@ export default defineConfig({
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       '/api/dashboard/sales': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       '/api/dashboard/fne': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
@@ -143,70 +143,70 @@ export default defineConfig({
 
       // ─── FNE invoices → sales-service (3003) ────
       '/api/fne-invoices': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       // ─── FNE clients → sales-service (3003) ────
       '/api/fne-clients': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       // ─── FNE products → sales-service (3003) ───
       '/api/fne-products': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       // ─── FNE points of sale → sales-service (3003)
       '/api/fne-points-of-sale': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       // ─── FNE establishments → sales-service (3003)
       '/api/fne-establishments': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       // ─── FNE settings → sales-service (3003)
       '/api/fne-settings': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       // ─── FNE accounting → sales-service (3003)
       '/api/fne-accounting': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
 
       // ─── Sales-service (3003) ────────────────────
       '/api/sales': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       '/api/clients': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       '/api/products': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       '/api/payments': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },
       '/api/receivables': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3013',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, '/api/v1'),
       },

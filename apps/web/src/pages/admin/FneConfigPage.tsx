@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Store,
@@ -20,8 +20,8 @@ import {
   TestTube2,
   CheckCircle2,
   XCircle,
+  X,
 } from 'lucide-react';
-import { Button, Input, Modal, Badge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import {
   useFnePointsOfSale,
@@ -48,6 +48,74 @@ interface ItemForm {
 }
 
 const defaultForm: ItemForm = { name: '', address: '', isActive: true, companyId: '' };
+
+function StatusBadge({ active, label }: { active: boolean; label: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-block rounded-full px-2 py-0.5 text-[10px] font-medium mt-0.5',
+        active ? 'bg-[#dcfce7] text-[#166534]' : 'bg-[#f6f9fc] text-[#697386]',
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+  size = 'md',
+}: {
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  children: ReactNode;
+  size?: 'sm' | 'md' | 'lg';
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const sizeClass = size === 'sm' ? 'max-w-md' : size === 'lg' ? 'max-w-2xl' : 'max-w-lg';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div
+        className={cn(
+          'bg-white rounded-md border border-[#e0e6eb] w-full max-h-[90vh] overflow-y-auto',
+          sizeClass,
+        )}
+      >
+        {title && (
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e6eb]">
+            <h2 className="text-sm font-semibold text-[#0a2540]">{title}</h2>
+            <button
+              onClick={onClose}
+              className="rounded-md p-1 text-[#697386] hover:bg-zinc-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <div className="p-5">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function FneConfigPage() {
   const { t } = useTranslation();
@@ -316,10 +384,10 @@ export default function FneConfigPage() {
             </p>
           </div>
         </div>
-        <Button onClick={openCreatePos}>
+        <button className="btn-primary" onClick={openCreatePos}>
           <Plus className="mr-2 h-4 w-4" />
           {t('admin.fneConfig.addPos', 'Ajouter un point de vente')}
-        </Button>
+        </button>
       </div>
 
       {/* Search */}
@@ -345,10 +413,10 @@ export default function FneConfigPage() {
               : t('admin.fneConfig.emptyPos', 'Aucun point de vente pour cet établissement')}
           </p>
           {!search && (
-            <Button onClick={openCreatePos} className="mt-4" variant="ghost">
+            <button className="btn-secondary mt-4" onClick={openCreatePos}>
               <Plus className="mr-2 h-4 w-4" />
               {t('admin.fneConfig.addPos', 'Ajouter un point de vente')}
-            </Button>
+            </button>
           )}
         </div>
       ) : (
@@ -381,12 +449,10 @@ export default function FneConfigPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="truncate text-sm font-semibold text-gray-900">{item.name}</h3>
-                  <Badge
-                    variant={item.isActive ? 'success' : 'outline'}
-                    className="mt-0.5 text-[10px]"
-                  >
-                    {item.isActive ? t('common.active', 'Actif') : t('common.inactive', 'Inactif')}
-                  </Badge>
+                  <StatusBadge
+                    active={item.isActive}
+                    label={item.isActive ? t('common.active', 'Actif') : t('common.inactive', 'Inactif')}
+                  />
                 </div>
               </div>
               {item.address && (
@@ -443,10 +509,10 @@ export default function FneConfigPage() {
               : t('admin.fneConfig.emptyEst', 'Aucun établissement configuré')}
           </p>
           {!search && (
-            <Button onClick={openCreateEst} className="mt-4" variant="ghost">
+            <button className="btn-secondary mt-4" onClick={openCreateEst}>
               <Plus className="mr-2 h-4 w-4" />
               {t('admin.fneConfig.addEst', 'Ajouter un établissement')}
-            </Button>
+            </button>
           )}
         </div>
       ) : (
@@ -489,12 +555,10 @@ export default function FneConfigPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="truncate text-sm font-semibold text-gray-900">{item.name}</h3>
-                  <Badge
-                    variant={item.isActive ? 'success' : 'outline'}
-                    className="mt-0.5 text-[10px]"
-                  >
-                    {item.isActive ? t('common.active', 'Actif') : t('common.inactive', 'Inactif')}
-                  </Badge>
+                  <StatusBadge
+                    active={item.isActive}
+                    label={item.isActive ? t('common.active', 'Actif') : t('common.inactive', 'Inactif')}
+                  />
                 </div>
               </div>
               {item.address && (
@@ -770,16 +834,19 @@ export default function FneConfigPage() {
             </div>
 
             <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
-              <Button
+              <button
+                className="btn-primary"
                 onClick={handleSaveSettings}
-                disabled={!settingsForm.apiKey}
-                loading={upsertSetting.isPending}
+                disabled={!settingsForm.apiKey || upsertSetting.isPending}
               >
+                {upsertSetting.isPending && (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                )}
                 {fneSetting ? t('common.save', 'Enregistrer') : t('common.create', 'Créer')}
-              </Button>
+              </button>
               {settingsSaved && (
-                <span className="text-sm text-green-600 font-medium">
-                  {t('admin.fneConfig.saved', 'Configuration enregistrée !')}
+                <span className="text-sm text-[#166534] font-medium">
+                  ✓ {t('admin.fneConfig.saved', 'Configuration enregistrée !')}
                 </span>
               )}
             </div>
@@ -1068,24 +1135,30 @@ export default function FneConfigPage() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-3">
-            <Button
+            <button
+              className="btn-primary"
               onClick={handleSaveErp}
-              disabled={!erpForm.apiUrl || !erpForm.accessToken}
-              loading={upsertErp.isPending}
+              disabled={!erpForm.apiUrl || !erpForm.accessToken || upsertErp.isPending}
             >
+              {upsertErp.isPending && (
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               {erpSetting ? 'Enregistrer' : 'Créer la configuration'}
-            </Button>
-            <Button
-              variant="outline"
+            </button>
+            <button
+              className="btn-secondary"
               onClick={handleTestErp}
-              disabled={!erpSetting}
-              loading={testErpConn.isPending}
+              disabled={!erpSetting || testErpConn.isPending}
             >
-              <TestTube2 className="mr-2 h-4 w-4" />
+              {testErpConn.isPending ? (
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <TestTube2 className="mr-2 h-4 w-4" />
+              )}
               Tester la connexion
-            </Button>
+            </button>
             {erpSaved && (
-              <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
+              <span className="flex items-center gap-1 text-sm text-[#166534] font-medium">
                 <CheckCircle2 className="h-4 w-4" />
                 Configuration ERP enregistrée !
               </span>
@@ -1094,7 +1167,7 @@ export default function FneConfigPage() {
               <span
                 className={cn(
                   'flex items-center gap-1 text-sm font-medium',
-                  erpTestResult.ok ? 'text-green-600' : 'text-red-600',
+                  erpTestResult.ok ? 'text-[#166534]' : 'text-[#991b1b]',
                 )}
               >
                 {erpTestResult.ok ? (
@@ -1131,10 +1204,10 @@ export default function FneConfigPage() {
               </p>
             </div>
             {activeTab === 'establishments' && (
-              <Button onClick={openCreateEst}>
+              <button className="btn-primary" onClick={openCreateEst}>
                 <Plus className="mr-2 h-4 w-4" />
                 {t('admin.fneConfig.addEst', 'Ajouter un établissement')}
-              </Button>
+              </button>
             )}
           </div>
 
@@ -1188,7 +1261,7 @@ export default function FneConfigPage() {
       )}
 
       {/* Create / Edit Modal */}
-      <Modal
+      <ModalShell
         open={showModal}
         onClose={() => setShowModal(false)}
         title={
@@ -1228,17 +1301,23 @@ export default function FneConfigPage() {
               </div>
             </div>
           )}
-          <Input
-            label={t('admin.fneConfig.name', 'Nom')}
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            required
-          />
-          <Input
-            label={t('admin.fneConfig.address', 'Adresse')}
-            value={form.address}
-            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-          />
+          <div className="space-y-1.5">
+            <label className="label">{t('admin.fneConfig.name', 'Nom')}</label>
+            <input
+              className="input"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="label">{t('admin.fneConfig.address', 'Adresse')}</label>
+            <input
+              className="input"
+              value={form.address}
+              onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+            />
+          </div>
           {editId && (
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -1251,22 +1330,27 @@ export default function FneConfigPage() {
             </label>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowModal(false)}>
+            <button className="btn-secondary" onClick={() => setShowModal(false)}>
               {t('common.cancel', 'Annuler')}
-            </Button>
-            <Button
+            </button>
+            <button
+              className="btn-primary"
               onClick={handleSubmit}
-              disabled={!form.name || (modalTarget === 'est' && !editId && !form.companyId)}
-              loading={isPending}
+              disabled={
+                !form.name || (modalTarget === 'est' && !editId && !form.companyId) || isPending
+              }
             >
+              {isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               {editId ? t('common.save', 'Enregistrer') : t('common.create', 'Créer')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
 
       {/* Delete confirmation Modal */}
-      <Modal
+      <ModalShell
         open={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
         title={t('admin.fneConfig.confirmDeleteTitle', 'Confirmer la suppression')}
@@ -1285,19 +1369,22 @@ export default function FneConfigPage() {
                 )}
           </p>
           <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setConfirmDelete(null)}>
+            <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>
               {t('common.cancel', 'Annuler')}
-            </Button>
-            <Button
-              variant="danger"
+            </button>
+            <button
+              className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-600 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-2"
               onClick={handleDelete}
-              loading={deletePos.isPending || deleteEst.isPending}
+              disabled={deletePos.isPending || deleteEst.isPending}
             >
+              {(deletePos.isPending || deleteEst.isPending) && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               {t('common.delete', 'Supprimer')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
     </>
   );
 }

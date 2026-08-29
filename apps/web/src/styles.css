@@ -14,6 +14,45 @@
     color: #1f2937;
     margin: 0;
   }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+}
+
+/*
+ * ═══ Form pattern (style A — pages métier) ═══
+ * <Section title="...">                    → carte avec en-tête gris (bg-[#f6f9fc])
+ *   <Row>...</Row>                          → grid-cols-2 gap-4
+ *     <Field label="..." hint="...">
+ *       <input className="input" ... />
+ * États : loading → skeleton animate-pulse ; erreur → bandeau rouge ;
+ * succès → texte vert temporaire (setTimeout ~2.5-3s) à côté du bouton submit.
+ * Pas de composant partagé — chaque page réimplémente Section/Row/Field
+ * localement (duplication assumée, cf. ExpenseListPage.tsx / CompanySettingsPage.tsx).
+ */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-brand-gold px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-gold-hover disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .input {
+    @apply w-full rounded-md border border-zinc-300 px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-zinc-400 focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500;
+  }
+
+  .card {
+    @apply rounded-md border border-[#e0e6eb] bg-white p-6 shadow-sm transition-colors;
+  }
+
+  .label {
+    @apply mb-1 block text-xs font-medium text-zinc-700;
+  }
 }
 
 @layer utilities {

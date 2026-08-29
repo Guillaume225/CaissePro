@@ -24,18 +24,25 @@ export class SubscriptionService {
 
   async getPlan(tenantId: string): Promise<SubscriptionPlan> {
     const key = `${CACHE_PREFIX}${tenantId}`;
-    const cached = await this.redis.get(key);
+    const cached = await this.redis.get(key).catch((err) => {
+      this.logger.warn(`[REDIS-UNAVAILABLE] get failed (non-fatal): ${(err as Error).message}`);
+      return null;
+    });
     if (cached) {
       return JSON.parse(cached) as SubscriptionPlan;
     }
-    // Cache miss: auth-service is the authoritative source
+    // Cache miss (or Redis unavailable): auth-service is the authoritative source
     const plan = await this.fetchFromAuthService(tenantId);
-    await this.redis.set(key, JSON.stringify(plan), 'EX', CACHE_TTL_SECONDS);
+    await this.redis.set(key, JSON.stringify(plan), 'EX', CACHE_TTL_SECONDS).catch((err) => {
+      this.logger.warn(`[REDIS-UNAVAILABLE] set failed (non-fatal): ${(err as Error).message}`);
+    });
     return plan;
   }
 
   async invalidateCache(tenantId: string): Promise<void> {
-    await this.redis.del(`${CACHE_PREFIX}${tenantId}`);
+    await this.redis.del(`${CACHE_PREFIX}${tenantId}`).catch((err) => {
+      this.logger.warn(`[REDIS-UNAVAILABLE] del failed (non-fatal): ${(err as Error).message}`);
+    });
   }
 
   async assertFeature(tenantId: string, feature: string): Promise<void> {
@@ -83,7 +90,7 @@ export class SubscriptionService {
   }
 
   private async fetchFromAuthService(tenantId: string): Promise<SubscriptionPlan> {
-    const url = `${this.authServiceUrl}/internal/tenants/${tenantId}/plan`;
+    const url = `${this.authServiceUrl}/api/v1/internal/tenants/${tenantId}/plan`;
     let response: Response;
 
     try {

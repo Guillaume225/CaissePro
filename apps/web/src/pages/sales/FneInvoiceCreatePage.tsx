@@ -21,7 +21,6 @@ import {
   X,
   Package,
 } from 'lucide-react';
-import { Button, Card } from '@/components/ui';
 import { useCreateFneInvoice, useUpdateFneInvoice } from '@/hooks/useFneInvoices';
 import { useFneClients } from '@/hooks/useFneClients';
 import { useFneProducts } from '@/hooks/useFneProducts';
@@ -556,7 +555,7 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
       </div>
 
       {/* ── Step content ── */}
-      <Card>
+      <div className="card">
         {/* ─── STEP 0: Type de facturation ─── */}
         {step === 0 && (
           <div className="space-y-5">
@@ -1072,9 +1071,9 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
           <div className="space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">{t('fne.step3', 'Articles')}</h2>
-              <Button size="sm" onClick={addLine}>
-                <Plus className="h-4 w-4 mr-1" /> {t('fne.addLine', 'Ajouter')}
-              </Button>
+              <button className="btn-secondary px-3 py-1.5 text-xs" onClick={addLine}>
+                <Plus className="h-4 w-4" /> {t('fne.addLine', 'Ajouter')}
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -1489,26 +1488,26 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
         <div className="mt-8 flex items-center justify-between border-t border-gray-100 pt-5">
           <div>
             {step > 0 && (
-              <Button variant="outline" onClick={prev}>
+              <button className="btn-secondary" onClick={prev}>
                 <ArrowLeft className="h-4 w-4" /> {t('common.previous', 'Précédent')}
-              </Button>
+              </button>
             )}
           </div>
           {step < 4 ? (
-            <Button onClick={next}>
+            <button className="btn-primary" onClick={next}>
               {t('common.next', 'Suivant')} <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            </button>
           ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={!canSubmit || createMutation.isPending || updateMutation.isPending}
-              className={
+            <button
+              className={`btn-primary disabled:opacity-50 ${
                 isEditMode
-                  ? 'bg-brand-gold hover:bg-brand-gold/90'
+                  ? ''
                   : invoiceType === 'estimate'
                     ? 'bg-gray-600 hover:bg-gray-700'
                     : 'bg-green-600 hover:bg-green-700'
-              }
+              }`}
+              onClick={handleSubmit}
+              disabled={!canSubmit || createMutation.isPending || updateMutation.isPending}
             >
               {createMutation.isPending || updateMutation.isPending ? (
                 <>
@@ -1534,18 +1533,18 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                   {t('fne.certifyAndSend', 'Certifier & envoyer')}
                 </>
               )}
-            </Button>
+            </button>
           )}
         </div>
 
         {/* Error */}
         {(createMutation.isError || updateMutation.isError) && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-4 border-l-2 border-red-400 bg-[#fee2e2] px-3 py-2 text-xs text-[#991b1b] rounded-sm">
             {((createMutation.error || updateMutation.error) as Error)?.message ||
               t('fne.errorGeneric', 'Erreur lors de la certification')}
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

@@ -50,4 +50,19 @@ export class FneAccountingController {
   deleteAll(@CurrentUser('tenantId') tenantId: string) {
     return this.fneAccountingService.deleteAll(tenantId);
   }
+
+  @Get('reversible-count')
+  @Permissions(FNE_PERMISSIONS.READ)
+  countReversible(@CurrentUser('tenantId') tenantId: string) {
+    return this.fneAccountingService.countReversible(tenantId);
+  }
+
+  @Post('reverse')
+  @Permissions(FNE_PERMISSIONS.UPDATE)
+  reverseAllPosted(
+    @CurrentUser('tenantId') tenantId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.fneAccountingService.reverseAllPosted(tenantId, userId);
+  }
 }

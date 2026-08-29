@@ -17,7 +17,6 @@ import {
   ChevronDown,
   X,
 } from 'lucide-react';
-import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import {
   usePeriodClosingHistory,
   useMultiDayOperations,
@@ -576,9 +575,13 @@ function JournalComptable({
 
       <div className="mt-3 flex items-center gap-2 text-sm">
         {Math.abs(totalDebit - totalCredit) < 1 ? (
-          <Badge variant="success">Équilibre confirmé</Badge>
+          <span className="rounded-full bg-[#dcfce7] px-2 py-0.5 text-xs font-medium text-[#166534]">
+            Équilibre confirmé
+          </span>
         ) : (
-          <Badge variant="destructive">Déséquilibre : {fmt(totalDebit - totalCredit)} FCFA</Badge>
+          <span className="rounded-full bg-[#fee2e2] px-2 py-0.5 text-xs font-medium text-[#991b1b]">
+            Déséquilibre : {fmt(totalDebit - totalCredit)} FCFA
+          </span>
         )}
         <span className="text-xs text-gray-400">{allEntries.length} écritures</span>
       </div>
@@ -1334,14 +1337,12 @@ export default function ManagerCashReportsPage() {
         </div>
 
         {/* Period selector */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              {t('periodReports.selectPeriod')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-[#0a2540]">
+            <Calendar className="h-4 w-4" />
+            {t('periodReports.selectPeriod')}
+          </h3>
+          <div>
             {/* Mode toggle */}
             <div className="mb-4 flex gap-2">
               <button
@@ -1488,15 +1489,24 @@ export default function ManagerCashReportsPage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setQuickPeriod('month')}>
+                  <button
+                    className="btn-secondary px-3 py-1.5 text-xs"
+                    onClick={() => setQuickPeriod('month')}
+                  >
                     {t('periodReports.thisMonth')}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setQuickPeriod('quarter')}>
+                  </button>
+                  <button
+                    className="btn-secondary px-3 py-1.5 text-xs"
+                    onClick={() => setQuickPeriod('quarter')}
+                  >
                     {t('periodReports.thisQuarter')}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setQuickPeriod('year')}>
+                  </button>
+                  <button
+                    className="btn-secondary px-3 py-1.5 text-xs"
+                    onClick={() => setQuickPeriod('year')}
+                  >
                     {t('periodReports.thisYear')}
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
@@ -1506,8 +1516,8 @@ export default function ManagerCashReportsPage() {
                 {t('periodReports.daysFound', { count: days.length })}
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Report tabs */}
         <div className="flex gap-4" style={{ minHeight: 'calc(100vh - 340px)' }}>
@@ -1543,11 +1553,11 @@ export default function ManagerCashReportsPage() {
 
             {/* No data */}
             {!isLoading && days.length === 0 && (
-              <Card>
-                <CardContent className="py-8 text-center text-sm text-gray-400">
+              <div className="card">
+                <div className="py-8 text-center text-sm text-gray-400">
                   {t('periodReports.noData')}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {/* Tabs + content */}
@@ -1595,10 +1605,13 @@ export default function ManagerCashReportsPage() {
                       );
                     })}
                   </div>
-                  <Button size="sm" onClick={handlePrint} className="ml-2 shrink-0">
+                  <button
+                    className="btn-primary ml-2 shrink-0 px-3 py-1.5 text-xs"
+                    onClick={handlePrint}
+                  >
                     <Printer className="mr-1 h-3.5 w-3.5" />
                     {t('reports.print')}
-                  </Button>
+                  </button>
                 </div>
 
                 {/* Report content */}

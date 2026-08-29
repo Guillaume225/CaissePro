@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,7 +17,6 @@ import {
   Send,
   ShieldCheck,
 } from 'lucide-react';
-import { Button, Badge, Card, Modal } from '@/components/ui';
 import {
   useExpenses,
   useExportExpenses,
@@ -32,17 +31,14 @@ import { cn } from '@/lib/utils';
 import type { Expense, ExpenseStatus, ExpenseFilters } from '@/types/expense';
 
 // ── Status config ────────────────────────────────────────
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }
-> = {
-  DRAFT: { label: 'Brouillon', variant: 'outline' },
-  PENDING: { label: 'En attente', variant: 'warning' },
-  APPROVED: { label: 'Approuvée', variant: 'info' },
-  APPROVED_L1: { label: 'Approuvée N1', variant: 'info' },
-  APPROVED_L2: { label: 'Approuvée N2', variant: 'info' },
-  PAID: { label: 'Payée', variant: 'success' },
-  REJECTED: { label: 'Rejetée', variant: 'destructive' },
+const STATUS_CONFIG: Record<string, { label: string; classes: string }> = {
+  DRAFT: { label: 'Brouillon', classes: 'border border-zinc-300 text-zinc-600' },
+  PENDING: { label: 'En attente', classes: 'bg-amber-50 text-amber-800' },
+  APPROVED: { label: 'Approuvée', classes: 'bg-[#eff6ff] text-[#1e40af]' },
+  APPROVED_L1: { label: 'Approuvée N1', classes: 'bg-[#eff6ff] text-[#1e40af]' },
+  APPROVED_L2: { label: 'Approuvée N2', classes: 'bg-[#eff6ff] text-[#1e40af]' },
+  PAID: { label: 'Payée', classes: 'bg-[#dcfce7] text-[#166534]' },
+  REJECTED: { label: 'Rejetée', classes: 'bg-[#fee2e2] text-[#991b1b]' },
 };
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
@@ -168,14 +164,14 @@ export default function ExpenseListPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t('expenses.title')}</h1>
           <p className="mt-1 text-sm text-gray-500">{t('expenses.subtitle')}</p>
         </div>
-        <Button onClick={() => navigate('/expenses/new')}>
+        <button className="btn-primary" onClick={() => navigate('/expenses/new')}>
           <Plus className="h-4 w-4" />
           {t('expenses.newExpense')}
-        </Button>
+        </button>
       </div>
 
       {/* ── Filters bar ───────────────────────── */}
-      <Card className="p-4">
+      <div className="card">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
@@ -217,31 +213,32 @@ export default function ExpenseListPage() {
           </select>
 
           {/* Toggle more filters */}
-          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+          <button
+            className="btn-secondary px-3 py-1.5 text-xs"
+            onClick={() => setShowFilters(!showFilters)}
+          >
             <Filter className="h-4 w-4" />
             {t('expenses.filters')}
-          </Button>
+          </button>
 
           {/* Export buttons */}
-          <div className="flex gap-1 ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              loading={exportMutation.isPending}
+          <div className="ml-auto flex gap-1">
+            <button
+              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+              disabled={exportMutation.isPending}
               onClick={() => exportMutation.mutate({ format: 'xlsx', filters })}
             >
               <FileSpreadsheet className="h-4 w-4" />
               Excel
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              loading={exportMutation.isPending}
+            </button>
+            <button
+              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+              disabled={exportMutation.isPending}
               onClick={() => exportMutation.mutate({ format: 'csv', filters })}
             >
               <Download className="h-4 w-4" />
               CSV
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -302,17 +299,20 @@ export default function ExpenseListPage() {
 
             {/* Reset */}
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <button
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[#697386] hover:text-[#0a2540]"
+                onClick={resetFilters}
+              >
                 <X className="h-4 w-4" />
                 {t('expenses.resetFilters')}
-              </Button>
+              </button>
             )}
           </div>
         )}
-      </Card>
+      </div>
 
       {/* ── Data table ────────────────────────── */}
-      <Card className="p-0 overflow-hidden">
+      <div className="card overflow-hidden p-0">
         {isLoading && (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-gold border-t-transparent" />
@@ -521,37 +521,13 @@ export default function ExpenseListPage() {
             )}
           </>
         )}
-      </Card>
+      </div>
 
       {/* ── Pay Modal ─────────────────────── */}
-      <Modal
+      <ModalShell
         open={!!payExpense}
         onClose={() => setPayExpense(null)}
         title={t('expenses.payTitle')}
-        size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setPayExpense(null)}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={() => {
-                if (!payExpense) return;
-                payMutation.mutate(payExpense.id, {
-                  onSuccess: () => {
-                    payMutation.reset();
-                    setPayExpense(null);
-                  },
-                });
-              }}
-              loading={payMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Banknote className="h-4 w-4" />
-              {t('expenses.confirmPay')}
-            </Button>
-          </>
-        }
       >
         {payExpense && (
           <div className="space-y-3">
@@ -589,17 +565,92 @@ export default function ExpenseListPage() {
                 <p className="text-sm font-medium text-gray-700">{formatDate(payExpense.date)}</p>
               </div>
             </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button className="btn-secondary" onClick={() => setPayExpense(null)}>
+                {t('common.cancel')}
+              </button>
+              <button
+                className="btn-primary bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                disabled={payMutation.isPending}
+                onClick={() => {
+                  payMutation.mutate(payExpense.id, {
+                    onSuccess: () => {
+                      payMutation.reset();
+                      setPayExpense(null);
+                    },
+                  });
+                }}
+              >
+                {payMutation.isPending && (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                )}
+                <Banknote className="h-4 w-4" />
+                {t('expenses.confirmPay')}
+              </button>
+            </div>
           </div>
         )}
-      </Modal>
+      </ModalShell>
+    </div>
+  );
+}
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-md bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#e0e6eb] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#0a2540]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-6 py-4">{children}</div>
+      </div>
     </div>
   );
 }
 
 // ── Sub-components ─────────────────────────────────────
 function StatusBadge({ status }: { status: ExpenseStatus }) {
-  const config = STATUS_CONFIG[status] ?? { label: status, variant: 'outline' as const };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  const config = STATUS_CONFIG[status] ?? {
+    label: status,
+    classes: 'border border-zinc-300 text-zinc-600',
+  };
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${config.classes}`}>
+      {config.label}
+    </span>
+  );
 }
 
 function Th({

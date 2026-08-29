@@ -13,19 +13,9 @@ import {
   RefreshCw,
   LogOut,
   User,
+  X,
 } from 'lucide-react';
 import { useEmployeeAuthStore } from '@/stores/employee-auth-store';
-import {
-  Button,
-  Input,
-  Select,
-  Badge,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  Modal,
-} from '@/components/ui';
 import { cn } from '@/lib/utils';
 import {
   useCreateDisbursementRequest,
@@ -48,6 +38,51 @@ interface FormData {
 }
 
 const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-md bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#e0e6eb] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#0a2540]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 const SERVICE_OPTIONS = [
   { value: 'comptabilite', label: 'Comptabilité' },
@@ -175,16 +210,33 @@ export default function DemandePage() {
     }
   };
 
-  const statusConfig: Record<
-    string,
-    { variant: 'warning' | 'success' | 'destructive'; icon: typeof Clock; label: string }
-  > = {
-    PENDING: { variant: 'warning', icon: Clock, label: t('demande.status.pending') },
-    APPROVED: { variant: 'success', icon: CheckCircle2, label: t('demande.status.approved') },
-    REJECTED: { variant: 'destructive', icon: XCircle, label: t('demande.status.rejected') },
-    PROCESSED: { variant: 'success', icon: CheckCircle2, label: t('demande.status.approved') },
-    VALIDATING: { variant: 'warning', icon: RefreshCw, label: 'En cours de validation' },
-    VALIDATED: { variant: 'success', icon: CheckCircle2, label: 'Validé' },
+  const statusConfig: Record<string, { classes: string; icon: typeof Clock; label: string }> = {
+    PENDING: {
+      classes: 'bg-amber-50 text-amber-800',
+      icon: Clock,
+      label: t('demande.status.pending'),
+    },
+    APPROVED: {
+      classes: 'bg-[#dcfce7] text-[#166534]',
+      icon: CheckCircle2,
+      label: t('demande.status.approved'),
+    },
+    REJECTED: {
+      classes: 'bg-[#fee2e2] text-[#991b1b]',
+      icon: XCircle,
+      label: t('demande.status.rejected'),
+    },
+    PROCESSED: {
+      classes: 'bg-[#dcfce7] text-[#166534]',
+      icon: CheckCircle2,
+      label: t('demande.status.approved'),
+    },
+    VALIDATING: {
+      classes: 'bg-amber-50 text-amber-800',
+      icon: RefreshCw,
+      label: 'En cours de validation',
+    },
+    VALIDATED: { classes: 'bg-[#dcfce7] text-[#166534]', icon: CheckCircle2, label: 'Validé' },
   };
 
   return (
@@ -205,15 +257,13 @@ export default function DemandePage() {
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={handleLogout}
-            className="shrink-0 text-gray-400 hover:text-white hover:bg-white/10"
+            className="flex shrink-0 items-center rounded-md px-2 py-1.5 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">{t('employeeAuth.logout')}</span>
-          </Button>
+          </button>
         </div>
       )}
 
@@ -259,116 +309,164 @@ export default function DemandePage() {
 
         {/* ─── New Request Form ─────────────────────── */}
         {activeTab === 'form' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('demande.form.title')}</CardTitle>
-              <p className="text-sm text-gray-500">{t('demande.form.subtitle')}</p>
-            </CardHeader>
-            <CardContent>
+          <div className="card">
+            <h3 className="text-base font-semibold text-[#0a2540]">{t('demande.form.title')}</h3>
+            <p className="mb-4 text-sm text-gray-500">{t('demande.form.subtitle')}</p>
+            <div>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
                 {/* Row 1: Service + Matricule */}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Select
-                    {...register('service', { required: t('demande.form.errors.serviceRequired') })}
-                    label={t('demande.form.service')}
-                    options={SERVICE_OPTIONS}
-                    placeholder={t('demande.form.servicePlaceholder')}
-                    error={errors.service?.message}
-                    disabled={!!employee}
-                  />
-                  <Input
-                    {...register('matricule', {
-                      required: t('demande.form.errors.matriculeRequired'),
-                    })}
-                    label={t('demande.form.matricule')}
-                    placeholder="MAT-000"
-                    error={errors.matricule?.message}
-                    disabled={!!employee}
-                  />
+                  <div>
+                    <label className="label">{t('demande.form.service')}</label>
+                    <select
+                      className="input"
+                      {...register('service', {
+                        required: t('demande.form.errors.serviceRequired'),
+                      })}
+                      disabled={!!employee}
+                    >
+                      <option value="">{t('demande.form.servicePlaceholder')}</option>
+                      {SERVICE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.service?.message && (
+                      <p className="mt-1 text-xs text-red-500">{errors.service.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="label">{t('demande.form.matricule')}</label>
+                    <input
+                      className="input"
+                      {...register('matricule', {
+                        required: t('demande.form.errors.matriculeRequired'),
+                      })}
+                      placeholder="MAT-000"
+                      disabled={!!employee}
+                    />
+                    {errors.matricule?.message && (
+                      <p className="mt-1 text-xs text-red-500">{errors.matricule.message}</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Row 2: Nom + Prénom */}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    {...register('lastName', {
-                      required: t('demande.form.errors.lastNameRequired'),
-                    })}
-                    label={t('demande.form.lastName')}
-                    placeholder={t('demande.form.lastNamePlaceholder')}
-                    error={errors.lastName?.message}
-                    disabled={!!employee}
-                  />
-                  <Input
-                    {...register('firstName', {
-                      required: t('demande.form.errors.firstNameRequired'),
-                    })}
-                    label={t('demande.form.firstName')}
-                    placeholder={t('demande.form.firstNamePlaceholder')}
-                    error={errors.firstName?.message}
-                    disabled={!!employee}
-                  />
+                  <div>
+                    <label className="label">{t('demande.form.lastName')}</label>
+                    <input
+                      className="input"
+                      {...register('lastName', {
+                        required: t('demande.form.errors.lastNameRequired'),
+                      })}
+                      placeholder={t('demande.form.lastNamePlaceholder')}
+                      disabled={!!employee}
+                    />
+                    {errors.lastName?.message && (
+                      <p className="mt-1 text-xs text-red-500">{errors.lastName.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="label">{t('demande.form.firstName')}</label>
+                    <input
+                      className="input"
+                      {...register('firstName', {
+                        required: t('demande.form.errors.firstNameRequired'),
+                      })}
+                      placeholder={t('demande.form.firstNamePlaceholder')}
+                      disabled={!!employee}
+                    />
+                    {errors.firstName?.message && (
+                      <p className="mt-1 text-xs text-red-500">{errors.firstName.message}</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Row 3: Poste + Téléphone */}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    {...register('position', {
-                      required: t('demande.form.errors.positionRequired'),
-                    })}
-                    label={t('demande.form.position')}
-                    placeholder={t('demande.form.positionPlaceholder')}
-                    error={errors.position?.message}
-                    disabled={!!employee}
-                  />
-                  <Input
-                    {...register('phone', {
-                      required: t('demande.form.errors.phoneRequired'),
-                      pattern: {
-                        value: /^[+]?[\d\s-]{8,}$/,
-                        message: t('demande.form.errors.phoneInvalid'),
-                      },
-                    })}
-                    label={t('demande.form.phone')}
-                    type="tel"
-                    placeholder="+225 07 00 00 00"
-                    error={errors.phone?.message}
-                    disabled={!!employee}
-                  />
+                  <div>
+                    <label className="label">{t('demande.form.position')}</label>
+                    <input
+                      className="input"
+                      {...register('position', {
+                        required: t('demande.form.errors.positionRequired'),
+                      })}
+                      placeholder={t('demande.form.positionPlaceholder')}
+                      disabled={!!employee}
+                    />
+                    {errors.position?.message && (
+                      <p className="mt-1 text-xs text-red-500">{errors.position.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="label">{t('demande.form.phone')}</label>
+                    <input
+                      className="input"
+                      {...register('phone', {
+                        required: t('demande.form.errors.phoneRequired'),
+                        pattern: {
+                          value: /^[+]?[\d\s-]{8,}$/,
+                          message: t('demande.form.errors.phoneInvalid'),
+                        },
+                      })}
+                      type="tel"
+                      placeholder="+225 07 00 00 00"
+                      disabled={!!employee}
+                    />
+                    {errors.phone?.message && (
+                      <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Row 4: Email + Montant */}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    {...register('email', {
-                      required: t('demande.form.errors.emailRequired'),
-                      pattern: {
-                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        message: t('demande.form.errors.emailInvalid'),
-                      },
-                    })}
-                    label={t('demande.form.email')}
-                    type="email"
-                    placeholder="prenom.nom@entreprise.com"
-                    error={errors.email?.message}
-                    disabled={!!employee}
-                  />
-                  <Input
-                    {...register('amount', {
-                      required: t('demande.form.errors.amountRequired'),
-                      min: { value: 1, message: t('demande.form.errors.amountMin') },
-                      validate: (v) => {
-                        if (maxDisbursement > 0 && Number(v) > maxDisbursement) {
-                          return `Le montant dépasse la limite autorisée de ${fmt(maxDisbursement)}`;
-                        }
-                        return true;
-                      },
-                    })}
-                    label={t('demande.form.amount')}
-                    type="number"
-                    placeholder="0"
-                    error={errors.amount?.message}
-                    hint={maxDisbursement > 0 ? `Limite max : ${fmt(maxDisbursement)}` : undefined}
-                  />
+                  <div>
+                    <label className="label">{t('demande.form.email')}</label>
+                    <input
+                      className="input"
+                      {...register('email', {
+                        required: t('demande.form.errors.emailRequired'),
+                        pattern: {
+                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                          message: t('demande.form.errors.emailInvalid'),
+                        },
+                      })}
+                      type="email"
+                      placeholder="prenom.nom@entreprise.com"
+                      disabled={!!employee}
+                    />
+                    {errors.email?.message && (
+                      <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="label">{t('demande.form.amount')}</label>
+                    <input
+                      className="input"
+                      {...register('amount', {
+                        required: t('demande.form.errors.amountRequired'),
+                        min: { value: 1, message: t('demande.form.errors.amountMin') },
+                        validate: (v) => {
+                          if (maxDisbursement > 0 && Number(v) > maxDisbursement) {
+                            return `Le montant dépasse la limite autorisée de ${fmt(maxDisbursement)}`;
+                          }
+                          return true;
+                        },
+                      })}
+                      type="number"
+                      placeholder="0"
+                    />
+                    {errors.amount?.message ? (
+                      <p className="mt-1 text-xs text-red-500">{errors.amount.message}</p>
+                    ) : maxDisbursement > 0 ? (
+                      <p className="mt-1 text-xs text-[#aab7c4]">
+                        Limite max : {fmt(maxDisbursement)}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
 
                 {/* Motif */}
@@ -397,47 +495,49 @@ export default function DemandePage() {
 
                 {/* Submit */}
                 <div className="flex">
-                  <Button
+                  <button
                     type="submit"
-                    loading={isSubmitting}
-                    className="w-full sm:w-auto sm:ml-auto"
+                    className="btn-primary w-full disabled:opacity-50 sm:ml-auto sm:w-auto"
+                    disabled={isSubmitting}
                   >
-                    <Send className="mr-2 h-4 w-4" />
+                    {isSubmitting && (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    )}
+                    <Send className="h-4 w-4" />
                     {t('demande.form.submit')}
-                  </Button>
+                  </button>
                 </div>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* ─── Tracking Tab ─────────────────────────── */}
         {activeTab === 'tracking' && (
           <div className="space-y-6">
             {/* Search by reference */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('demande.tracking.title')}</CardTitle>
-                <p className="text-sm text-gray-500">{t('demande.tracking.subtitle')}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1">
-                    <Input
-                      value={trackingRef}
-                      onChange={(e) => setTrackingRef(e.target.value)}
-                      placeholder={t('demande.tracking.placeholder')}
-                      onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
-                    />
-                  </div>
-                  <Button
+            <div className="card">
+              <h3 className="text-base font-semibold text-[#0a2540]">
+                {t('demande.tracking.title')}
+              </h3>
+              <p className="mb-4 text-sm text-gray-500">{t('demande.tracking.subtitle')}</p>
+              <div>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <input
+                    className="input flex-1"
+                    value={trackingRef}
+                    onChange={(e) => setTrackingRef(e.target.value)}
+                    placeholder={t('demande.tracking.placeholder')}
+                    onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
+                  />
+                  <button
+                    className="btn-primary w-full disabled:opacity-50 sm:w-auto"
                     onClick={handleTrack}
                     disabled={!trackingRef.trim()}
-                    className="w-full sm:w-auto"
                   >
-                    <Search className="mr-2 h-4 w-4" />
+                    <Search className="h-4 w-4" />
                     {t('demande.tracking.search')}
-                  </Button>
+                  </button>
                 </div>
 
                 {/* Tracking result */}
@@ -451,13 +551,12 @@ export default function DemandePage() {
                         const cfg = statusConfig[trackingResult.status];
                         const Icon = cfg.icon;
                         return (
-                          <Badge
-                            variant={cfg.variant}
-                            className="flex items-center gap-1.5 px-3 py-1"
+                          <span
+                            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${cfg.classes}`}
                           >
                             <Icon className="h-3.5 w-3.5" />
                             {cfg.label}
-                          </Badge>
+                          </span>
                         );
                       })()}
                     </div>
@@ -575,25 +674,22 @@ export default function DemandePage() {
                     <p className="text-sm">{t('demande.tracking.notFound')}</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* ─── My Requests List ─────────────────── */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Mes demandes</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={loadMyRequests}
-                    disabled={loadingRequests}
-                  >
-                    <RefreshCw className={cn('h-4 w-4', loadingRequests && 'animate-spin')} />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
+            <div className="card">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-base font-semibold text-[#0a2540]">Mes demandes</h3>
+                <button
+                  className="rounded-md p-1.5 text-[#697386] hover:bg-zinc-100 disabled:opacity-50"
+                  onClick={loadMyRequests}
+                  disabled={loadingRequests}
+                >
+                  <RefreshCw className={cn('h-4 w-4', loadingRequests && 'animate-spin')} />
+                </button>
+              </div>
+              <div>
                 {loadingRequests && myRequests.length === 0 && (
                   <p className="text-sm text-gray-500 text-center py-4">Chargement…</p>
                 )}
@@ -621,13 +717,12 @@ export default function DemandePage() {
                               <span className="font-mono text-sm text-brand-gold">
                                 {req.reference}
                               </span>
-                              <Badge
-                                variant={cfg?.variant ?? 'warning'}
-                                className="flex items-center gap-1 text-xs px-2 py-0.5"
+                              <span
+                                className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${cfg?.classes ?? 'bg-amber-50 text-amber-800'}`}
                               >
                                 <Icon className="h-3 w-3" />
                                 {cfg?.label ?? req.status}
-                              </Badge>
+                              </span>
                             </div>
                             <p className="text-sm text-gray-700 mt-1 truncate">{req.reason}</p>
                             <p className="text-xs text-gray-400">
@@ -642,17 +737,16 @@ export default function DemandePage() {
                     })}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Success modal */}
-        <Modal
+        <ModalShell
           open={showSuccessModal}
           onClose={() => setShowSuccessModal(false)}
           title={t('demande.success.title')}
-          size="sm"
         >
           <div className="space-y-4 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
@@ -664,11 +758,14 @@ export default function DemandePage() {
               <p className="text-lg font-bold text-brand-gold">{lastReference}</p>
             </div>
             <p className="text-xs text-gray-400">{t('demande.success.hint')}</p>
-            <Button onClick={() => setShowSuccessModal(false)} className="w-full">
+            <button
+              className="btn-primary w-full"
+              onClick={() => setShowSuccessModal(false)}
+            >
               {t('common.close')}
-            </Button>
+            </button>
           </div>
-        </Modal>
+        </ModalShell>
       </div>
     </div>
   );

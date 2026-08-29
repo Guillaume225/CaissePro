@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,8 +17,8 @@ import {
   Sparkles,
   Link2,
   Send,
+  X,
 } from 'lucide-react';
-import { Button, Badge, Card, CardHeader, CardTitle, CardContent, Modal } from '@/components/ui';
 import {
   useExpense,
   useApproveExpense,
@@ -33,23 +33,65 @@ import { cn } from '@/lib/utils';
 import type { ExpenseStatus, ExpenseApproval } from '@/types/expense';
 
 // ── Status config ────────────────────────────────────────
-const STATUS_CONFIG: Record<
-  string,
-  {
-    label: string;
-    variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive';
-    icon: typeof Clock;
-  }
-> = {
-  DRAFT: { label: 'Brouillon', variant: 'outline', icon: Clock },
-  PENDING: { label: 'En attente', variant: 'warning', icon: Clock },
-  APPROVED: { label: 'Approuvée', variant: 'info', icon: CheckCircle2 },
-  APPROVED_L1: { label: 'Approuvée N1', variant: 'info', icon: CheckCircle2 },
-  APPROVED_L2: { label: 'Approuvée N2', variant: 'info', icon: CheckCircle2 },
-  PAID: { label: 'Payée', variant: 'success', icon: Banknote },
-  REJECTED: { label: 'Rejetée', variant: 'destructive', icon: XCircle },
-  CANCELLED: { label: 'Annulée', variant: 'destructive', icon: XCircle },
+const STATUS_CONFIG: Record<string, { label: string; classes: string; icon: typeof Clock }> = {
+  DRAFT: { label: 'Brouillon', classes: 'border border-zinc-300 text-zinc-600', icon: Clock },
+  PENDING: { label: 'En attente', classes: 'bg-amber-50 text-amber-800', icon: Clock },
+  APPROVED: { label: 'Approuvée', classes: 'bg-[#eff6ff] text-[#1e40af]', icon: CheckCircle2 },
+  APPROVED_L1: { label: 'Approuvée N1', classes: 'bg-[#eff6ff] text-[#1e40af]', icon: CheckCircle2 },
+  APPROVED_L2: { label: 'Approuvée N2', classes: 'bg-[#eff6ff] text-[#1e40af]', icon: CheckCircle2 },
+  PAID: { label: 'Payée', classes: 'bg-[#dcfce7] text-[#166534]', icon: Banknote },
+  REJECTED: { label: 'Rejetée', classes: 'bg-[#fee2e2] text-[#991b1b]', icon: XCircle },
+  CANCELLED: { label: 'Annulée', classes: 'bg-[#fee2e2] text-[#991b1b]', icon: XCircle },
 };
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  size = 'md',
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  size?: 'sm' | 'md' | 'lg';
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div
+        className={`relative w-full rounded-md bg-white shadow-2xl ${size === 'lg' ? 'max-w-2xl' : 'max-w-md'}`}
+      >
+        <div className="flex items-center justify-between border-b border-[#e0e6eb] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#0a2540]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="max-h-[75vh] overflow-y-auto px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 const PAYMENT_LABELS: Record<string, string> = {
   CASH: 'Espèces',
@@ -121,9 +163,9 @@ export default function ExpenseDetailPage() {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-2">
         <p className="text-sm text-red-500">{t('common.error')}</p>
-        <Button variant="outline" size="sm" onClick={() => navigate('/expenses')}>
+        <button className="btn-secondary" onClick={() => navigate('/expenses')}>
           {t('common.back')}
-        </Button>
+        </button>
       </div>
     );
   }
@@ -145,10 +187,12 @@ export default function ExpenseDetailPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">{expense.reference}</h1>
-              <Badge variant={statusCfg.variant} className="gap-1">
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${statusCfg.classes}`}
+              >
                 <StatusIcon className="h-3 w-3" />
                 {statusCfg.label}
-              </Badge>
+              </span>
               {expense.currentApprovalLevel && (
                 <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
                   Niveau {expense.currentApprovalLevel}
@@ -165,36 +209,53 @@ export default function ExpenseDetailPage() {
         {/* Action buttons */}
         <div className="flex items-center gap-2">
           {canSubmit && (
-            <Button
+            <button
+              className="btn-primary bg-green-600 hover:bg-green-700 disabled:opacity-50"
               onClick={handleSubmit}
-              loading={submitMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              disabled={submitMutation.isPending}
             >
+              {submitMutation.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               <Send className="h-4 w-4" />
               {t('expenses.submit')}
-            </Button>
+            </button>
           )}
           {canApprove && (
-            <Button onClick={handleApprove} loading={approveMutation.isPending}>
+            <button
+              className="btn-primary disabled:opacity-50"
+              onClick={handleApprove}
+              disabled={approveMutation.isPending}
+            >
+              {approveMutation.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               <CheckCircle2 className="h-4 w-4" />
               {t('expenses.approve')}
-            </Button>
+            </button>
           )}
           {canReject && (
-            <Button
-              variant="destructive"
+            <button
+              className="btn-primary bg-red-600 hover:bg-red-700 disabled:opacity-50"
               onClick={() => setRejectModalOpen(true)}
-              loading={rejectMutation.isPending}
+              disabled={rejectMutation.isPending}
             >
               <XCircle className="h-4 w-4" />
               {t('expenses.reject')}
-            </Button>
+            </button>
           )}
           {canPay && (
-            <Button onClick={handlePay} loading={payMutation.isPending}>
+            <button
+              className="btn-primary disabled:opacity-50"
+              onClick={handlePay}
+              disabled={payMutation.isPending}
+            >
+              {payMutation.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               <Banknote className="h-4 w-4" />
               {t('expenses.markPaid')}
-            </Button>
+            </button>
           )}
         </div>
       </div>
@@ -203,11 +264,9 @@ export default function ExpenseDetailPage() {
         {/* ── Main info ──────────────────── */}
         <div className="space-y-6 lg:col-span-2">
           {/* Details card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('expenses.details')}</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="card">
+            <h3 className="mb-4 text-base font-semibold text-[#0a2540]">{t('expenses.details')}</h3>
+            <div>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
                 <DetailItem
                   icon={Calendar}
@@ -258,18 +317,16 @@ export default function ExpenseDetailPage() {
                   </button>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Attachments */}
           {expense.attachments.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {t('expenses.attachments')} ({expense.attachments.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="card">
+              <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+                {t('expenses.attachments')} ({expense.attachments.length})
+              </h3>
+              <div>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {expense.attachments.map((att) => (
                     <a
@@ -299,20 +356,18 @@ export default function ExpenseDetailPage() {
                     </a>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* AI Anomaly score */}
           {expense.aiAnomalyScore != null && expense.aiAnomalyScore > 0.5 && (
-            <Card className="border-amber-200 bg-amber-50/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-amber-800">
-                  <Sparkles className="h-4 w-4" />
-                  {t('expenses.aiAnomalyTitle')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="card border-amber-200 bg-amber-50/50">
+              <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-amber-800">
+                <Sparkles className="h-4 w-4" />
+                {t('expenses.aiAnomalyTitle')}
+              </h3>
+              <div>
                 <div className="flex items-center gap-3">
                   <div className="h-2.5 flex-1 rounded-full bg-amber-200">
                     <div
@@ -337,22 +392,22 @@ export default function ExpenseDetailPage() {
                     ))}
                   </ul>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
 
         {/* ── Sidebar: Timeline + Approvals ─ */}
         <div className="space-y-6">
           {/* Workflow Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('expenses.workflowTimeline')}</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="card">
+            <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+              {t('expenses.workflowTimeline')}
+            </h3>
+            <div>
               <WorkflowTimeline expense={expense} approvals={expense.approvals} />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Next validator */}
           {(() => {
@@ -374,8 +429,8 @@ export default function ExpenseDetailPage() {
               nextLevel = 2;
             }
             return nextName ? (
-              <Card className="border-amber-200 bg-amber-50/50">
-                <CardContent className="py-3">
+              <div className="card border-amber-200 bg-amber-50/50 py-3">
+                <div>
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
                       <User className="h-4 w-4" />
@@ -392,17 +447,17 @@ export default function ExpenseDetailPage() {
                       </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ) : null;
           })()}
 
           {/* Approval History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('expenses.approvalHistory')}</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="card">
+            <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+              {t('expenses.approvalHistory')}
+            </h3>
+            <div>
               {expense.approvals.length > 0 ? (
                 <div className="space-y-4">
                   {expense.approvals.map((appr) => (
@@ -414,32 +469,16 @@ export default function ExpenseDetailPage() {
                   Aucune validation pour le moment
                 </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ── Reject modal ──────────────────── */}
-      <Modal
+      <ModalShell
         open={rejectModalOpen}
         onClose={() => setRejectModalOpen(false)}
         title={t('expenses.rejectExpense')}
-        size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setRejectModalOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReject}
-              loading={rejectMutation.isPending}
-              disabled={!rejectComment.trim()}
-            >
-              {t('expenses.confirmReject')}
-            </Button>
-          </>
-        }
       >
         <div className="space-y-3">
           <p className="text-sm text-gray-600">{t('expenses.rejectReason')}</p>
@@ -448,11 +487,26 @@ export default function ExpenseDetailPage() {
             onChange={(e) => setRejectComment(e.target.value)}
             rows={4}
             placeholder={t('expenses.rejectCommentPlaceholder')}
-            className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+            className="input"
             autoFocus
           />
+          <div className="flex justify-end gap-3 pt-2">
+            <button className="btn-secondary" onClick={() => setRejectModalOpen(false)}>
+              {t('common.cancel')}
+            </button>
+            <button
+              className="btn-primary bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              onClick={handleReject}
+              disabled={!rejectComment.trim() || rejectMutation.isPending}
+            >
+              {rejectMutation.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
+              {t('expenses.confirmReject')}
+            </button>
+          </div>
         </div>
-      </Modal>
+      </ModalShell>
 
       {/* ── Disbursement Request modal ────── */}
       {expense.disbursementRequestId && (
@@ -506,15 +560,21 @@ function WorkflowTimeline({
 }) {
   const { t } = useTranslation();
   const nextApproval = approvals.find((a) => a.status === 'PENDING');
-  const steps: { label: string; status: ExpenseStatus; date?: string }[] = [
+  type TimelineStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'PAID';
+  const steps: { label: string; status: TimelineStatus; date?: string }[] = [
     { label: t('expenses.statusDraft'), status: 'DRAFT' },
     { label: t('expenses.statusPending'), status: 'PENDING' },
     { label: t('expenses.statusApproved'), status: 'APPROVED' },
     { label: t('expenses.statusPaid'), status: 'PAID' },
   ];
 
-  const statusOrder: ExpenseStatus[] = ['DRAFT', 'PENDING', 'APPROVED', 'PAID'];
-  const currentIndex = statusOrder.indexOf(expense.status);
+  // APPROVED_L1/APPROVED_L2 both collapse to the single "Approved" timeline step.
+  const displayStatus: TimelineStatus =
+    expense.status === 'APPROVED_L1' || expense.status === 'APPROVED_L2'
+      ? 'APPROVED'
+      : (expense.status as TimelineStatus);
+  const statusOrder: TimelineStatus[] = ['DRAFT', 'PENDING', 'APPROVED', 'PAID'];
+  const currentIndex = statusOrder.indexOf(displayStatus);
   const isRejected = expense.status === 'REJECTED';
 
   return (
@@ -629,14 +689,11 @@ function ApprovalItem({ approval }: { approval: ExpenseApproval }) {
 
 // ── Disbursement Request Modal ─────────────────────────
 
-const DR_STATUS_CONFIG: Record<
-  string,
-  { label: string; variant: 'outline' | 'warning' | 'info' | 'success' | 'destructive' }
-> = {
-  PENDING: { label: 'En attente', variant: 'warning' },
-  APPROVED: { label: 'Approuvée', variant: 'info' },
-  REJECTED: { label: 'Rejetée', variant: 'destructive' },
-  PROCESSED: { label: 'Traitée', variant: 'success' },
+const DR_STATUS_CONFIG: Record<string, { label: string; classes: string }> = {
+  PENDING: { label: 'En attente', classes: 'bg-amber-50 text-amber-800' },
+  APPROVED: { label: 'Approuvée', classes: 'bg-[#eff6ff] text-[#1e40af]' },
+  REJECTED: { label: 'Rejetée', classes: 'bg-[#fee2e2] text-[#991b1b]' },
+  PROCESSED: { label: 'Traitée', classes: 'bg-[#dcfce7] text-[#166534]' },
 };
 
 function DisbursementRequestModal({
@@ -656,7 +713,7 @@ function DisbursementRequestModal({
     : DR_STATUS_CONFIG.PENDING;
 
   return (
-    <Modal open={open} onClose={onClose} title="Demande de décaissement" size="lg">
+    <ModalShell open={open} onClose={onClose} title="Demande de décaissement" size="lg">
       {isLoading ? (
         <div className="flex h-32 items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-4 border-brand-gold border-t-transparent" />
@@ -671,7 +728,9 @@ function DisbursementRequestModal({
               <p className="text-lg font-bold text-gray-900">{dr.reference}</p>
               <p className="text-xs text-gray-500">{formatDateTime(dr.createdAt)}</p>
             </div>
-            <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusCfg.classes}`}>
+              {statusCfg.label}
+            </span>
           </div>
 
           {/* Amount */}
@@ -708,7 +767,7 @@ function DisbursementRequestModal({
           )}
         </div>
       )}
-    </Modal>
+    </ModalShell>
   );
 }
 

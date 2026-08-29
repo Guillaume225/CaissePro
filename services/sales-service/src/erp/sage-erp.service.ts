@@ -174,7 +174,7 @@ export class SageErpService {
         return {
           success: false,
           entriesPosted: 0,
-          message: `Erreur Sage: HTTP ${status}`,
+          message: this.describeHttpError(status, url, responseText),
           rawResponse: responseText.substring(0, 500),
         };
       }
@@ -194,9 +194,41 @@ export class SageErpService {
       return {
         success: false,
         entriesPosted: 0,
-        message: `Erreur de connexion: ${errorMsg}`,
+        message: `Erreur de connexion vers ${setting.apiUrl} : ${errorMsg}`,
       };
     }
+  }
+
+  /**
+   * Build a clear, actionable error message for a non-2xx Sage response —
+   * shown directly to the user, so include the diagnostic details inline
+   * rather than just the bare status code.
+   */
+  private describeHttpError(status: number, url: string, responseText: string): string {
+    const host = (() => {
+      try {
+        return new URL(url).origin;
+      } catch {
+        return url;
+      }
+    })();
+    // Strip HTML tags from server error pages (e.g. "<HTML><BODY><B>404 Not Found</B></BODY></HTML>")
+    const cleanBody = responseText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const snippet = cleanBody ? cleanBody.substring(0, 300) : '(réponse vide)';
+
+    if (status === 404) {
+      return (
+        `Erreur Sage: HTTP 404 — l'URL de l'API Sage (${host}) ne correspond à aucune route sur le serveur. ` +
+        `Vérifiez l'URL configurée dans les paramètres ERP (chemin de base incorrect ou service Sage non démarré). Réponse du serveur : ${snippet}`
+      );
+    }
+    if (status === 401 || status === 403) {
+      return `Erreur Sage: HTTP ${status} — accès refusé. Vérifiez le jeton d'accès (accessToken) configuré dans les paramètres ERP. Réponse du serveur : ${snippet}`;
+    }
+    if (status >= 500) {
+      return `Erreur Sage: HTTP ${status} — le serveur Sage a rencontré une erreur interne en traitant la requête. Réponse du serveur : ${snippet}`;
+    }
+    return `Erreur Sage: HTTP ${status} — ${snippet}`;
   }
 
   /**
@@ -285,7 +317,7 @@ export class SageErpService {
         return {
           success: false,
           entriesPosted: 0,
-          message: `Erreur Sage: HTTP ${status}`,
+          message: this.describeHttpError(status, url, responseText),
           rawResponse: responseText.substring(0, 500),
         };
       }
@@ -296,7 +328,7 @@ export class SageErpService {
       return {
         success: false,
         entriesPosted: 0,
-        message: `Erreur de connexion: ${errorMsg}`,
+        message: `Erreur de connexion vers ${setting.apiUrl} : ${errorMsg}`,
       };
     }
   }

@@ -25,7 +25,6 @@ import {
   ShieldAlert,
   Sparkles,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, Stat, Badge } from '@/components/ui';
 import { useDashboardKpis, useAiAlerts } from '@/hooks/useDashboard';
 import { useFneInvoices } from '@/hooks/useFneInvoices';
 import { useExpenses } from '@/hooks/useExpenses';
@@ -55,13 +54,10 @@ const PIE_COLORS = [
   '#6366F1',
 ];
 
-const SEVERITY_CONFIG: Record<
-  AlertSeverity,
-  { variant: 'success' | 'warning' | 'destructive'; label: string }
-> = {
-  LOW: { variant: 'success', label: 'Faible' },
-  MEDIUM: { variant: 'warning', label: 'Moyen' },
-  HIGH: { variant: 'destructive', label: 'Élevé' },
+const SEVERITY_CONFIG: Record<AlertSeverity, { classes: string; label: string }> = {
+  LOW: { classes: 'bg-[#dcfce7] text-[#166534]', label: 'Faible' },
+  MEDIUM: { classes: 'bg-amber-50 text-amber-800', label: 'Moyen' },
+  HIGH: { classes: 'bg-[#fee2e2] text-[#991b1b]', label: 'Élevé' },
 };
 
 const TOOLTIP_STYLE = {
@@ -253,25 +249,25 @@ export default function DecisionDashboard() {
 
       {/* ═══ KPI Cards ══════════════════════════ */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
+        <StatTile
           label="Factures FNE certifiées"
           value={String(certifiedInvoices.length)}
           icon={<FileCheck2 className="h-5 w-5" />}
           onClick={() => navigate('/fne/invoices')}
         />
-        <Stat
+        <StatTile
           label="CA Factures FNE"
           value={formatCFA(fneTotalTtc)}
           icon={<Clock className="h-5 w-5" />}
           onClick={() => navigate('/fne/invoices')}
         />
-        <Stat
+        <StatTile
           label="Validation en attente"
           value={String(pendingCount)}
           icon={<AlertTriangle className="h-5 w-5" />}
           onClick={() => navigate('/validation')}
         />
-        <Stat
+        <StatTile
           label="Dépenses du mois"
           value={formatCFA(monthExpensesTotal)}
           icon={<TrendingDown className="h-5 w-5" />}
@@ -282,15 +278,17 @@ export default function DecisionDashboard() {
       {/* ═══ Charts Section — 2 columns ═════════ */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ── Area: Évolution du CA FNE ─────── */}
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-md"
+        <div
+          className="card cursor-pointer transition-shadow hover:shadow-md"
           onClick={() => navigate('/fne/invoices')}
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Évolution du CA (FNE certifiées)</CardTitle>
+          <div className="mb-2 flex flex-row items-center justify-between">
+            <h3 className="text-base font-semibold text-[#0a2540]">
+              Évolution du CA (FNE certifiées)
+            </h3>
             <PeriodSelector value={fnePeriod} onChange={setFnePeriod} />
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div>
             {fneChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <AreaChart data={fneChartData}>
@@ -335,19 +333,19 @@ export default function DecisionDashboard() {
             ) : (
               <EmptyChart t={t} />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ── Bar: Dépenses ─────────────────── */}
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-md"
+        <div
+          className="card cursor-pointer transition-shadow hover:shadow-md"
           onClick={() => navigate('/month-expenses')}
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Évolution des dépenses</CardTitle>
+          <div className="mb-2 flex flex-row items-center justify-between">
+            <h3 className="text-base font-semibold text-[#0a2540]">Évolution des dépenses</h3>
             <PeriodSelector value={expPeriod} onChange={setExpPeriod} />
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div>
             {expChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <BarChart data={expChartData} barGap={4}>
@@ -384,18 +382,16 @@ export default function DecisionDashboard() {
             ) : (
               <EmptyChart t={t} />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ── FNE Summary ─────────────────── */}
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-md"
+        <div
+          className="card cursor-pointer transition-shadow hover:shadow-md"
           onClick={() => navigate('/devis')}
         >
-          <CardHeader>
-            <CardTitle>Résumé Facturation FNE</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">Résumé Facturation FNE</h3>
+          <div>
             <div className="space-y-4">
               <div className="flex items-center justify-between rounded-lg bg-purple-50 p-4">
                 <div>
@@ -425,18 +421,18 @@ export default function DecisionDashboard() {
                 Voir les devis →
               </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ── Pie: Expense categories ─────── */}
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-md"
+        <div
+          className="card cursor-pointer transition-shadow hover:shadow-md"
           onClick={() => navigate('/month-expenses')}
         >
-          <CardHeader>
-            <CardTitle>{t('dashboard.expensesByCategory')}</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <h3 className="mb-4 text-base font-semibold text-[#0a2540]">
+            {t('dashboard.expensesByCategory')}
+          </h3>
+          <div>
             {categories.length > 0 ? (
               <ResponsiveContainer width="100%" height={288}>
                 <PieChart>
@@ -470,21 +466,19 @@ export default function DecisionDashboard() {
             ) : (
               <EmptyChart t={t} />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* ═══ AI Section ═════════════════════════ */}
       <div>
         {/* ── AI Alerts ───────────────────────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-purple-500" />
-              {t('dashboard.aiAlerts')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="card">
+          <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-[#0a2540]">
+            <ShieldAlert className="h-5 w-5 text-purple-500" />
+            {t('dashboard.aiAlerts')}
+          </h3>
+          <div>
             {alerts.length > 0 ? (
               <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                 {alerts.map((alert) => {
@@ -506,9 +500,11 @@ export default function DecisionDashboard() {
                           <span className="text-sm font-medium text-gray-900 truncate">
                             {alert.title}
                           </span>
-                          <Badge variant={sev.variant} className="text-[10px] shrink-0">
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${sev.classes}`}
+                          >
                             {sev.label}
-                          </Badge>
+                          </span>
                         </div>
                         <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{alert.message}</p>
                         <span className="mt-1 text-[10px] text-gray-400">
@@ -524,14 +520,41 @@ export default function DecisionDashboard() {
                 {t('dashboard.noAlerts')}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 // ── Helpers ──────────────────────────────────────────────
+
+function StatTile({
+  label,
+  value,
+  icon,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      className={cn('card flex items-start justify-between', onClick && 'cursor-pointer transition-shadow hover:shadow-md')}
+      onClick={onClick}
+    >
+      <div>
+        <p className="text-sm font-medium text-[#697386]">{label}</p>
+        <p className="mt-1 text-2xl font-bold text-[#0a2540]">{value}</p>
+      </div>
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold/10 text-brand-gold">
+        {icon}
+      </div>
+    </div>
+  );
+}
 
 function AlertIcon({ type }: { type: string }) {
   const iconClass = 'h-4 w-4 mt-0.5 shrink-0';

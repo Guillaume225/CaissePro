@@ -18,8 +18,8 @@ import {
   Printer,
   CheckCircle2,
   AlertTriangle,
+  X,
 } from 'lucide-react';
-import { Button, Input, Badge, Card, CardContent, Stat, Modal } from '@/components/ui';
 import {
   useCashState,
   useDayOperations,
@@ -34,6 +34,65 @@ import { useExpenses, useExpenseCategories } from '@/hooks/useExpenses';
 import type { CashMovementType, CashMovementCategory } from '@/types/admin';
 
 const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(n) + ' FCFA';
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-md bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#e0e6eb] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#0a2540]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="max-h-[75vh] overflow-y-auto px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function StatTile({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return (
+    <div className="card flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-[#697386]">{label}</p>
+        <p className="mt-1 text-2xl font-bold text-[#0a2540]">{value}</p>
+      </div>
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold/10 text-brand-gold">
+        {icon}
+      </div>
+    </div>
+  );
+}
 
 export default function ClosingPage() {
   const { t } = useTranslation();
@@ -204,62 +263,70 @@ export default function ClosingPage() {
         </div>
         <div className="flex gap-2">
           {state?.status === 'OPEN' && (
-            <Button variant="destructive" onClick={() => setShowLockModal(true)}>
-              <LockKeyhole className="mr-2 h-4 w-4" />
+            <button
+              className="btn-primary bg-red-600 hover:bg-red-700"
+              onClick={() => setShowLockModal(true)}
+            >
+              <LockKeyhole className="h-4 w-4" />
               {t('closing.lockCash')}
-            </Button>
+            </button>
           )}
           {state?.status === 'PENDING_CLOSE' && (
             <div className="flex gap-2">
-              <Button
-                variant="outline"
+              <button
+                className="btn-secondary disabled:opacity-50"
                 onClick={() => unlockCash.mutate()}
-                loading={unlockCash.isPending}
+                disabled={unlockCash.isPending}
               >
-                <UnlockKeyhole className="mr-2 h-4 w-4" />
+                {unlockCash.isPending && (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                )}
+                <UnlockKeyhole className="h-4 w-4" />
                 {t('closing.unlockCash')}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => { setCloseError(null); setShowCloseModal(true); }}
+              </button>
+              <button
+                className="btn-primary bg-red-600 hover:bg-red-700"
+                onClick={() => {
+                  setCloseError(null);
+                  setShowCloseModal(true);
+                }}
               >
-                <LockKeyhole className="mr-2 h-4 w-4" />
+                <LockKeyhole className="h-4 w-4" />
                 {t('closing.closeCash')}
-              </Button>
+              </button>
             </div>
           )}
           {state?.status === 'CLOSED' && (
-            <Button onClick={() => setShowOpenModal(true)}>
-              <UnlockKeyhole className="mr-2 h-4 w-4" />
+            <button className="btn-primary" onClick={() => setShowOpenModal(true)}>
+              <UnlockKeyhole className="h-4 w-4" />
               {t('closing.openCash')}
-            </Button>
+            </button>
           )}
         </div>
       </div>
 
       {/* Status + KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Card className="border-l-4 border-l-brand-gold">
-          <CardContent className="flex items-center gap-3 py-4">
+        <div className="card border-l-4 border-l-brand-gold py-4">
+          <div className="flex items-center gap-3">
             <Vault className="h-8 w-8 text-brand-gold" />
             <div>
               <p className="text-xs text-gray-500">{t('closing.status')}</p>
-              <Badge
-                variant={
+              <span
+                className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                   state?.status === 'OPEN'
-                    ? 'success'
+                    ? 'bg-[#dcfce7] text-[#166534]'
                     : state?.status === 'PENDING_CLOSE'
-                      ? 'warning'
-                      : 'default'
-                }
-                className="mt-1"
+                      ? 'bg-amber-50 text-amber-800'
+                      : 'bg-zinc-100 text-zinc-600'
+                }`}
               >
                 {state?.status === 'OPEN'
                   ? t('closing.statusOpen')
                   : state?.status === 'PENDING_CLOSE'
                     ? t('closing.statusPendingClose')
                     : t('closing.statusClosed')}
-              </Badge>
+              </span>
               {state?.openedBy && (
                 <p className="mt-1 text-[10px] text-gray-400">
                   {t('closing.openedBy', { name: state.openedBy })}
@@ -269,24 +336,24 @@ export default function ClosingPage() {
                 <p className="mt-0.5 font-mono text-[10px] text-brand-gold">{state.reference}</p>
               )}
             </div>
-          </CardContent>
-        </Card>
-        <Stat
+          </div>
+        </div>
+        <StatTile
           label={t('closing.openModal.openingBalance')}
           value={fmt(state?.openingBalance ?? 0)}
           icon={<UnlockKeyhole className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('closing.theoreticalBalance')}
           value={fmt(state?.theoreticalBalance ?? 0)}
           icon={<Vault className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('closing.todayEntries')}
           value={fmt(state?.todayEntries ?? 0)}
           icon={<ArrowUpRight className="h-5 w-5" />}
         />
-        <Stat
+        <StatTile
           label={t('closing.todayExits')}
           value={fmt(state?.todayExits ?? 0)}
           icon={<ArrowDownRight className="h-5 w-5" />}
@@ -295,28 +362,23 @@ export default function ClosingPage() {
 
       {/* Pending close banner */}
       {state?.status === 'PENDING_CLOSE' && (
-        <Card className="border-l-4 border-l-orange-400 bg-orange-50">
-          <CardContent className="flex items-center gap-3 py-4">
-            <LockKeyhole className="h-6 w-6 text-orange-600" />
-            <div>
-              <p className="text-sm font-semibold text-orange-800">
-                {t('closing.pendingCloseBanner.title')}
-              </p>
-              <p className="text-xs text-orange-600">
-                {t('closing.pendingCloseBanner.description')}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="card flex items-center gap-3 border-l-4 border-l-orange-400 bg-orange-50 py-4">
+          <LockKeyhole className="h-6 w-6 text-orange-600" />
+          <div>
+            <p className="text-sm font-semibold text-orange-800">
+              {t('closing.pendingCloseBanner.title')}
+            </p>
+            <p className="text-xs text-orange-600">{t('closing.pendingCloseBanner.description')}</p>
+          </div>
+        </div>
       )}
 
       {/* Pending requests stats block */}
       {state?.status === 'OPEN' && (
-        <Card
-          className="cursor-pointer border-l-4 border-l-amber-400 transition hover:shadow-md"
+        <div
+          className="card flex cursor-pointer items-center gap-4 border-l-4 border-l-amber-400 py-5 transition hover:shadow-md"
           onClick={() => navigate('/pending-requests')}
         >
-          <CardContent className="flex items-center gap-4 py-5">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-50">
               <FileSignature className="h-6 w-6 text-amber-600" />
             </div>
@@ -341,13 +403,12 @@ export default function ClosingPage() {
               </div>
             </div>
             <ArrowUpRight className="h-5 w-5 text-gray-400" />
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Expense stats block */}
-      <Card>
-        <CardContent className="py-5">
+      <div className="card py-5">
+        <div>
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
               <Receipt className="h-5 w-5 text-blue-600" />
@@ -418,15 +479,14 @@ export default function ClosingPage() {
               </span>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Open Cash Modal */}
-      <Modal
+      <ModalShell
         open={showOpenModal}
         onClose={() => setShowOpenModal(false)}
         title={t('closing.openModal.title')}
-        size="md"
       >
         <div className="space-y-4">
           <div className="rounded-lg bg-emerald-50 p-4">
@@ -441,13 +501,16 @@ export default function ClosingPage() {
             </div>
           </div>
 
-          <Input
-            label={t('closing.openModal.openingBalance')}
-            type="number"
-            value={openingBalance}
-            onChange={(e) => setOpeningBalance(e.target.value)}
-            placeholder="0"
-          />
+          <div>
+            <label className="label">{t('closing.openModal.openingBalance')}</label>
+            <input
+              className="input"
+              type="number"
+              value={openingBalance}
+              onChange={(e) => setOpeningBalance(e.target.value)}
+              placeholder="0"
+            />
+          </div>
 
           {openingBalance !== '' && (
             <div className="rounded-lg bg-gray-50 p-3">
@@ -457,27 +520,29 @@ export default function ClosingPage() {
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowOpenModal(false)}>
+            <button className="btn-secondary" onClick={() => setShowOpenModal(false)}>
               {t('common.cancel')}
-            </Button>
-            <Button
+            </button>
+            <button
+              className="btn-primary disabled:opacity-50"
               onClick={handleOpen}
-              loading={openCash.isPending}
-              disabled={openingBalance === ''}
+              disabled={openingBalance === '' || openCash.isPending}
             >
-              <UnlockKeyhole className="mr-2 h-4 w-4" />
+              {openCash.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
+              <UnlockKeyhole className="h-4 w-4" />
               {t('closing.openCash')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
 
       {/* Lock Confirmation Modal — requires reports review */}
-      <Modal
+      <ModalShell
         open={showLockModal}
         onClose={() => setShowLockModal(false)}
         title={t('closing.lockModal.title')}
-        size="md"
       >
         <div className="space-y-4">
           <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
@@ -515,10 +580,10 @@ export default function ClosingPage() {
                 </div>
               </div>
               {!reportsVisited && (
-                <Button size="sm" variant="outline" onClick={handleGoToReports}>
-                  <Printer className="mr-1.5 h-3.5 w-3.5" />
+                <button className="btn-secondary px-3 py-1.5 text-xs" onClick={handleGoToReports}>
+                  <Printer className="h-3.5 w-3.5" />
                   {t('closing.lockModal.goToReports')}
-                </Button>
+                </button>
               )}
             </div>
           </div>
@@ -547,28 +612,29 @@ export default function ClosingPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowLockModal(false)}>
+            <button className="btn-secondary" onClick={() => setShowLockModal(false)}>
               {t('common.cancel')}
-            </Button>
-            <Button
-              variant="destructive"
+            </button>
+            <button
+              className="btn-primary bg-red-600 hover:bg-red-700 disabled:opacity-50"
               onClick={handleConfirmLock}
-              loading={lockCash.isPending}
-              disabled={!reportsVisited}
+              disabled={!reportsVisited || lockCash.isPending}
             >
-              <LockKeyhole className="mr-2 h-4 w-4" />
+              {lockCash.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
+              <LockKeyhole className="h-4 w-4" />
               {t('closing.lockCash')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
 
       {/* Close (Clôture) Modal */}
-      <Modal
+      <ModalShell
         open={showCloseModal}
         onClose={() => setShowCloseModal(false)}
         title={t('closing.closeModal.title')}
-        size="md"
       >
         <div className="space-y-4">
           {closeError && (
@@ -588,13 +654,16 @@ export default function ClosingPage() {
             </div>
           </div>
 
-          <Input
-            label={t('closing.closeModal.actualBalance')}
-            type="number"
-            value={actualBalance}
-            onChange={(e) => setActualBalance(e.target.value)}
-            placeholder="0"
-          />
+          <div>
+            <label className="label">{t('closing.closeModal.actualBalance')}</label>
+            <input
+              className="input"
+              type="number"
+              value={actualBalance}
+              onChange={(e) => setActualBalance(e.target.value)}
+              placeholder="0"
+            />
+          </div>
 
           {actualBalance !== '' && (() => {
             const gap = (Number(actualBalance) || 0) - (state?.theoreticalBalance ?? 0);
@@ -625,11 +694,11 @@ export default function ClosingPage() {
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowCloseModal(false)}>
+            <button className="btn-secondary" onClick={() => setShowCloseModal(false)}>
               {t('common.cancel')}
-            </Button>
-            <Button
-              variant="destructive"
+            </button>
+            <button
+              className="btn-primary bg-red-600 hover:bg-red-700 disabled:opacity-50"
               onClick={async () => {
                 const bal = Number(actualBalance) || 0;
                 const gap = bal - (state?.theoreticalBalance ?? 0);
@@ -638,7 +707,10 @@ export default function ClosingPage() {
                   return;
                 }
                 try {
-                  await closeCash.mutateAsync({ actualBalance: bal, comment: closeComment || undefined });
+                  await closeCash.mutateAsync({
+                    actualBalance: bal,
+                    comment: closeComment || undefined,
+                  });
                   setShowCloseModal(false);
                   setActualBalance('');
                   setCloseComment('');
@@ -647,22 +719,23 @@ export default function ClosingPage() {
                   setCloseError(msg);
                 }
               }}
-              loading={closeCash.isPending}
-              disabled={actualBalance === ''}
+              disabled={actualBalance === '' || closeCash.isPending}
             >
-              <LockKeyhole className="mr-2 h-4 w-4" />
+              {closeCash.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
+              <LockKeyhole className="h-4 w-4" />
               {t('closing.closeCash')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
 
       {/* Add Movement Modal */}
-      <Modal
+      <ModalShell
         open={showMovementModal}
         onClose={() => setShowMovementModal(false)}
         title={t('closing.movementModal.title')}
-        size="md"
       >
         <div className="space-y-4">
           {/* Type selector */}
@@ -716,20 +789,26 @@ export default function ClosingPage() {
             </select>
           </div>
 
-          <Input
-            label={t('closing.movementModal.amount')}
-            type="number"
-            value={mvAmount}
-            onChange={(e) => setMvAmount(e.target.value)}
-            placeholder="0"
-          />
+          <div>
+            <label className="label">{t('closing.movementModal.amount')}</label>
+            <input
+              className="input"
+              type="number"
+              value={mvAmount}
+              onChange={(e) => setMvAmount(e.target.value)}
+              placeholder="0"
+            />
+          </div>
 
-          <Input
-            label={t('closing.movementModal.reference')}
-            value={mvReference}
-            onChange={(e) => setMvReference(e.target.value)}
-            placeholder={t('closing.movementModal.referencePlaceholder')}
-          />
+          <div>
+            <label className="label">{t('closing.movementModal.reference')}</label>
+            <input
+              className="input"
+              value={mvReference}
+              onChange={(e) => setMvReference(e.target.value)}
+              placeholder={t('closing.movementModal.referencePlaceholder')}
+            />
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -757,20 +836,23 @@ export default function ClosingPage() {
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowMovementModal(false)}>
+            <button className="btn-secondary" onClick={() => setShowMovementModal(false)}>
               {t('common.cancel')}
-            </Button>
-            <Button
+            </button>
+            <button
+              className="btn-primary disabled:opacity-50"
               onClick={handleAddMovement}
-              loading={addMovement.isPending}
-              disabled={mvAmount === '' || !mvDescription.trim()}
+              disabled={mvAmount === '' || !mvDescription.trim() || addMovement.isPending}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              {addMovement.isPending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
+              <Plus className="h-4 w-4" />
               {t('closing.movementModal.add')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
     </div>
   );
 }

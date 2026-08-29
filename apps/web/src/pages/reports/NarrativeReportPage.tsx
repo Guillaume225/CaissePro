@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Brain, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui';
 import { useNarrativeReport } from '@/hooks/useReports';
 
 function buildPeriods(): string[] {
@@ -123,33 +122,25 @@ export default function NarrativeReportPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-gold border-t-transparent" />
         </div>
       ) : isError ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Brain className="mx-auto mb-3 h-10 w-10 text-gray-300" />
-            <p className="text-sm text-gray-500">{t('reports.narrative.noReport')}</p>
-          </CardContent>
-        </Card>
+        <div className="card py-12 text-center">
+          <Brain className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+          <p className="text-sm text-gray-500">{t('reports.narrative.noReport')}</p>
+        </div>
       ) : report ? (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Brain className="h-4 w-4 text-brand-gold" />
-                {t('reports.narrative.aiGenerated')}
-              </CardTitle>
-              <Badge variant="outline">
-                {t('reports.narrative.generatedAt', {
-                  date: new Date(report.generatedAt).toLocaleString('fr-FR'),
-                })}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm max-w-none">
-              {renderMarkdown(report.markdownContent)}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="card">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-[#0a2540]">
+              <Brain className="h-4 w-4 text-brand-gold" />
+              {t('reports.narrative.aiGenerated')}
+            </h3>
+            <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600">
+              {t('reports.narrative.generatedAt', {
+                date: new Date(report.generatedAt).toLocaleString('fr-FR'),
+              })}
+            </span>
+          </div>
+          <div className="prose prose-sm max-w-none">{renderMarkdown(report.markdownContent)}</div>
+        </div>
       ) : null}
     </div>
   );

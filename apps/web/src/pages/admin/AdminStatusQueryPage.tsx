@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Database, RefreshCw, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
-import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { useAdminQuery, useAdminUpdateStatus, type AdminEntityType } from '@/hooks/useAdmin';
 
 /* ─── Entity config ─── */
@@ -186,14 +185,12 @@ export default function AdminStatusQueryPage() {
       </div>
 
       {/* Entity selector + search */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Search className="h-4 w-4" />
-            {t('adminQuery.searchTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="card">
+        <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-[#0a2540]">
+          <Search className="h-4 w-4" />
+          {t('adminQuery.searchTitle')}
+        </h3>
+        <div className="space-y-4">
           {/* Entity type tabs */}
           <div className="flex flex-wrap gap-2">
             {(Object.keys(ENTITIES) as AdminEntityType[]).map((key) => (
@@ -251,27 +248,27 @@ export default function AdminStatusQueryPage() {
                 ))}
               </select>
             </div>
-            <Button size="sm" variant="outline" onClick={() => refetch()}>
-              <RefreshCw className="mr-1 h-4 w-4" />
+            <button className="btn-secondary" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
               {t('adminQuery.refresh')}
-            </Button>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Results table */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">{t('adminQuery.results', { count: total })}</CardTitle>
-            {selectedIds.length > 0 && (
-              <Badge variant="info">
-                {t('adminQuery.selected', { count: selectedIds.length })}
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
+      <div className="card">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-[#0a2540]">
+            {t('adminQuery.results', { count: total })}
+          </h3>
+          {selectedIds.length > 0 && (
+            <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-xs font-medium text-[#1e40af]">
+              {t('adminQuery.selected', { count: selectedIds.length })}
+            </span>
+          )}
+        </div>
+        <div>
           {isLoading ? (
             <div className="py-8 text-center text-sm text-gray-400">{t('common.loading')}</div>
           ) : records.length === 0 ? (
@@ -300,18 +297,20 @@ export default function AdminStatusQueryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {records.map((row: Record<string, unknown>) => (
+                    {records.map((row: Record<string, unknown>) => {
+                      const rowId = row.id as string;
+                      return (
                       <tr
-                        key={row.id}
+                        key={rowId}
                         className={`border-b border-gray-100 transition-colors hover:bg-gray-50 ${
-                          selectedIds.includes(row.id) ? 'bg-emerald-50/50' : ''
+                          selectedIds.includes(rowId) ? 'bg-emerald-50/50' : ''
                         }`}
                       >
                         <td className="px-3 py-2">
                           <input
                             type="checkbox"
-                            checked={selectedIds.includes(row.id)}
-                            onChange={() => toggleSelect(row.id)}
+                            checked={selectedIds.includes(rowId)}
+                            onChange={() => toggleSelect(rowId)}
                             className="rounded border-gray-300"
                           />
                         </td>
@@ -331,7 +330,8 @@ export default function AdminStatusQueryPage() {
                           </td>
                         ))}
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -343,40 +343,36 @@ export default function AdminStatusQueryPage() {
                     Page {page} / {Math.ceil(total / 50)}
                   </span>
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
+                    <button
+                      className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
                       disabled={page <= 1}
                       onClick={() => setPage((p) => p - 1)}
                     >
                       {t('common.previous')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                    </button>
+                    <button
+                      className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
                       disabled={page * 50 >= total}
                       onClick={() => setPage((p) => p + 1)}
                     >
                       {t('common.next')}
-                    </Button>
+                    </button>
                   </div>
                 </div>
               )}
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Action panel */}
       {selectedIds.length > 0 && (
-        <Card className="border-emerald-200 bg-emerald-50/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-emerald-700">
-              <ArrowRight className="h-4 w-4" />
-              {t('adminQuery.changeStatus')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="card border-emerald-200 bg-emerald-50/30">
+          <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-emerald-700">
+            <ArrowRight className="h-4 w-4" />
+            {t('adminQuery.changeStatus')}
+          </h3>
+          <div className="space-y-4">
             <div className="flex flex-wrap items-end gap-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -407,13 +403,13 @@ export default function AdminStatusQueryPage() {
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
-              <Button
-                variant="default"
+              <button
+                className="btn-primary disabled:opacity-50"
                 disabled={!newStatus || selectedIds.length === 0}
                 onClick={() => setShowConfirm(true)}
               >
                 {t('adminQuery.apply')}
-              </Button>
+              </button>
             </div>
 
             {/* Selected summary */}
@@ -424,8 +420,8 @@ export default function AdminStatusQueryPage() {
                 status: newStatus || '...',
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Confirmation modal */}
@@ -461,12 +457,16 @@ export default function AdminStatusQueryPage() {
               )}
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowConfirm(false)}>
+              <button className="btn-secondary" onClick={() => setShowConfirm(false)}>
                 {t('common.cancel')}
-              </Button>
-              <Button variant="default" onClick={handleApply} disabled={updateMutation.isPending}>
+              </button>
+              <button
+                className="btn-primary disabled:opacity-50"
+                onClick={handleApply}
+                disabled={updateMutation.isPending}
+              >
                 {updateMutation.isPending ? t('common.loading') : t('common.confirm')}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -474,8 +474,7 @@ export default function AdminStatusQueryPage() {
 
       {/* Success result */}
       {result && (
-        <Card className="border-green-200 bg-green-50/30">
-          <CardContent className="py-4">
+        <div className="card border-green-200 bg-green-50/30 py-4">
             <div className="flex items-center gap-2 text-green-700">
               <CheckCircle2 className="h-5 w-5" />
               <span className="font-medium">
@@ -502,8 +501,7 @@ export default function AdminStatusQueryPage() {
                 ))}
               </ul>
             )}
-          </CardContent>
-        </Card>
+        </div>
       )}
     </div>
   );

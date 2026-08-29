@@ -1,4 +1,12 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FileText,
@@ -46,7 +54,6 @@ import {
   ToggleLeft,
   ListFilter,
 } from 'lucide-react';
-import { Button, Badge, Input } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import {
   useReportConfigStore,
@@ -156,6 +163,84 @@ function sampleKpiValue(key: string): string {
     new Intl.NumberFormat('fr-FR').format(
       [125000, 450000, 325000, 250000, 75000][Math.abs(key.length) % 5],
     ) + ' FCFA'
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Local UI primitives (this editor keeps its own dark canvas chrome,
+   so these are plain Tailwind elements rather than components/ui)
+═══════════════════════════════════════════════════════════════ */
+
+const BUTTON_VARIANT_CLASSES: Record<string, string> = {
+  default: 'bg-brand-gold text-white shadow-sm hover:bg-brand-gold-dark',
+  outline: 'border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50',
+};
+
+const BUTTON_SIZE_CLASSES: Record<string, string> = {
+  default: 'h-10 px-4 py-2',
+  sm: 'h-8 px-3 text-xs',
+};
+
+function Button({
+  variant = 'default',
+  size = 'default',
+  className,
+  disabled,
+  children,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'default' | 'outline';
+  size?: 'default' | 'sm';
+}) {
+  return (
+    <button
+      className={cn(
+        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        BUTTON_VARIANT_CLASSES[variant],
+        BUTTON_SIZE_CLASSES[size],
+        className,
+      )}
+      disabled={disabled}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Badge({
+  variant,
+  className,
+  children,
+}: {
+  variant?: 'outline';
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+        variant === 'outline'
+          ? 'border border-gray-300 text-gray-600'
+          : 'bg-brand-gold/10 text-brand-gold',
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      className={cn(
+        'w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-gray-400 focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
+        className,
+      )}
+      {...props}
+    />
   );
 }
 

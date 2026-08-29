@@ -68,6 +68,18 @@ export class FneAccountingEntry {
   @Column({ type: 'varchar', length: 2000, name: 'erp_error', nullable: true })
   erpError!: string | null;
 
+  /** Whether a reversal (contre-passation) entry has been generated for this entry */
+  @Column({ type: 'bit', default: false })
+  reversed!: boolean;
+
+  /** When the reversal was generated */
+  @Column({ type: 'datetimeoffset', name: 'reversed_at', nullable: true })
+  reversedAt!: Date | null;
+
+  /** For a reversal entry, the id of the original entry it cancels out */
+  @Column({ type: 'uuid', name: 'reversal_of_entry_id', nullable: true })
+  reversalOfEntryId!: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 }
