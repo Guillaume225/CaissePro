@@ -648,21 +648,39 @@ export class PurchaseRequestsService {
         }
       } else {
         this.logger.warn(
-          `No active approval circuit matched amount=${total} for request ${id} — falling back to a single ADMIN-level approval`,
+          `No active approval circuit matched amount=${total} for request ${id} — falling back to a single level open to every user with ${DA_PERMISSIONS.APPROVE}`,
         );
-        createdApprovals.push(
-          await approvalRepo.save(
-            approvalRepo.create({
-              purchaseRequestId: id,
-              circuitId: null,
-              cycle: request.cycle,
-              level: 1,
-              role: 'ADMIN',
-              approverId: null,
-              status: PurchaseRequestApprovalStatus.PENDING,
-            }),
-          ),
-        );
+        // Explicit approverId per eligible user rather than a role-name
+        // sentinel: role names are free text set by the admin (e.g.
+        // "Administrateur"), so a hardcoded role like 'ADMIN' would never
+        // match anyone's actual roleName and this fallback level would be
+        // permanently unactionable and unnotified — see resolveApproval's
+        // approverId-or-role matching and resolveApproverIds above.
+        const fallbackRoles = await manager.getRepository(Role).find();
+        const fallbackRoleIds = fallbackRoles
+          .filter((r) => r.permissions.includes(DA_PERMISSIONS.APPROVE))
+          .map((r) => r.id);
+        const fallbackApprovers =
+          fallbackRoleIds.length > 0
+            ? await manager
+                .getRepository(User)
+                .find({ where: { roleId: In(fallbackRoleIds), isActive: true } })
+            : [];
+        for (const approver of fallbackApprovers) {
+          createdApprovals.push(
+            await approvalRepo.save(
+              approvalRepo.create({
+                purchaseRequestId: id,
+                circuitId: null,
+                cycle: request.cycle,
+                level: 1,
+                role: 'ADMIN',
+                approverId: approver.id,
+                status: PurchaseRequestApprovalStatus.PENDING,
+              }),
+            ),
+          );
+        }
       }
 
       const minLevel = Math.min(...createdApprovals.map((a) => a.level));

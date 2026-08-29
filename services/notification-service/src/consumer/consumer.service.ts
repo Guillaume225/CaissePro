@@ -33,6 +33,11 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
   /* ------------------------------------------------------------------ */
 
   async connect(): Promise<void> {
+    // A prior connection can still be alive when this fires (e.g. a spurious
+    // 'close'/error under event-loop starvation that the socket itself
+    // recovers from) — close it first so we never end up with two live
+    // consumers on the same queue.
+    await this.disconnect();
     try {
       const url = this.configService.get<string>('rabbitmq.url', 'amqp://localhost:5672');
       this.connection = await amqplib.connect(url);
