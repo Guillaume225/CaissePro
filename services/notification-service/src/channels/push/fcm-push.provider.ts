@@ -30,6 +30,7 @@ export class FcmPushProvider implements PushProvider {
       const { initializeApp, cert } = await import('firebase-admin/app');
       const serviceAccount = JSON.parse(raw);
       this.app = initializeApp({ credential: cert(serviceAccount) }, 'notification-service');
+      this.logger.log(`Firebase Admin SDK initialized (project: ${serviceAccount.project_id})`);
       return this.app;
     } catch (error) {
       this.logger.error(`Failed to initialize Firebase Admin SDK: ${(error as Error).message}`);
@@ -59,10 +60,16 @@ export class FcmPushProvider implements PushProvider {
           data,
         });
         response.responses.forEach((r, idx) => {
-          if (!r.success && this.isInvalidTokenError(r.error?.code)) {
+          if (r.success) return;
+          if (this.isInvalidTokenError(r.error?.code)) {
             invalidTokens.push(batch[idx]);
+          } else {
+            this.logger.warn(`FCM send failed for a token: ${r.error?.code} — ${r.error?.message}`);
           }
         });
+        this.logger.log(
+          `FCM push: ${response.successCount}/${batch.length} delivered, ${response.failureCount} failed`,
+        );
       } catch (error) {
         this.logger.error(`FCM multicast send failed: ${(error as Error).message}`);
       }

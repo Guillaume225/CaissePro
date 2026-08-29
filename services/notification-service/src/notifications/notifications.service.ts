@@ -118,7 +118,11 @@ export class NotificationsService {
     data: Record<string, string>,
   ): Promise<void> {
     const deviceTokens = await this.deviceTokenRepo.find({ where: { userId: recipientId } });
-    if (deviceTokens.length === 0) return;
+    if (deviceTokens.length === 0) {
+      this.logger.debug(`sendPush: no device token for recipient ${recipientId} — skipping`);
+      return;
+    }
+    this.logger.debug(`sendPush: ${deviceTokens.length} device token(s) for recipient ${recipientId}`);
 
     const { invalidTokens } = await this.pushProvider.send(
       deviceTokens.map((t) => t.token),
