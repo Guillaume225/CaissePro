@@ -167,4 +167,146 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
     entityType: 'treasury_forecast',
     getEntityId: entityIdFrom('forecastId'),
   },
+
+  /* ------------------------------------------------------------------ */
+  /*  Demande d'Achat (e-DA — purchase request workflow)                */
+  /* ------------------------------------------------------------------ */
+  'da.submitted': {
+    type: NotificationType.DA_SUBMITTED,
+    title: 'Demande d’achat soumise',
+    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été soumise pour validation.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.to_validate': {
+    type: NotificationType.DA_TO_VALIDATE,
+    title: 'Demande d’achat à valider',
+    message:
+      'La demande d’achat #{{number}} ({{subject}}) de {{amount}} FCFA nécessite votre validation (niveau {{currentApprovalLevel}}).',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromArrayField('approverIds'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.returned': {
+    type: NotificationType.DA_RETURNED,
+    title: 'Demande d’achat retournée',
+    message:
+      'Votre demande d’achat #{{number}} ({{subject}}) vous a été retournée pour correction. Motif : {{comment}}.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.approved': {
+    type: NotificationType.DA_APPROVED,
+    title: 'Demande d’achat approuvée',
+    message: 'Votre demande d’achat #{{number}} ({{subject}}) a franchi le niveau de validation {{currentApprovalLevel}}.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.rejected': {
+    type: NotificationType.DA_REJECTED,
+    title: 'Demande d’achat rejetée',
+    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été rejetée. Motif : {{comment}}.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.to_price': {
+    type: NotificationType.DA_TO_PRICE,
+    title: 'Demande d’achat à chiffrer',
+    message:
+      'La demande d’achat #{{number}} ({{subject}}) attend un chiffrage (prix + devis) avant de pouvoir entrer en validation.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    // Mêmes limites que da.validated_transmitted : pas de résolution rôle→utilisateurs
+    // pour l'instant, les publishers renseignent purchasingUserIds quand ils le peuvent.
+    getRecipients: recipientFromArrayField('purchasingUserIds'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.priced': {
+    type: NotificationType.DA_PRICED,
+    title: 'Demande d’achat chiffrée',
+    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été chiffrée par le service achats.',
+    channels: [NotificationChannel.IN_APP],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.validated_transmitted': {
+    type: NotificationType.DA_VALIDATED_TRANSMITTED,
+    title: 'Demande d’achat transmise aux achats',
+    message:
+      'La demande d’achat #{{number}} ({{subject}}) de {{amount}} FCFA est entièrement validée et transmise au service achats.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    // No role→users resolution mechanism exists yet (see expense.submitted's
+    // approverIds precedent) — publishers populate purchasingUserIds when
+    // they can resolve concrete recipients for the configured purchasing role.
+    getRecipients: recipientFromArrayField('purchasingUserIds'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.taken_over': {
+    type: NotificationType.DA_TAKEN_OVER,
+    title: 'Demande d’achat prise en charge',
+    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été prise en charge par le service achats.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.processing': {
+    type: NotificationType.DA_PROCESSING,
+    title: 'Demande d’achat en cours de traitement',
+    message: 'Votre demande d’achat #{{number}} ({{subject}}) est en cours de traitement par le service achats.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.processed': {
+    type: NotificationType.DA_PROCESSED,
+    title: 'Demande d’achat traitée',
+    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été traitée.',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.closed': {
+    type: NotificationType.DA_CLOSED,
+    title: 'Demande d’achat clôturée',
+    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été clôturée. {{comment}}',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
+
+  'da.cancelled': {
+    type: NotificationType.DA_CANCELLED,
+    title: 'Demande d’achat annulée',
+    message: 'La demande d’achat #{{number}} ({{subject}}) a été annulée. {{comment}}',
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    getRecipients: recipientFromField('requesterId'),
+    entityType: 'purchase_request',
+    getEntityId: entityIdFrom('purchaseRequestId'),
+  },
 };

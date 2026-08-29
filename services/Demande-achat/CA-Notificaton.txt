@@ -1,0 +1,151 @@
+Spécification backend — Enregistrement des jetons push (device tokens)
+Pour le module notifications (expense-service), consommé par l'application mobile e-DA Validateur.
+Référence : cahier-charge.txt §8 (Notifications push) et §15.5 (Écarts à combler avant développement).
+
+────────────────────────────────────────────────────────────────────
+1. Contexte
+────────────────────────────────────────────────────────────────────
+
+L'application mobile est intégrée avec Firebase Cloud Messaging (FCM) côté
+client et fonctionne déjà (permission demandée, jeton FCM récupéré et
+rafraîchi automatiquement, réception des messages en premier plan / arrière-
+plan / app fermée, navigation vers la DA concernée au clic).
+
+Il manque uniquement les deux endpoints ci-dessous pour que le backend
+puisse effectivement envoyer les push. Sans backend d'envoi côté serveur
+(appel à l'API FCM Admin SDK avec les jetons enregistrés), rien ne sera
+délivré : ce document couvre uniquement la partie "enregistrement du
+jeton", pas l'envoi effectif des notifications (qui utilise probablement
+déjà un mécanisme équivalent pour d'autres canaux de notification).
+
+Toutes les requêtes ci-dessous nécessitent l'en-tête :
+  Authorization: Bearer <accessToken>
+
+et suivent le même format de réponse que le reste de l'API :
+  Succès : { "success": true, "data": ... }
+  Erreur : { "success": false, "error": { "message": "..." }, "timestamp": "..." }
+
+
+────────────────────────────────────────────────────────────────────
+2. POST /api/notifications/device-tokens — Enregistrer un jeton
+────────────────────────────────────────────────────────────────────
+
+Appelé par l'app :
+  - juste après la connexion (et l'obtention de la permission notification) ;
+  - à chaque fois que Firebase émet un nouveau jeton (rotation périodique,
+    normale côté FCM — l'app appelle cet endpoint à nouveau avec le
+    nouveau jeton).
+
+Requête :
+  POST /api/notifications/device-tokens
+  Authorization: Bearer <accessToken>
+  Content-Type: application/json
+
+  {
+    "platform": "android",   // ou "ios"
+    "token": "eXampleFcmTokenString..."
+  }
+
+Comportement attendu côté backend :
+  - Associer ce jeton à l'utilisateur authentifié (déduit du token JWT,
+    pas besoin de le renvoyer dans le body).
+  - Un même utilisateur peut avoir plusieurs jetons actifs simultanément
+    (plusieurs appareils, ou réinstallation de l'app) : ne pas écraser les
+    jetons existants d'autres appareils, faire un upsert sur le jeton lui-
+    même (si le même token existe déjà, ne pas dupliquer la ligne).
+  - Si le même jeton était déjà associé à un AUTRE utilisateur (cas d'un
+    appareil partagé où un second valideur se connecte), le ré-associer au
+    nouvel utilisateur — les jetons FCM sont propres à l'installation de
+    l'app, pas à l'utilisateur.
+
+Réponse succès (200) :
+  { "success": true, "data": null }
+
+Réponse erreur possible :
+  401 si le token JWT est invalide/expiré (comportement standard déjà en
+  place sur les autres endpoints).
+
+
+────────────────────────────────────────────────────────────────────
+3. DELETE /api/notifications/device-tokens/:token — Désenregistrer
+────────────────────────────────────────────────────────────────────
+
+Appelé par l'app à la déconnexion (§15.1.3 : "désenregistrer le jeton push
+à la déconnexion"), avant que le token d'authentification ne soit effacé
+localement.
+
+Requête :
+  DELETE /api/notifications/device-tokens/eXampleFcmTokenString...
+  Authorization: Bearer <accessToken>
+
+Comportement attendu côté backend :
+  - Supprimer (ou désactiver) l'association entre ce jeton et l'utilisateur
+    authentifié, pour que ce jeton ne reçoive plus de notifications tant
+    qu'il n'est pas réenregistré.
+  - Idempotent : si le jeton n'existe pas/déjà supprimé, répondre succès
+    quand même (200), pas une erreur.
+
+Réponse succès (200) :
+  { "success": true, "data": null }
+
+
+────────────────────────────────────────────────────────────────────
+4. Événements déclencheurs des push (rappel §8, pour l'envoi côté backend)
+────────────────────────────────────────────────────────────────────
+
+Quand le backend enverra effectivement les push (hors périmètre de ce
+document, mais pour référence), les 4 types d'événements attendus par
+l'app sont :
+
+  da.to_validate  — nouvelle DA à valider
+  da.reminder     — relance après délai sans action (dépend de la
+                     fonctionnalité de relance automatique du module
+                     e-DA, non développée à ce jour — cf. cahier des
+                     charges e-DA §27)
+  da.returned     — une DA déjà approuvée par ce valideur à un palier
+                     précédent est retournée par un palier suivant
+  da.cancelled    — une DA en attente de validation est annulée par le
+                     demandeur
+
+Format de message FCM attendu côté app (structure "notification" +
+"data", standard FCM) :
+
+  {
+    "notification": {
+      "title": "Une nouvelle DA de {demandeur} attend votre validation",
+      "body": "DA-2026-000123 — 5 000 €"
+    },
+    "data": {
+      "type": "da.to_validate",
+      "demandeId": "<id de la demande d'achat concernée>"
+    }
+  }
+
+L'app lit "data.demandeId" (avec repli sur "purchaseRequestId" puis
+"requestId" si l'un de ces noms est plus proche de vos conventions
+internes) pour naviguer directement vers le détail de la DA au clic sur
+la notification. Merci de confirmer/adapter le nom de champ exact utilisé
+côté backend — l'app accepte déjà les trois variantes.
+
+
+────────────────────────────────────────────────────────────────────
+5. Résumé pour l'implémentation
+────────────────────────────────────────────────────────────────────
+
+Table suggérée (device_tokens) :
+  id            (PK)
+  user_id       (FK vers users)
+  platform      ('android' | 'ios')
+  token         (unique)
+  created_at
+  updated_at
+
+Endpoints à ajouter :
+  POST   /api/notifications/device-tokens
+  DELETE /api/notifications/device-tokens/:token
+
+Ces deux endpoints suffisent pour que l'app mobile e-DA Validateur soit
+pleinement fonctionnelle côté enregistrement — l'envoi effectif des push
+(déclenché par les mêmes événements métier que les notifications in-app
+déjà en place sur /api/notifications) reste à implémenter séparément côté
+backend avec le SDK FCM Admin.

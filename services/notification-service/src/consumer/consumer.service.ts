@@ -6,7 +6,7 @@ import { NotificationsService } from '@/notifications/notifications.service';
 import { NotificationChannel } from '@/common/enums';
 import { ROUTING_RULES, RoutingRule } from './routing-rules';
 
-const EXCHANGES = ['expense.events', 'sales.events'];
+const EXCHANGES = ['expense.events', 'sales.events', 'demande_achat.events'];
 const QUEUE_NAME = 'notification-service.events';
 
 @Injectable()

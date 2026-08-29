@@ -13,10 +13,11 @@ import {
   TrendingUp,
   Landmark,
   FileCheck2,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useUnreadCount } from '@/hooks/useDashboard';
 import { useAuthStore } from '@/stores/auth-store';
 import { useSwitchCompany } from '@/hooks/useAdmin';
@@ -80,6 +81,15 @@ const headerModules: HeaderModule[] = [
     textColor: 'text-purple-700',
     firstRoute: { path: '/', labelKey: 'nav.dashboard' },
   },
+  {
+    id: 'demande-achat',
+    labelKey: 'modules.demande-achat.name',
+    icon: ShoppingCart,
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-50',
+    textColor: 'text-sky-700',
+    firstRoute: { path: '/demande-achat', labelKey: 'modules.demande-achat.list' },
+  },
 ];
 
 const routeLabels: Record<string, string> = {
@@ -112,6 +122,12 @@ const routeLabels: Record<string, string> = {
   '/admin/fne-config': 'modules.admin.fneConfig',
   '/notifications': 'nav.notifications',
   '/profile': 'nav.profile',
+  '/demande-achat': 'modules.demande-achat.list',
+  '/demande-achat/new': 'modules.demande-achat.new',
+  '/demande-achat/to-validate': 'modules.demande-achat.toValidate',
+  '/demande-achat/achats': 'modules.demande-achat.purchasing',
+  '/demande-achat/dashboard': 'modules.demande-achat.dashboard',
+  '/admin/demande-achat-circuits': 'modules.demande-achat.circuits',
 };
 
 export function Header({ onAIClick }: { onAIClick?: () => void }) {
@@ -128,6 +144,24 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
   const switchCompany = useSwitchCompany();
   const { activeModule, setActiveModule } = useModuleStore();
   const { openTab } = useTabStore();
+
+  // ── Click-outside-to-close for all header dropdowns ──
+  const moduleRef = useRef<HTMLDivElement>(null);
+  const companyRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (moduleRef.current && !moduleRef.current.contains(target)) setModuleOpen(false);
+      if (companyRef.current && !companyRef.current.contains(target)) setCompanyOpen(false);
+      if (searchRef.current && !searchRef.current.contains(target)) setSearchOpen(false);
+      if (langRef.current && !langRef.current.contains(target)) setLangOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // ── Module filtering ─────────────────────────
   const visibleModules = useMemo(() => {
@@ -208,7 +242,7 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
       <div className="flex items-center gap-2">
         {/* Module Switcher */}
         {visibleModules.length > 0 && (
-          <div className="relative">
+          <div className="relative" ref={moduleRef}>
             <button
               onClick={() => {
                 setModuleOpen(!moduleOpen);
@@ -231,8 +265,8 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
               />
             </button>
             {moduleOpen && (
-              <div className="absolute left-0 top-full mt-1 w-52 rounded-lg border border-gray-200 bg-white p-1 shadow-lg z-50">
-                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+              <div className="absolute left-0 top-full mt-1 w-52 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg z-50">
+                <p className="border-b border-zinc-100 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                   {t('nav.modules')}
                 </p>
                 {visibleModules.map((mod) => (
@@ -240,15 +274,15 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
                     key={mod.id}
                     onClick={() => handleModuleChange(mod)}
                     className={cn(
-                      'flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+                      'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
                       activeModule === mod.id
-                        ? `${mod.bgColor} ${mod.textColor} font-medium`
-                        : 'text-gray-600 hover:bg-gray-50',
+                        ? 'bg-orange-50 text-[#EA761D] font-medium'
+                        : 'text-zinc-700 hover:bg-zinc-50 hover:text-[#EA761D]',
                     )}
                   >
-                    <mod.icon className={cn('h-4 w-4 shrink-0', mod.color)} />
+                    <mod.icon className={cn('h-3.5 w-3.5 shrink-0', mod.color)} strokeWidth={1.5} />
                     <span className="flex-1 text-left truncate">{t(mod.labelKey)}</span>
-                    {activeModule === mod.id && <Check className={cn('h-4 w-4', mod.color)} />}
+                    {activeModule === mod.id && <Check className="h-3.5 w-3.5 text-[#EA761D]" />}
                   </button>
                 ))}
               </div>
@@ -258,7 +292,7 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
 
         {/* Company Switcher */}
         {userCompanies.length >= 1 && (
-          <div className="relative">
+          <div className="relative" ref={companyRef}>
             <button
               onClick={() => {
                 setCompanyOpen(!companyOpen);
@@ -276,8 +310,8 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
               />
             </button>
             {companyOpen && (
-              <div className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-gray-200 bg-white p-1 shadow-lg z-50">
-                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+              <div className="absolute right-0 top-full mt-1 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg z-50">
+                <p className="border-b border-zinc-100 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                   {t('admin.companies.switchCompany')}
                 </p>
                 {userCompanies.map((c) => (
@@ -285,15 +319,15 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
                     key={c.id}
                     onClick={() => handleCompanySwitch(c.id, c.name)}
                     className={cn(
-                      'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+                      'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
                       user?.companyId === c.id
-                        ? 'bg-emerald-50 text-emerald-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-50',
+                        ? 'bg-orange-50 text-[#EA761D] font-medium'
+                        : 'text-zinc-700 hover:bg-zinc-50 hover:text-[#EA761D]',
                     )}
                   >
-                    <Building2 className="h-3.5 w-3.5 shrink-0" />
+                    <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
                     <span className="flex-1 text-left truncate">{c.name}</span>
-                    {user?.companyId === c.id && <Check className="h-4 w-4 text-emerald-500" />}
+                    {user?.companyId === c.id && <Check className="h-3.5 w-3.5 text-[#EA761D]" />}
                   </button>
                 ))}
               </div>
@@ -302,7 +336,7 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
         )}
 
         {/* Search */}
-        <div className="relative">
+        <div className="relative" ref={searchRef}>
           <button
             onClick={() => setSearchOpen(!searchOpen)}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
@@ -311,7 +345,7 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
             <Search className="h-4.5 w-4.5" />
           </button>
           {searchOpen && (
-            <div className="absolute right-0 top-full mt-1 w-80 rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
+            <div className="absolute right-0 top-full mt-1 w-80 rounded-lg border border-zinc-200 bg-white p-2 shadow-lg z-50">
               <input
                 type="text"
                 value={searchQuery}
@@ -339,37 +373,45 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
         </Link>
 
         {/* Language selector */}
-        <div className="relative">
+        <div className="relative" ref={langRef}>
           <button
             onClick={() => setLangOpen(!langOpen)}
             className="flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
           >
             <Globe className="h-4 w-4" />
             <span className="font-medium uppercase">{i18n.language}</span>
+            <ChevronDown
+              className={cn(
+                'h-3.5 w-3.5 opacity-60 transition-transform',
+                langOpen && 'rotate-180',
+              )}
+            />
           </button>
           {langOpen && (
-            <div className="absolute right-0 top-full mt-1 w-36 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+            <div className="absolute right-0 top-full mt-1 w-36 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg z-50">
               <button
                 onClick={() => switchLanguage('fr')}
                 className={cn(
-                  'flex w-full items-center rounded-md px-3 py-2 text-sm',
+                  'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
                   i18n.language === 'fr'
-                    ? 'bg-brand-gold/10 font-medium text-brand-gold'
-                    : 'text-gray-600 hover:bg-gray-50',
+                    ? 'bg-orange-50 text-[#EA761D] font-medium'
+                    : 'text-zinc-700 hover:bg-zinc-50 hover:text-[#EA761D]',
                 )}
               >
-                {t('language.fr')}
+                <span className="flex-1 text-left">{t('language.fr')}</span>
+                {i18n.language === 'fr' && <Check className="h-3.5 w-3.5 text-[#EA761D]" />}
               </button>
               <button
                 onClick={() => switchLanguage('en')}
                 className={cn(
-                  'flex w-full items-center rounded-md px-3 py-2 text-sm',
+                  'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
                   i18n.language === 'en'
-                    ? 'bg-brand-gold/10 font-medium text-brand-gold'
-                    : 'text-gray-600 hover:bg-gray-50',
+                    ? 'bg-orange-50 text-[#EA761D] font-medium'
+                    : 'text-zinc-700 hover:bg-zinc-50 hover:text-[#EA761D]',
                 )}
               >
-                {t('language.en')}
+                <span className="flex-1 text-left">{t('language.en')}</span>
+                {i18n.language === 'en' && <Check className="h-3.5 w-3.5 text-[#EA761D]" />}
               </button>
             </div>
           )}

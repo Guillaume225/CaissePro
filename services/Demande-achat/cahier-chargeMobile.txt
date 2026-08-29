@@ -1,0 +1,358 @@
+Cahier des charges — Application mobile e-DA Validateur
+Suivi et validation nomade des demandes d'achat
+
+1. Objet du document
+
+Ce document définit les besoins fonctionnels et techniques d'une application mobile dédiée aux valideurs du module e-DA (Demande d'Achat).
+
+Elle ne réimplémente pas le module e-DA : elle s'appuie sur le backend existant (service demande-achat-service) et se concentre sur un seul objectif :
+
+permettre à un valideur de traiter ses demandes d'achat en attente, où qu'il soit, en quelques secondes.
+
+2. Contexte
+
+Le module e-DA (voir cahier-ChargeDA.txt) gère aujourd'hui l'intégralité du cycle de vie d'une demande d'achat via l'application web. Le circuit de validation peut compter plusieurs niveaux (responsable hiérarchique, DAF, direction générale...), et chaque niveau bloque la demande tant que son valideur n'a pas agi.
+
+En pratique, les valideurs (souvent des responsables ou des dirigeants) ne sont pas toujours devant un ordinateur. Un circuit de validation qui dépend d'un accès web ralentit le traitement des demandes et pénalise l'indicateur "délai moyen de validation" (§26 du cahier des charges e-DA).
+
+L'application mobile répond à ce point précis : réduire le délai entre la soumission d'une demande et sa validation, en apportant l'action de validation dans la poche du valideur.
+
+3. Périmètre fonctionnel
+
+Dans le périmètre
+
+consulter la liste des demandes en attente de ma validation ;
+consulter le détail complet d'une demande (informations, lignes, pièces jointes, montant, justification) ;
+valider une demande ;
+rejeter une demande (motif obligatoire) ;
+retourner une demande au demandeur pour correction (motif obligatoire) ;
+consulter l'historique de mes décisions passées ;
+recevoir une notification push à chaque nouvelle demande à valider et à chaque rappel de relance ;
+consulter le profil du demandeur et le contexte (service, département, priorité) ;
+ajouter un commentaire sur une demande.
+
+Hors périmètre
+
+créer ou modifier une demande d'achat (réservé à l'application web) ;
+gérer le circuit de validation (paramétrage réservé à l'administrateur, sur le web) ;
+prendre en charge / traiter / clôturer une demande (réservé au service achats sur le web) ;
+gérer les utilisateurs, rôles, services et départements ;
+consulter le tableau de bord global e-DA (hors périmètre de cette première version, cf. §14).
+
+L'application mobile est donc un client de lecture + action ciblé, pas une réplique du module web.
+
+4. Acteurs
+Acteur	Rôle dans l'application
+Valideur	Utilisateur principal : consulte et traite ses demandes à valider
+Administrateur	Aucun accès applicatif dédié ; continue de paramétrer les circuits depuis le web
+
+5. Rappel des statuts concernés
+
+L'application mobile n'intervient que sur les demandes au statut :
+
+EN VALIDATION
+
+Elle affiche en lecture seule les demandes aux autres statuts (onglet "Historique"), mais ne propose d'actions de validation que sur celles où l'utilisateur connecté est l'approbateur du palier courant.
+
+Rappel du cycle de vie complet (cf. cahier-ChargeDA.txt §4) :
+
+BROUILLON → SOUMISE → EN VALIDATION → VALIDÉE → TRANSMISE AUX ACHATS → PRISE EN CHARGE → EN TRAITEMENT → TRAITÉE → CLÔTURÉE
+
+avec sorties alternatives REJETÉE, RETOURNÉE, ANNULÉE.
+
+6. Authentification et sécurité
+
+6.1. Connexion
+
+Écran de connexion : email + mot de passe (mêmes identifiants que l'application web — le compte utilisateur est partagé entre web et mobile).
+Option "Se souvenir de moi" : session persistée sur l'appareil (cf. mécanisme équivalent déjà en place côté web).
+Support de l'authentification à deux facteurs (2FA) si le compte du valideur l'a activée (même flux que le web : code TOTP).
+
+6.2. Déverrouillage rapide
+
+Une fois connecté une première fois, l'application propose un déverrouillage par biométrie (Face ID / empreinte digitale) ou code PIN local, pour éviter de ressaisir le mot de passe à chaque ouverture.
+Le jeton d'authentification (JWT) est stocké de façon chiffrée sur l'appareil (Keychain iOS / Keystore Android).
+Une session inactive au-delà d'une durée paramétrable (ex. 30 jours) est invalidée et impose une reconnexion complète.
+
+6.3. Permissions et accès réservé au rôle Valideur
+
+L'application respecte strictement les permissions déjà définies côté backend (da.approve, da.reject, da.return). Trois rôles existent désormais dans le module e-DA :
+
+Demandeur (da.create, da.read, da.update, da.delete, da.submit, da.cancel) — n'a pas accès à l'application mobile.
+Valideur (da.read, da.approve, da.reject, da.return) — seul rôle autorisé à se connecter à l'application mobile.
+Acheteur (chiffrage, prise en charge, traitement, clôture, vision globale) — n'a pas accès à l'application mobile, reste sur le web.
+
+Après connexion réussie (POST /api/auth/login), l'application doit appeler GET /api/users/me et vérifier que permissions contient au moins da.approve (ou, plus simplement, que roleName vaut "Valideur"). Si ce n'est pas le cas, l'application refuse l'accès avec un message explicite (ex. "Cette application est réservée aux valideurs. Utilisez l'application web pour créer ou traiter des demandes d'achat.") plutôt que d'afficher un écran vide ou une erreur technique. Ce contrôle est une vérification d'expérience utilisateur côté client : la sécurité réelle reste garantie par le backend, qui refuse de toute façon toute action da.approve/da.reject/da.return à un utilisateur qui n'a pas la permission correspondante.
+
+6.4. RG13 — auto-validation interdite
+
+Comme sur le web, un valideur ne peut jamais agir sur une demande dont il est lui-même le demandeur, même si son rôle correspondrait au palier courant. L'application ne doit pas proposer les actions Valider / Rejeter / Retourner sur ses propres demandes (cohérent avec le comportement déjà implémenté côté web).
+
+7. Parcours utilisateur et écrans
+
+7.1. Écran "À valider" (écran d'accueil)
+
+Liste des demandes actuellement en attente de la validation du valideur connecté, triée par priorité puis par ancienneté.
+
+Chaque ligne affiche :
+
+numéro de DA ;
+objet ;
+demandeur ;
+montant ;
+priorité (badge couleur : Normale / Urgente / Très urgente) ;
+temps d'attente ("en attente depuis 2 jours").
+
+Un badge sur l'icône de l'application (et dans le menu) indique le nombre de demandes en attente, à la manière d'une boîte de messagerie.
+
+Un geste de balayage rapide (swipe) sur une ligne propose directement les actions Valider / Rejeter, pour les cas simples, sans ouvrir le détail.
+
+7.2. Écran de détail d'une demande
+
+Reprend les informations de la demande (§5 et §6 du cahier des charges e-DA) :
+
+informations générales (numéro, demandeur, service, département, date, priorité, motif d'urgence le cas échéant) ;
+justification ;
+liste des lignes (désignation, quantité, unité, prix, montant) avec le montant total estimé ;
+pièces jointes, consultables (visionneuse intégrée pour PDF et images) ;
+position dans le circuit de validation (palier en cours / nombre total de paliers, avec l'indicateur "1/2" par exemple) ;
+historique et commentaires de la demande.
+
+Boutons d'action en bas d'écran, visibles uniquement si l'utilisateur est l'approbateur éligible du palier courant :
+
+Valider (confirmation simple, commentaire facultatif) ;
+Rejeter (motif obligatoire, non validable sans texte) ;
+Retourner (motif obligatoire, non validable sans texte).
+
+Chaque action déclenche une confirmation explicite (ex. "Confirmer la validation de DA-2026-000125 ?") pour éviter les erreurs de manipulation tactile.
+
+7.3. Écran "Mes décisions" (historique)
+
+Liste des demandes déjà traitées par le valideur (validées, rejetées, retournées), avec filtre par statut et par période. Permet de retrouver rapidement une décision passée et son motif.
+
+7.4. Écran de notifications
+
+Centralise les notifications reçues (nouvelle demande à valider, rappel de relance, demande retournée par un palier suivant, etc.), avec renvoi direct vers la demande concernée.
+
+7.5. Écran de profil
+
+Affiche l'identité du valideur, son service/département, et propose la déconnexion, la configuration du déverrouillage biométrique et le choix de la langue (français / anglais, cohérent avec l'application web).
+
+8. Notifications push
+
+Les événements suivants (déjà publiés par le backend, cf. §22 du cahier des charges e-DA et le mécanisme de notification existant) déclenchent une notification push :
+
+da.to_validate — nouvelle demande à valider ("Une nouvelle DA de {demandeur} attend votre validation") ;
+da.reminder — relance après un délai configurable sans action (fonctionnalité de relance automatique du cahier des charges e-DA, à activer conjointement) ;
+da.returned — une demande que le valideur avait approuvée à un palier précédent est retournée par un palier suivant (information, pas d'action attendue) ;
+da.cancelled — une demande en attente de sa validation est annulée par le demandeur (l'action à valider disparaît de la liste).
+
+L'application doit gérer proprement le cas où l'utilisateur refuse les notifications push : l'écran "À valider" reste la source de vérité, avec un simple indicateur de rafraîchissement.
+
+9. Règles de gestion
+
+Ces règles sont héritées du module e-DA et doivent être respectées à l'identique côté mobile (elles sont de toute façon appliquées et vérifiées par le backend ; l'application mobile les reflète simplement dans son interface pour éviter les allers-retours inutiles) :
+
+RGM01 : un valideur ne voit une demande dans "À valider" que s'il est l'approbateur assigné (nommément, ou par son rôle) du palier actuellement en cours pour cette demande.
+RGM02 : un valideur ne peut agir que sur le palier courant — un palier futur n'est jamais actionnable même si le valideur y est assigné.
+RGM03 : un rejet ou un retour exige un motif non vide (RG05 / RG06 du cahier des charges e-DA).
+RGM04 : un valideur ne peut jamais valider, rejeter ou retourner sa propre demande (RG13).
+RGM05 : une fois tous les paliers validés, la demande est transmise automatiquement au service achats (RG07) — l'application en informe le valideur du dernier palier ("Demande transmise au service achats").
+RGM06 : toute action est historisée (RG10) et visible dans l'écran "Mes décisions".
+
+10. Connectivité et mode dégradé
+
+Le mobile n'est pas toujours utilisé dans de bonnes conditions réseau. L'application doit :
+
+mettre en cache la liste "À valider" et le détail des demandes déjà consultées, pour un affichage instantané même en cas de coupure réseau ;
+permettre la consultation hors ligne des demandes déjà chargées ;
+mettre en file d'attente les actions (valider/rejeter/retourner) effectuées hors connexion et les soumettre automatiquement dès le retour du réseau, avec confirmation visuelle une fois l'action réellement acceptée par le serveur ;
+gérer explicitement le cas où une action en attente d'envoi n'est plus valide (ex. la demande a déjà été traitée par erreur depuis le web) : afficher une erreur claire plutôt qu'un échec silencieux.
+
+11. Contraintes techniques
+
+Plateformes cibles : iOS et Android (application native ou cross-platform type React Native / Flutter — à trancher en phase de conception technique).
+Authentification : réutilise l'API d'authentification existante (auth-service, JWT).
+Données : consomme exclusivement les API déjà exposées par demande-achat-service et le module notifications (voir annexe §15, y compris l'enregistrement des jetons push §15.3.5/15.3.6, désormais disponible).
+Notifications push : intégration Firebase Cloud Messaging (Android) et Apple Push Notification service (iOS).
+Multi-tenant : l'application doit gérer le même mécanisme de résolution de tenant que le web (sous-domaine / sélection d'organisation à la connexion si l'utilisateur est rattaché à plusieurs sociétés).
+
+12. Exigences non fonctionnelles
+
+Performance : l'écran "À valider" doit s'afficher en moins de 2 secondes sur une connexion 4G standard.
+Sécurité : aucune donnée sensible (mot de passe, jeton) en clair sur l'appareil ; verrouillage automatique de l'application après une période d'inactivité configurable.
+Accessibilité : tailles de police ajustables, contrastes suffisants, compatibilité lecteur d'écran (VoiceOver / TalkBack) au minimum sur les écrans de décision.
+Langue : français et anglais, cohérents avec les traductions déjà existantes du module e-DA.
+Disponibilité : l'application doit rester utilisable en lecture même en cas d'indisponibilité temporaire du backend (cache local, cf. §10).
+
+13. Indicateurs de succès
+
+Ces indicateurs permettront de mesurer l'impact réel de l'application, en s'appuyant sur les délais déjà calculés par le module e-DA (§26 du cahier des charges e-DA) :
+
+réduction du délai moyen de validation (Date validation − Date soumission) après mise en service de l'application, comparé à la période où seule l'application web existait ;
+part des validations effectuées depuis mobile vs. web ;
+taux d'adoption : pourcentage de valideurs actifs sur mobile parmi les valideurs éligibles ;
+délai moyen entre la notification push et l'action de validation.
+
+14. Hors périmètre (v1)
+
+Les éléments suivants sont explicitement exclus de cette première version et pourront faire l'objet d'une itération ultérieure :
+
+tableau de bord et statistiques (§25 du cahier des charges e-DA) ;
+accès au module Achats (prise en charge / traitement / clôture) ;
+création ou édition de demandes d'achat depuis le mobile ;
+configuration des circuits de validation depuis le mobile ;
+mode multi-langue au-delà de français/anglais ;
+signature électronique avancée (au-delà de l'action "Valider" simple).
+
+15. Annexe — API disponibles et procédure d'utilisation
+
+Cette annexe recense, endpoint par endpoint, toutes les API déjà exposées par la plateforme web (auth-service, demande-achat-service, et le module notifications hébergé par expense-service) que l'application mobile doit consommer pour fonctionner. Ce sont exactement les mêmes API que celles utilisées par l'application web — aucune API "spéciale mobile" n'existe aujourd'hui, ce qui garantit que le comportement (permissions, règles de gestion, messages d'erreur) sera strictement identique entre les deux canaux.
+
+Toutes les URLs ci-dessous sont données en chemin relatif à l'hôte de l'API (ex. https://i-management.fr). Toutes, sauf mention contraire, nécessitent l'en-tête :
+
+Authorization: Bearer <accessToken>
+
+et retournent leurs erreurs au format :
+
+{ "success": false, "error": { "message": "..." }, "timestamp": "..." }
+
+15.1. Authentification
+
+15.1.1. Connexion — POST /api/auth/login
+
+Procédure :
+
+1. Envoyer { "email", "password" }.
+2. Trois cas de réponse possibles dans data :
+   - Cas normal : { "accessToken", "refreshToken" } → connexion terminée, aller à l'étape "Récupérer le profil" (§15.1.6).
+   - requiresMfaSetup = true : l'administrateur impose la 2FA et l'utilisateur ne l'a pas encore configurée. La réponse contient aussi setupToken, secret et qrCodeDataUrl (QR code à afficher). L'application doit alors présenter un écran de configuration (scanner le QR dans une app d'authentification) puis appeler POST /api/auth/mfa/setup-verify avec { "setupToken", "code" } (code à 6 chiffres saisi par l'utilisateur). La réponse de cet appel contient accessToken/refreshToken.
+   - requiresMfa = true : l'utilisateur a déjà activé la 2FA. La réponse contient mfaToken. L'application affiche un écran de saisie du code à 6 chiffres, puis renvoie POST /api/auth/login avec { "email", "password", "mfaCode", "mfaToken" } (on rejoue l'appel de connexion en ajoutant les deux champs MFA). La réponse contient alors accessToken/refreshToken.
+3. Stocker accessToken et refreshToken de façon chiffrée sur l'appareil (§6.2).
+
+Exemple de requête :
+{ "email": "valideur1@i-management.fr", "password": "********" }
+
+Exemple de réponse (cas normal) :
+{ "success": true, "data": { "accessToken": "eyJ...", "refreshToken": "..." } }
+
+15.1.2. Rafraîchissement de session — POST /api/auth/refresh
+
+Procédure : lorsque l'API renvoie 401 sur un appel authentifié, envoyer { "refreshToken" } à cet endpoint (sans en-tête Authorization) ; il renvoie une nouvelle paire { accessToken, refreshToken } à substituer aux jetons stockés. Si cet appel échoue à son tour (refresh token expiré ou révoqué), déconnecter l'utilisateur et le renvoyer à l'écran de connexion.
+
+15.1.3. Déconnexion — POST /api/auth/logout
+
+Procédure : envoyer { "refreshToken" } (avec l'en-tête Authorization du jeton encore valide). Puis, côté application, effacer les jetons stockés localement et désenregistrer le jeton push (§15.4, une fois cet endpoint disponible).
+
+15.1.4. Mot de passe oublié — POST /api/auth/forgot-password puis POST /api/auth/reset-password
+
+Procédure (facultative pour la v1, utile si l'écran de connexion propose "mot de passe oublié") :
+1. POST /api/auth/forgot-password avec { "email" } → envoie un email contenant un lien/jeton de réinitialisation (le parcours de réception du lien reste géré par email, pas par l'application mobile elle-même).
+2. POST /api/auth/reset-password avec { "token", "password" } pour définir le nouveau mot de passe.
+
+15.1.5. Configuration MFA depuis l'application (hors connexion) — POST /api/auth/mfa/setup et POST /api/auth/mfa/verify
+
+Ces deux endpoints permettent d'activer la 2FA depuis l'écran "Profil" (et non plus pendant la connexion) : mfa/setup (sans body) renvoie un secret/QR code, puis mfa/verify avec { "code" } confirme l'activation. Optionnel pour la v1 si l'activation reste pilotée depuis le web uniquement.
+
+15.1.6. Profil utilisateur connecté — GET /api/users/me
+
+Procédure : à appeler juste après l'obtention des jetons (fin de §15.1.1), puis à chaque démarrage de l'application pour rafraîchir le profil en cache. La réponse (data) contient notamment id, firstName, lastName, roleName, permissions (tableau de chaînes, à vérifier pour da.approve / da.reject / da.return / da.view_all avant d'afficher les écrans de validation), tenantId, serviceName, departmentName, allowedModules. Si permissions ne contient aucun droit da.*, afficher l'écran "Accès non configuré" plutôt qu'une liste vide (§6.3).
+
+Sociétés rattachées (cf. §11, multi-société) — la réponse contient aussi :
+- companyId / companyName : la société actuellement active pour cet utilisateur ;
+- companyIds / companyNames : la liste complète des sociétés auxquelles il est rattaché (tableaux parallèles, mêmes index).
+
+Si companyIds contient plus d'un élément, l'application doit proposer un sélecteur de société (à la connexion, ou depuis l'écran Profil) plutôt que de supposer une seule société. Tant qu'aucun changement n'est demandé, companyId indique la société à utiliser pour filtrer les demandes affichées.
+
+15.1.7. Changer de société active — POST /api/companies/:id/switch
+
+Procédure : à appeler quand l'utilisateur choisit une autre société dans le sélecteur (à partir de la liste companyIds/companyNames du §15.1.6). Aucun corps de requête ; :id est l'identifiant de la société choisie. Réponse : { "success": true, "message": "Company switched" }. Après ce changement, rappeler GET /api/users/me pour rafraîchir companyId et, si nécessaire, redemander les listes déjà chargées (À valider, etc.) qui peuvent différer d'une société à l'autre.
+
+15.2. Demandes d'achat
+
+15.2.1. Liste des demandes à valider — GET /api/demandes-achat/to-validate
+
+Procédure : à appeler à l'ouverture de l'écran d'accueil (§7.1) et à chaque pull-to-refresh. Paramètres de requête optionnels : status, page, perPage, search. Réponse : { data: PurchaseRequest[], meta: { total } }. Chaque élément contient déjà number, subject, requesterName, service, department, priority, totalEstimatedAmount, currentApprovalLevel, cycle, status — suffisant pour afficher la liste sans appel supplémentaire. Utiliser meta.total pour le badge de comptage (§7.1).
+
+15.2.2. Détail d'une demande — GET /api/demandes-achat/:id
+
+Procédure : à appeler à l'ouverture de l'écran de détail (§7.2). La réponse contient l'objet complet : informations générales, lines[] (lignes de besoin), attachments[] (métadonnées des pièces jointes — le fichier lui-même se télécharge via l'endpoint dédié du §15.2.2bis ci-dessous), approvals[] (chaque palier du circuit avec son statut, son niveau, son approverId) et history[] (journal + commentaires, avec actorName déjà résolu). C'est sur ce tableau approvals, croisé avec currentApprovalLevel et cycle, que l'application détermine si les boutons Valider/Rejeter/Retourner doivent être affichés (même logique que le web, cf. §9 RGM01/RGM02 — chercher dans approvals l'entrée où status = "PENDING", cycle = cycle courant, level = currentApprovalLevel, et approverId = mon id).
+
+15.2.2bis. Télécharger une pièce jointe — GET /api/demandes-achat/:id/attachments/:attachmentId
+
+Procédure : à appeler lorsque le valideur touche le nom d'une pièce jointe dans l'écran de détail (§7.2). L'endpoint renvoie directement le contenu binaire du fichier (Content-Disposition: attachment, nom de fichier d'origine conservé), pas une URL — l'application doit effectuer la requête avec l'en-tête Authorization (comme tout appel authentifié) puis écrire le corps de la réponse dans un fichier temporaire ou le passer à la visionneuse intégrée (PDF/image). Ce comportement est volontairement identique à celui de l'application web, qui utilise le même endpoint (téléchargement via un appel authentifié suivi de la création d'un blob local, plutôt qu'un lien direct — puisque le fichier n'est accessible qu'aux utilisateurs autorisés sur la demande, il ne peut pas être exposé par une simple URL publique).
+
+Réponses d'erreur possibles : 404 si la pièce jointe n'existe pas ou n'appartient pas à la demande indiquée, 401/403 selon les règles habituelles (l'utilisateur doit avoir le droit da.read sur la demande, comme pour consulter son détail).
+
+15.2.3. Valider — POST /api/demandes-achat/:id/approve
+
+Corps (facultatif) : { "comment": "..." }. Réponse : la demande mise à jour (nouveau statut, nouveau currentApprovalLevel, ou passage à VALIDÉE puis TRANSMISE AUX ACHATS si c'était le dernier palier). Procédure : après confirmation utilisateur (§7.2), appeler cet endpoint, puis rafraîchir l'écran de détail et retirer l'élément de la liste "À valider" locale (ou la recharger).
+
+15.2.4. Rejeter — POST /api/demandes-achat/:id/reject
+
+Corps obligatoire : { "motif": "..." } (chaîne non vide — le bouton de confirmation doit rester désactivé tant que le champ motif est vide, §9 RGM03). Réponse : la demande passée au statut REJETÉE (terminal).
+
+15.2.5. Retourner au demandeur — POST /api/demandes-achat/:id/return
+
+Corps obligatoire : { "motif": "..." }. Mêmes règles que le rejet. La demande passe au statut RETOURNÉE (le demandeur pourra la corriger et la resoumettre depuis le web).
+
+15.2.6. Ajouter un commentaire — POST /api/demandes-achat/:id/comments
+
+Corps : { "message": "..." }. Utilisable depuis l'écran de détail indépendamment d'une décision (ex. demander une précision avant de valider). Le commentaire apparaît immédiatement dans history au prochain rafraîchissement.
+
+15.2.7. Mes demandes — GET /api/demandes-achat/mine
+
+Procédure : utile uniquement si le valideur peut aussi être demandeur (cas courant : un responsable valide les demandes de son équipe et soumet aussi les siennes). Alimente un onglet "Mes demandes" optionnel, filtrable par status. Ce n'est pas la même chose que "Mes décisions" (§7.3 et §15.2.8) : ici il s'agit des demandes que l'utilisateur a lui-même créées.
+
+15.2.8. Historique de mes décisions — GET /api/demandes-achat/to-validate n'inclut que le palier courant
+
+Point d'attention : il n'existe pas aujourd'hui d'endpoint dédié "mes décisions passées" (demandes déjà validées/rejetées/retournées par l'utilisateur). Pour l'écran §7.3, deux options : (a) demander l'ajout d'un filtre approverId+status sur GET /api/demandes-achat (endpoint existant, réservé aujourd'hui à la permission da.view_all — à ouvrir ou dédier), ou (b) construire côté mobile un historique local à partir des actions effectuées depuis l'application (moins fiable, ne couvre pas les décisions prises depuis le web). L'option (a) est recommandée et doit être validée en phase de conception technique (cf. §15.5, gap à trancher avant développement).
+
+15.3. Notifications
+
+Le module notifications est aujourd'hui exposé via le service expense-service (port 3002 en interne), sous le chemin public /api/notifications — c'est un choix d'architecture existant (le module notifications a été développé une fois et réutilisé pour tous les domaines métier, dont e-DA), sans impact sur l'usage : les notifications e-DA (da.to_validate, da.returned, da.cancelled...) y apparaissent au même titre que les autres.
+
+15.3.1. Liste des notifications — GET /api/notifications
+
+Paramètres optionnels : type, isRead. Procédure : alimente l'écran "Notifications" (§7.4). Filtrer côté client (ou via type si le backend le permet) sur les types da.* pour un affichage ciblé "e-DA" si l'application couvre plusieurs modules.
+
+15.3.2. Compteur de notifications non lues — GET /api/notifications/unread-count
+
+Procédure : à appeler à chaque ouverture de l'application et après réception d'une notification push, pour tenir à jour le badge sur l'icône de l'application (§7.1).
+
+15.3.3. Marquer une notification comme lue — PATCH /api/notifications/:id/read
+
+Procédure : appeler dès que l'utilisateur ouvre la notification (au tap depuis le centre de notifications système ou depuis l'écran §7.4).
+
+15.3.4. Tout marquer comme lu — PATCH /api/notifications/read-all
+
+Procédure : bouton "Tout marquer comme lu" sur l'écran §7.4.
+
+15.4. Résumé des appels par écran
+Écran	Appels à l'ouverture	Appels sur action
+Connexion	—	POST /api/auth/login (+ variantes MFA §15.1.1)
+À valider	GET /api/demandes-achat/to-validate, GET /api/notifications/unread-count	—
+Détail d'une demande	GET /api/demandes-achat/:id	POST .../approve, .../reject, .../return, .../comments ; GET .../attachments/:attachmentId (téléchargement)
+Mes décisions	GET /api/demandes-achat/mine (+ évolution §15.2.8)	—
+Notifications	GET /api/notifications	PATCH .../:id/read, PATCH .../read-all, POST .../device-tokens, DELETE .../device-tokens/:token
+Profil	GET /api/users/me	POST /api/auth/logout
+
+15.3.5. Enregistrer le jeton push — POST /api/notifications/device-tokens
+
+Procédure : à appeler juste après la connexion (une fois la permission de notification obtenue et le jeton FCM récupéré), et à nouveau à chaque fois que Firebase émet un nouveau jeton (rotation périodique — appeler cet endpoint avec le nouveau jeton, pas besoin de désenregistrer l'ancien explicitement).
+
+Corps : { "platform": "android" | "ios", "token": "..." }. Réponse : { "success": true, "data": null }. L'upsert se fait sur le jeton lui-même (pas sur l'utilisateur) : un même jeton déjà associé à un autre utilisateur (appareil partagé) est automatiquement réassocié à l'utilisateur qui vient de se connecter.
+
+15.3.6. Désenregistrer le jeton push — DELETE /api/notifications/device-tokens/:token
+
+Procédure : à appeler à la déconnexion (avant d'effacer les jetons d'authentification stockés localement), pour que cet appareil cesse de recevoir des notifications tant qu'il n'est pas réenregistré. Idempotent : répond 200 même si le jeton n'existe plus.
+
+15.5. Écarts à combler avant développement (endpoints n'existant pas encore)
+
+Les points suivants ont été identifiés en confrontant ce cahier des charges à l'implémentation actuelle du backend. Ils ne bloquent pas le démarrage du projet mobile mais doivent être développés côté backend avant la mise en production des écrans concernés :
+
+Envoi effectif des push. L'enregistrement des jetons (§15.3.5/15.3.6) est en place, mais l'appel au SDK FCM Admin pour émettre réellement une notification push lors des événements da.to_validate / da.returned / da.cancelled reste à implémenter côté backend (probablement dans notification-service, en s'appuyant sur la table dbo.device_tokens).
+Historique des décisions par valideur (§15.2.8). À trancher en conception technique : extension de GET /api/demandes-achat avec un filtre par approbateur, ou nouvel endpoint dédié.
+Relances automatiques (da.reminder). La mécanique de relance/escalade après un délai sans action (§27 du cahier des charges e-DA) est explicitement hors périmètre de la version actuelle du module e-DA — l'événement da.reminder utilisé au §8 de ce document ne sera donc disponible qu'après le développement de cette fonctionnalité côté e-DA.
+
+Le reste des règles de gestion (permissions da.approve / da.reject / da.return, obligation de motif, interdiction d'auto-validation RG13, transmission automatique au service achats) est déjà entièrement implémenté et vérifié côté serveur : l'application mobile n'a rien à revalider elle-même, seulement à refléter dans son interface les décisions déjà prises par l'API (boutons visibles/masqués, messages d'erreur renvoyés tels quels à l'utilisateur).

@@ -74,6 +74,23 @@ export const PERMISSIONS = {
   FNE_READ: 'fne.read',
   FNE_UPDATE: 'fne.update',
   FNE_CREDIT_NOTE: 'fne.credit_note',
+
+  // Demande d'Achat (e-DA — purchase request workflow)
+  DA_CREATE: 'da.create',
+  DA_READ: 'da.read',
+  DA_UPDATE: 'da.update',
+  DA_DELETE: 'da.delete',
+  DA_SUBMIT: 'da.submit',
+  DA_APPROVE: 'da.approve',
+  DA_REJECT: 'da.reject',
+  DA_RETURN: 'da.return',
+  DA_CANCEL: 'da.cancel',
+  DA_TAKEOVER: 'da.takeover',
+  DA_PROCESS: 'da.process',
+  DA_CLOSE: 'da.close',
+  DA_VIEW_ALL: 'da.view_all',
+  DA_VIEW_REPORT: 'da.view_report',
+  DA_CONFIGURE: 'da.configure',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -96,6 +113,7 @@ const PERMISSION_MODULE_MAP: Record<string, string> = {
   company: 'admin',
   report: 'reports',
   dashboard: 'dashboard',
+  da: 'demande_achat',
 };
 
 const PERMISSION_LABELS: Record<string, string> = {
@@ -147,6 +165,21 @@ const PERMISSION_LABELS: Record<string, string> = {
   'fne.read': 'Consulter les factures FNE',
   'fne.update': 'Modifier les factures FNE',
   'fne.credit_note': 'Émettre des avoirs FNE',
+  'da.create': 'Créer des demandes d’achat',
+  'da.read': 'Lire les demandes d’achat',
+  'da.update': 'Modifier les demandes d’achat',
+  'da.delete': 'Supprimer les demandes d’achat',
+  'da.submit': 'Soumettre les demandes d’achat',
+  'da.approve': 'Approuver les demandes d’achat',
+  'da.reject': 'Rejeter les demandes d’achat',
+  'da.return': 'Retourner les demandes d’achat pour correction',
+  'da.cancel': 'Annuler les demandes d’achat',
+  'da.takeover': 'Prendre en charge les demandes d’achat (achats)',
+  'da.process': 'Traiter les demandes d’achat (achats)',
+  'da.close': 'Clôturer les demandes d’achat',
+  'da.view_all': 'Voir toutes les demandes d’achat',
+  'da.view_report': 'Consulter le tableau de bord des demandes d’achat',
+  'da.configure': 'Configurer les circuits de validation des demandes d’achat',
 };
 
 export function getPermissionsMeta(): { key: string; label: string; module: string }[] {

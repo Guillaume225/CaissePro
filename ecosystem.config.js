@@ -12,7 +12,7 @@
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
-        PORT: '3051',
+        PORT: '3001',
       },
     },
 
@@ -28,7 +28,7 @@
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
-        PORT: '3052',
+        PORT: '3002',
       },
     },
 
@@ -44,7 +44,7 @@
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
-        PORT: '3053',
+        PORT: '3013',
       },
     },
 
@@ -76,7 +76,7 @@
       max_memory_restart: '384M',
       env: {
         NODE_ENV: 'production',
-        PORT: '3056',
+        PORT: '3006',
       },
     },
 
@@ -94,6 +94,71 @@
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'production',
+      },
+    },
+
+    // ── Report Service (port 8001) ───────────────────────
+    {
+      name: 'report-service',
+      cwd: './services/report-service',
+      script: 'C:\\Python314\\python.exe',
+      args: '-m uvicorn app.main:app --host 0.0.0.0 --port 8001',
+      instances: 1,
+      exec_mode: 'fork',
+      interpreter: 'none',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
+
+    // ── Audit Service (port 3004) ────────────────────────
+    {
+      name: 'audit-service',
+      cwd: './services/audit-service',
+      script: 'dist/main.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '384M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: '3004',
+      },
+    },
+
+    // ── Notification Service (port 3005) ─────────────────
+    {
+      name: 'notification-service',
+      cwd: './services/notification-service',
+      script: 'dist/main.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '384M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: '3005',
+      },
+    },
+
+    // ── Demande d'Achat Service (port 3007) ──────────────
+    {
+      name: 'demande-achat-service',
+      cwd: './services/demande-achat-service',
+      script: 'dist/main.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '384M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: '3007',
       },
     },
   ],

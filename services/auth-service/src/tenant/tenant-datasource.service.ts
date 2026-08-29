@@ -4,12 +4,14 @@ import { DataSource } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
 import { Company } from '../entities/company.entity';
+import { Department } from '../entities/department.entity';
+import { Service } from '../entities/service.entity';
 
 export function tenantSchema(tenantId: string): string {
   return `t_${tenantId.replace(/-/g, '_')}`;
 }
 
-const TENANT_ENTITIES = [User, Role, Company];
+const TENANT_ENTITIES = [User, Role, Company, Department, Service];
 
 @Injectable()
 export class TenantDataSourceService implements OnModuleDestroy {

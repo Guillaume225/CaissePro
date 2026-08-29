@@ -43,6 +43,10 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsUUID()
+  serviceId?: string;
+
+  @IsOptional()
+  @IsUUID()
   companyId?: string;
 
   @IsOptional()
@@ -56,7 +60,7 @@ export class CreateUserDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @IsIn(['expense', 'sales', 'admin', 'decision', 'fne', 'manager-caisse'], { each: true })
+  @IsIn(['expense', 'sales', 'admin', 'decision', 'fne', 'manager-caisse', 'demande-achat'], { each: true })
   allowedModules?: string[];
 }
 
@@ -78,6 +82,10 @@ export class UpdateUserDto {
   @IsOptional()
   @IsUUID()
   departmentId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  serviceId?: string;
 
   @IsOptional()
   @IsUUID()
@@ -106,7 +114,7 @@ export class UpdateUserDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @IsIn(['expense', 'sales', 'admin', 'decision', 'fne', 'manager-caisse'], { each: true })
+  @IsIn(['expense', 'sales', 'admin', 'decision', 'fne', 'manager-caisse', 'demande-achat'], { each: true })
   allowedModules?: string[];
 }
 
@@ -148,6 +156,9 @@ export interface UserResponseDto {
   permissions: string[];
   tenantId: string;
   departmentId: string | null;
+  departmentName: string | null;
+  serviceId: string | null;
+  serviceName: string | null;
   companyId: string | null;
   companyName: string | null;
   companyIds: string[];

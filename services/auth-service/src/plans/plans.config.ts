@@ -27,6 +27,7 @@ export interface PlanFeatures {
   api_access: boolean;
   webhooks: boolean;
   audit_advanced: boolean;
+  demande_achat: boolean;
 }
 
 export interface PlanDefinition {
@@ -67,6 +68,7 @@ export const PLAN_DEFINITIONS: Record<PlanCode, PlanDefinition> = {
       api_access: false,
       webhooks: false,
       audit_advanced: false,
+      demande_achat: false,
     },
   },
 
@@ -99,6 +101,7 @@ export const PLAN_DEFINITIONS: Record<PlanCode, PlanDefinition> = {
       api_access: false,
       webhooks: false,
       audit_advanced: false,
+      demande_achat: true,
     },
   },
 
@@ -131,6 +134,7 @@ export const PLAN_DEFINITIONS: Record<PlanCode, PlanDefinition> = {
       api_access: false,
       webhooks: false,
       audit_advanced: false,
+      demande_achat: true,
     },
   },
 
@@ -163,6 +167,7 @@ export const PLAN_DEFINITIONS: Record<PlanCode, PlanDefinition> = {
       api_access: true,
       webhooks: true,
       audit_advanced: true,
+      demande_achat: true,
     },
   },
 };
@@ -171,7 +176,7 @@ export const PLAN_DEFINITIONS: Record<PlanCode, PlanDefinition> = {
  * Derives the list of frontend module IDs the admin user should have access to
  * based on the features included in their plan.
  *
- * Frontend ModuleId: 'admin' | 'expense' | 'manager-caisse' | 'fne' | 'decision'
+ * Frontend ModuleId: 'admin' | 'expense' | 'manager-caisse' | 'fne' | 'decision' | 'demande-achat'
  */
 export function getModulesForPlan(planCode: PlanCode): string[] {
   const { features } = PLAN_DEFINITIONS[planCode];
@@ -188,6 +193,9 @@ export function getModulesForPlan(planCode: PlanCode): string[] {
   }
   if (features.dashboard || features.multi_validation || features.accounting) {
     modules.push('decision');
+  }
+  if (features.demande_achat) {
+    modules.push('demande-achat');
   }
 
   return modules;

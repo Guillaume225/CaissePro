@@ -22,6 +22,7 @@ import { PlansModule } from './plans/plans.module';
 import { TenantModule } from './tenant/tenant.module';
 import { TenantDataSourceModule } from './tenant/tenant-datasource.module';
 import { ProvisioningModule } from './provisioning/provisioning.module';
+import { OrganizationModule } from './organization/organization.module';
 import { Tenant } from './tenant/tenant.entity';
 import { UserLogin } from './entities/user-login.entity';
 import { AuditLog } from './audit/audit-log.entity';
@@ -71,6 +72,7 @@ import { AuditLog } from './audit/audit-log.entity';
     CompaniesModule,
     DashboardModule,
     AdminModule,
+    OrganizationModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

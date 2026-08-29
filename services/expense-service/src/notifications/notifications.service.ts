@@ -55,4 +55,35 @@ export class NotificationsService {
     ]);
     return this.wrap(null);
   }
+
+  /**
+   * Upsert on the token itself (not the user): a device token belongs to an
+   * app installation, not a person — if the same token was already
+   * registered by a different user (shared/reused device), it is
+   * re-associated to whoever is authenticated now, matching how FCM tokens
+   * actually behave.
+   */
+  async registerDeviceToken(userId: string, platform: string, token: string) {
+    await this.ds.query(
+      `MERGE dbo.device_tokens AS target
+         USING (SELECT @0 AS token) AS source
+         ON target.token = source.token
+       WHEN MATCHED THEN
+         UPDATE SET user_id = @1, platform = @2, updated_at = SYSDATETIMEOFFSET()
+       WHEN NOT MATCHED THEN
+         INSERT (id, user_id, platform, token, created_at, updated_at)
+         VALUES (NEWID(), @1, @2, @0, SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET());`,
+      [token, userId, platform],
+    );
+    return this.wrap(null);
+  }
+
+  /** Idempotent: deleting a token that doesn't exist (or isn't this user's) is still a success. */
+  async unregisterDeviceToken(userId: string, token: string) {
+    await this.ds.query('DELETE FROM dbo.device_tokens WHERE token = @0 AND user_id = @1', [
+      token,
+      userId,
+    ]);
+    return this.wrap(null);
+  }
 }

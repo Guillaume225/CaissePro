@@ -6,11 +6,19 @@ import { useModuleStore, type ModuleId } from '@/stores/module-store';
 const ClosingPage = lazy(() => import('./ClosingPage'));
 const AdminDashboard = lazy(() => import('./dashboards/AdminDashboard'));
 const DecisionDashboard = lazy(() => import('./dashboards/DecisionDashboard'));
+const FneDashboardPage = lazy(() => import('./sales/FneDashboardPage'));
+const ManagerDashboardPage = lazy(() => import('./manager-caisse/ManagerDashboardPage'));
+const PurchaseRequestDashboardPage = lazy(
+  () => import('./demande-achat/PurchaseRequestDashboardPage'),
+);
 
 const dashboardMap: Record<ModuleId, React.LazyExoticComponent<() => JSX.Element>> = {
   expense: ClosingPage,
   admin: AdminDashboard,
   decision: DecisionDashboard,
+  fne: FneDashboardPage,
+  'manager-caisse': ManagerDashboardPage,
+  'demande-achat': PurchaseRequestDashboardPage,
 };
 
 function DashboardLoader() {

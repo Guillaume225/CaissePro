@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAuthStore, setRememberMe } from '@/stores/auth-store';
 import { useTabStore } from '@/stores/tab-store';
 import api from '@/lib/api';
 import type { User } from '@/types/auth';
@@ -29,6 +29,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState(import.meta.env.DEV ? 'admin@caisseflow.com' : '');
   const [password, setPassword] = useState(import.meta.env.DEV ? 'CaisseFlow2026!' : '');
+  const [rememberMe, setRememberMeState] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +65,7 @@ export default function LoginPage() {
   }, [mfaSetupStep]);
 
   const completeLogin = async (accessToken: string, refreshToken: string) => {
+    setRememberMe(rememberMe);
     useAuthStore.getState().setTokens(accessToken, refreshToken);
 
     const { data: meRes } = await api.get('/users/me');
@@ -80,6 +82,10 @@ export default function LoginPage() {
       companyName: profile.companyName || undefined,
       companyIds: profile.companyIds || [],
       companyNames: profile.companyNames || [],
+      departmentId: profile.departmentId || null,
+      departmentName: profile.departmentName || null,
+      serviceId: profile.serviceId || null,
+      serviceName: profile.serviceName || null,
       permissions: profile.permissions || [],
       allowedModules:
         profile.allowedModules && profile.allowedModules.length > 0
@@ -507,6 +513,19 @@ export default function LoginPage() {
               required
               className="mt-1.5 w-full rounded-lg border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
             />
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="rememberMe"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMeState(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
+            />
+            <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-600">
+              {t('auth.rememberMe')}
+            </label>
           </div>
 
           <button

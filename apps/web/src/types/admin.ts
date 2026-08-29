@@ -18,6 +18,10 @@ export interface AdminUser {
   allowedModules?: ModuleId[];
   companyIds?: string[];
   companyNames?: string[];
+  serviceId?: string | null;
+  serviceName?: string | null;
+  departmentId?: string | null;
+  departmentName?: string | null;
 }
 
 export interface CreateUserDto {
@@ -29,6 +33,7 @@ export interface CreateUserDto {
   password: string;
   allowedModules?: ModuleId[];
   companyIds?: string[];
+  serviceId?: string | null;
 }
 
 export interface UpdateUserDto {
@@ -40,6 +45,24 @@ export interface UpdateUserDto {
   mfaEnabled?: boolean;
   allowedModules?: ModuleId[];
   companyIds?: string[];
+  serviceId?: string | null;
+}
+
+// ── Organization: Departments & Services ─────────────────
+export interface Department {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface OrgService {
+  id: string;
+  name: string;
+  departmentId: string;
+  department?: Department;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ── Roles & Permissions ──────────────────────────────────

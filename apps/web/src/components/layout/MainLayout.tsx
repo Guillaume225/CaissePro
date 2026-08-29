@@ -7,7 +7,9 @@ import { useSocket } from '@/hooks/useSocket';
 import { useSidebarStore } from '@/stores/sidebar-store';
 import { useTabStore } from '@/stores/tab-store';
 import { useAuthStore } from '@/stores/auth-store';
+import { useModuleStore } from '@/stores/module-store';
 import { useCashState } from '@/hooks/useClosing';
+import { CASH_DAY_GATED_MODULES } from '@/lib/cashDayModules';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 
@@ -20,6 +22,7 @@ export function MainLayout() {
   const location = useLocation();
   const { tabs, activeTabId, setActiveTab } = useTabStore();
   const { user } = useAuthStore();
+  const { activeModule } = useModuleStore();
 
   // Check if user has access (has at least one module AND one company)
   const hasAccess = useMemo(() => {
@@ -34,9 +37,10 @@ export function MainLayout() {
   const { data: cashState, isLoading: cashStateLoading } = useCashState();
   const cashDayRequired = useMemo(() => {
     if (!user || user.role === 'admin' || user.role === 'manager') return false;
+    if (!CASH_DAY_GATED_MODULES.includes(activeModule)) return false;
     if (cashStateLoading) return false;
     return !cashState || cashState.status !== 'OPEN';
-  }, [user, cashState, cashStateLoading]);
+  }, [user, cashState, cashStateLoading, activeModule]);
 
   // Sync active tab when URL changes (e.g. browser back/forward)
   useEffect(() => {

@@ -49,3 +49,4 @@ power/
 
 # python egg-info
 *.egg-info/
+services/demande-achat-service/uploads/*

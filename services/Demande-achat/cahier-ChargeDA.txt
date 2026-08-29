@@ -1,0 +1,654 @@
+Cahier des charges — Module e-DA
+Gestion électronique des demandes d'achat
+1. Objet du module
+
+Le module e-DA (Demande d'Achat) a pour objectif de dématérialiser le processus interne d'expression et de validation des besoins d'achat.
+
+Il permet à un collaborateur ou à un service :
+
+d'exprimer un besoin ;
+de soumettre une demande d'achat ;
+de suivre son circuit de validation ;
+de permettre aux responsables habilités de la valider ou de la rejeter ;
+de transmettre automatiquement les demandes validées au service achats ;
+de permettre au service achats de prendre en charge et de traiter la demande ;
+d'assurer une traçabilité complète du processus.
+2. Périmètre fonctionnel
+
+Le module couvre exclusivement le cycle :
+
+Expression du besoin
+
+↓
+
+Soumission de la demande
+
+↓
+
+Validation
+
+↓
+
+Transmission au service achats
+
+↓
+
+Traitement par les achats
+
+↓
+
+Clôture de la demande
+
+Hors périmètre
+
+Le module e-DA ne gère pas directement :
+
+les consultations fournisseurs ;
+les demandes de cotation ;
+les comparatifs fournisseurs ;
+les bons de commande ;
+les réceptions ;
+les stocks ;
+les factures fournisseurs ;
+la comptabilité.
+
+Ces processus pourront être gérés dans d'autres modules du logiciel.
+
+3. Acteurs
+Acteur	Responsabilités
+Demandeur	Exprime le besoin et suit sa demande
+Validateur	Contrôle et valide/rejette la demande
+Service Achats	Prend en charge et traite les demandes validées
+Administrateur	Paramètre les règles et droits
+Direction	Valide les demandes selon les seuils définis
+4. Cycle de vie de la demande
+
+Le module devra gérer les statuts suivants :
+
+BROUILLON
+    ↓
+SOUMISE
+    ↓
+EN VALIDATION
+    ↓
+VALIDÉE
+    ↓
+TRANSMISE AUX ACHATS
+    ↓
+PRISE EN CHARGE
+    ↓
+EN TRAITEMENT
+    ↓
+TRAITÉE
+    ↓
+CLÔTURÉE
+
+Avec des sorties alternatives :
+
+EN VALIDATION
+      │
+      ├──► REJETÉE
+      │
+      └──► RETOURNÉE AU DEMANDEUR
+
+Une demande peut également être :
+
+ANNULÉE
+
+selon les droits de l'utilisateur.
+
+5. Création d'une demande d'achat
+
+Le demandeur accède à :
+
+e-DA → Nouvelle demande
+
+Il renseigne les informations générales.
+
+Informations obligatoires
+Numéro de DA — automatique ;
+date de demande ;
+demandeur ;
+service ;
+département/direction ;
+objet de la demande ;
+justification ;
+date souhaitée ;
+niveau de priorité.
+Informations facultatives
+projet ;
+centre de coût ;
+budget ;
+site ;
+commentaire général.
+
+Exemple :
+
+DA-2026-000125
+
+Objet : Achat de matériel informatique
+
+Justification : Équipement de nouveaux collaborateurs du service commercial.
+
+Date souhaitée : 15/09/2026
+
+Priorité : Normale
+
+6. Détail des besoins
+
+Une DA doit pouvoir contenir une ou plusieurs lignes.
+
+Chaque ligne comporte :
+
+référence article, si disponible ;
+désignation ;
+description ;
+quantité ;
+unité ;
+prix estimatif ;
+montant estimatif ;
+date souhaitée ;
+commentaire.
+
+Exemple :
+
+Désignation	Qté	Unité	Prix estimatif
+Ordinateur portable	5	U	500 000
+Souris sans fil	5	U	15 000
+Sacoche ordinateur	5	U	25 000
+
+Le système calcule automatiquement le montant estimatif total.
+
+7. Expression d'un besoin libre
+
+Le demandeur ne doit pas obligatoirement sélectionner un article existant.
+
+Il doit pouvoir saisir :
+
+Besoin hors catalogue
+
+Exemple :
+
+"Prestation de maintenance du système de climatisation du siège."
+
+Dans ce cas, la description du besoin devient obligatoire.
+
+8. Pièces jointes
+
+Le demandeur pourra joindre des documents à la DA :
+
+devis ;
+facture proforma ;
+cahier des charges ;
+image ;
+fiche technique ;
+document PDF ;
+Excel ;
+autres documents justificatifs.
+
+Le système devra enregistrer :
+
+fichier ;
+utilisateur ;
+date et heure ;
+type de document.
+9. Priorité
+
+La DA pourra avoir trois niveaux :
+
+Normale
+
+Traitement selon le processus habituel.
+
+Urgente
+
+Traitement prioritaire.
+
+Très urgente
+
+Traitement immédiat ou prioritaire.
+
+Pour une demande urgente ou très urgente, le motif de l'urgence doit être obligatoire.
+
+10. Brouillon
+
+Le demandeur peut enregistrer une demande sans la soumettre.
+
+Statut :
+
+BROUILLON
+
+Il peut :
+
+modifier ;
+ajouter/supprimer des lignes ;
+ajouter des pièces jointes ;
+supprimer le brouillon ;
+soumettre la demande.
+11. Soumission
+
+Lorsque le demandeur clique sur :
+
+"Soumettre la demande"
+
+le système vérifie automatiquement que toutes les informations obligatoires sont présentes.
+
+Si tout est correct :
+
+BROUILLON → SOUMISE
+
+La demande entre ensuite dans le workflow de validation.
+
+Le demandeur ne pourra plus modifier directement la DA.
+
+12. Circuit de validation
+
+Le workflow devra être configurable.
+
+Il peut dépendre de :
+
+montant estimatif ;
+service ;
+direction ;
+catégorie d'achat ;
+projet ;
+centre de coût ;
+niveau de priorité.
+Exemple
+DA ≤ 500 000 FCFA
+        ↓
+Responsable hiérarchique
+        ↓
+Validation
+500 001 à 2 000 000 FCFA
+        ↓
+Responsable hiérarchique
+        ↓
+DAF
+        ↓
+Validation
+> 2 000 000 FCFA
+        ↓
+Responsable hiérarchique
+        ↓
+DAF
+        ↓
+Direction Générale
+13. Écran "Mes demandes à valider"
+
+Un responsable dispose d'un espace :
+
+e-DA → À valider
+
+Il voit :
+
+N°	Demandeur	Objet	Montant	Date	Priorité
+DA-00125	Kouassi Jean	Ordinateurs	3 100 000	28/08	Normale
+DA-00126	Konan Marie	Fournitures	450 000	28/08	Urgente
+
+Il peut ouvrir la demande et consulter :
+
+informations générales ;
+lignes ;
+justification ;
+pièces jointes ;
+historique ;
+commentaires.
+14. Actions du validateur
+
+Le validateur dispose de trois actions principales :
+
+VALIDER
+
+La demande passe au niveau suivant.
+
+REJETER
+
+Le motif du rejet est obligatoire.
+
+RETOURNER
+
+La demande est renvoyée au demandeur pour correction.
+
+Le motif du retour est obligatoire.
+
+15. Retour pour modification
+
+Lorsqu'une demande est retournée :
+
+EN VALIDATION
+      ↓
+RETOURNÉE
+      ↓
+Demandeur
+      ↓
+Modification
+      ↓
+Soumission
+      ↓
+EN VALIDATION
+
+Le système doit conserver l'historique de la première soumission.
+
+16. Transmission au service achats
+
+Lorsque toutes les validations nécessaires sont obtenues :
+
+EN VALIDATION → VALIDÉE
+
+Puis le système transmet la demande au service achats.
+
+Statut :
+
+TRANSMISE AUX ACHATS
+
+Les utilisateurs du service achats reçoivent une notification.
+
+17. Espace du service achats
+
+Le service achats dispose d'un écran :
+
+"Demandes d'achat à traiter"
+
+Exemple :
+
+DA	Demandeur	Service	Objet	Montant	Statut
+DA-00125	K. Jean	IT	Ordinateurs	3 100 000	À traiter
+DA-00126	M. Marie	RH	Fournitures	450 000	À traiter
+
+Les achats peuvent filtrer par :
+
+date ;
+service ;
+demandeur ;
+priorité ;
+montant ;
+catégorie ;
+statut.
+18. Prise en charge par les achats
+
+Un acheteur peut cliquer :
+
+"Prendre en charge"
+
+La demande passe :
+
+TRANSMISE AUX ACHATS → PRISE EN CHARGE
+
+Le système enregistre :
+
+acheteur ;
+date ;
+heure.
+
+Exemple :
+
+DA-2026-00125 prise en charge par K. Yao, Service Achats, le 28/08/2026 à 14:35.
+
+19. Traitement de la demande
+
+Une fois prise en charge, l'acheteur peut passer la demande à :
+
+EN TRAITEMENT
+
+Il peut notamment renseigner :
+
+commentaire de traitement ;
+informations complémentaires ;
+date prévue de traitement ;
+observation ;
+statut de traitement.
+
+Important : le module s'arrête au niveau du traitement de la demande. Il ne crée pas nécessairement le bon de commande dans ce module.
+
+20. Clôture de la demande
+
+Lorsque le service achats considère que la demande a été traitée :
+
+EN TRAITEMENT → TRAITÉE → CLÔTURÉE
+
+Le motif ou commentaire de clôture pourra être obligatoire.
+
+Exemple :
+
+"Besoin traité conformément à la demande. Le dossier a été transmis au processus achat."
+
+21. Annulation
+
+Une DA peut être annulée selon les règles définies.
+
+Exemple :
+
+BROUILLON → ANNULÉE
+SOUMISE → ANNULÉE
+EN VALIDATION → ANNULÉE
+VALIDÉE → ANNULÉE
+
+Les droits d'annulation devront être paramétrables.
+
+Une DA déjà clôturée ne devra normalement plus pouvoir être annulée.
+
+22. Notifications
+
+Le système devra notifier automatiquement les utilisateurs.
+
+Demandeur
+demande soumise ;
+demande retournée ;
+demande validée ;
+demande rejetée ;
+demande prise en charge ;
+demande traitée ;
+demande clôturée.
+Validateur
+nouvelle demande à valider ;
+demande retournée ;
+rappel de validation.
+Service achats
+nouvelle DA validée ;
+nouvelle DA à traiter.
+23. Historique
+
+Chaque DA doit disposer d'un journal d'activité.
+
+Exemple :
+
+28/08/2026 09:10
+KOUASSI Jean
+Création de la DA
+
+28/08/2026 09:15
+KOUASSI Jean
+Soumission
+
+28/08/2026 10:20
+KONAN Paul
+Validation niveau 1
+
+28/08/2026 11:40
+TRAORE Aminata
+Validation niveau 2
+
+28/08/2026 11:41
+Système
+Transmission au service achats
+
+28/08/2026 14:35
+YAO Serge
+Prise en charge par les achats
+
+29/08/2026 16:20
+YAO Serge
+Demande traitée
+24. Commentaires
+
+Chaque étape peut permettre d'ajouter un commentaire.
+
+Les commentaires doivent être conservés dans l'historique.
+
+Exemple :
+
+Achats :
+
+Merci de préciser la spécification technique de l'ordinateur.
+
+Demandeur :
+
+Processeur Core i5 minimum, RAM 16 Go, SSD 512 Go.
+
+25. Tableau de bord
+
+Le tableau de bord doit rester centré sur le cycle e-DA.
+
+Indicateurs
+Total des DA ;
+Brouillons ;
+DA soumises ;
+DA en validation ;
+DA retournées ;
+DA rejetées ;
+DA validées ;
+DA transmises aux achats ;
+DA prises en charge ;
+DA en traitement ;
+DA traitées ;
+DA clôturées.
+Indicateurs de performance
+délai moyen de validation ;
+délai moyen de prise en charge ;
+délai moyen de traitement ;
+nombre de DA en retard ;
+montant total des demandes.
+26. Gestion des délais
+
+Le système pourra calculer automatiquement :
+
+Délai de validation
+Date validation - Date soumission
+Délai de prise en charge
+Date prise en charge - Date transmission aux achats
+Délai de traitement
+Date traitement - Date prise en charge
+
+Cela permettra de mesurer la performance des différents acteurs.
+
+27. Relances
+
+Le système devra pouvoir générer des rappels automatiques.
+
+Exemple :
+
+Une DA est en attente de validation depuis 48 heures.
+
+→ Notification au validateur.
+
+Après 72 heures :
+
+→ Relance.
+
+Après un délai configurable :
+
+→ Escalade au supérieur hiérarchique.
+
+28. Gestion des droits
+
+Les permissions pourront être structurées ainsi :
+
+DA_CREATE
+DA_READ
+DA_UPDATE
+DA_DELETE
+DA_SUBMIT
+DA_APPROVE
+DA_REJECT
+DA_RETURN
+DA_CANCEL
+DA_TAKEOVER
+DA_PROCESS
+DA_CLOSE
+DA_VIEW_ALL
+DA_VIEW_REPORT
+DA_CONFIGURE
+29. Règles de gestion
+RG01
+
+Une DA doit obligatoirement avoir au moins une ligne de besoin.
+
+RG02
+
+Une DA ne peut être soumise que si toutes les informations obligatoires sont renseignées.
+
+RG03
+
+Une DA soumise ne peut plus être modifiée par le demandeur.
+
+RG04
+
+Une demande retournée peut être modifiée puis soumise à nouveau.
+
+RG05
+
+Tout rejet doit obligatoirement comporter un motif.
+
+RG06
+
+Tout retour pour modification doit comporter un motif.
+
+RG07
+
+Une DA validée est automatiquement transmise au service achats.
+
+RG08
+
+Une DA transmise aux achats doit être prise en charge par un utilisateur habilité.
+
+RG09
+
+Une DA ne peut être clôturée que par le service achats ou un utilisateur autorisé.
+
+RG10
+
+Toutes les actions doivent être historisées.
+
+RG11
+
+Les règles de validation doivent être paramétrables.
+
+RG12
+
+Les seuils de validation doivent être paramétrables.
+
+RG13
+
+Le demandeur ne peut pas valider sa propre demande lorsque le workflow exige un supérieur hiérarchique.
+
+30. Architecture fonctionnelle finale
+
+Je structurerais le module comme ceci :
+
+                    e-DA
+                     │
+       ┌─────────────┼─────────────┐
+       │             │             │
+       ▼             ▼             ▼
+   Mes demandes   À valider    Achats
+       │             │             │
+       ▼             ▼             ▼
+   Brouillons      Validation   À traiter
+   Soumises        Rejet        Prise en charge
+   Retournées      Retour       En traitement
+   Validées                     Traitées
+   Clôturées                    Clôturées
+                     │
+                     ▼
+                  Historique
+                     │
+                     ▼
+                 Tableau de bord
+Le principe central
+
+Le e-DA n'est donc pas un module d'achat.
+
+Il constitue plutôt le workflow de contrôle interne qui précède le processus achats :
+
+Collaborateur → Demande d'achat → Validation → Service Achats

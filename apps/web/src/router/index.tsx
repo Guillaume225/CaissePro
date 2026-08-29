@@ -21,12 +21,15 @@ const FneAccountingPage = lazy(() => import('@/pages/sales/FneAccountingPage'));
 const FneDashboardPage = lazy(() => import('@/pages/sales/FneDashboardPage'));
 
 // ── Admin module ────────────────────────────────
-const AdminPage = lazy(() => import('@/pages/AdminPage'));
+const AdminLayout = lazy(() =>
+  import('@/components/admin').then((m) => ({ default: m.AdminLayout })),
+);
 const UserManagementPage = lazy(() => import('@/pages/admin/UserManagementPage'));
 const RoleManagementPage = lazy(() => import('@/pages/admin/RoleManagementPage'));
 const AuditLogPage = lazy(() => import('@/pages/admin/AuditLogPage'));
 const CompanyManagementPage = lazy(() => import('@/pages/admin/CompanyManagementPage'));
 const ApprovalCircuitPage = lazy(() => import('@/pages/admin/ApprovalCircuitPage'));
+const OrganizationPage = lazy(() => import('@/pages/admin/OrganizationPage'));
 const ReportDesignerPage = lazy(() => import('@/pages/admin/ReportDesignerPage'));
 const EmployeeManagementPage = lazy(() => import('@/pages/admin/EmployeeManagementPage'));
 const SecurityPage = lazy(() => import('@/pages/admin/SecurityPage'));
@@ -46,6 +49,27 @@ const CashReportsPage = lazy(() => import('@/pages/CashReportsPage'));
 const ManagerCashReportsPage = lazy(() => import('@/pages/manager-caisse/ManagerCashReportsPage'));
 
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
+
+// ── Demande d'Achat (e-DA) module ───────────────
+const PurchaseRequestListPage = lazy(
+  () => import('@/pages/demande-achat/PurchaseRequestListPage'),
+);
+const PurchaseRequestFormPage = lazy(
+  () => import('@/pages/demande-achat/PurchaseRequestFormPage'),
+);
+const PurchaseRequestDetailPage = lazy(
+  () => import('@/pages/demande-achat/PurchaseRequestDetailPage'),
+);
+const PurchaseRequestValidationPage = lazy(
+  () => import('@/pages/demande-achat/PurchaseRequestValidationPage'),
+);
+const PurchasingPage = lazy(() => import('@/pages/demande-achat/PurchasingPage'));
+const PurchaseRequestDashboardPage = lazy(
+  () => import('@/pages/demande-achat/PurchaseRequestDashboardPage'),
+);
+const DemandeAchatCircuitPage = lazy(
+  () => import('@/pages/demande-achat/admin/ApprovalCircuitPage'),
+);
 
 // ── Expense module ──────────────────────────────
 const ExpenseListPage = lazy(() => import('@/pages/expenses/ExpenseListPage'));
@@ -344,94 +368,171 @@ const router = createBrowserRouter(
           ),
         },
         {
-          path: 'admin',
+          path: 'notifications',
           element: (
-            <AuthGuard requiredRole="manager">
-              <SuspenseWrapper>
-                <AdminPage />
-              </SuspenseWrapper>
-            </AuthGuard>
+            <SuspenseWrapper>
+              <NotificationsPage />
+            </SuspenseWrapper>
           ),
+        },
+        {
+          path: 'demande-achat',
           children: [
             {
-              path: 'users',
+              index: true,
               element: (
                 <SuspenseWrapper>
-                  <UserManagementPage />
+                  <PurchaseRequestListPage />
                 </SuspenseWrapper>
               ),
             },
             {
-              path: 'roles',
+              path: 'new',
               element: (
                 <SuspenseWrapper>
-                  <RoleManagementPage />
+                  <PurchaseRequestFormPage />
                 </SuspenseWrapper>
               ),
             },
             {
-              path: 'companies',
+              path: 'dashboard',
               element: (
                 <SuspenseWrapper>
-                  <CompanyManagementPage />
+                  <PurchaseRequestDashboardPage />
                 </SuspenseWrapper>
               ),
             },
             {
-              path: 'approval-circuits',
+              path: 'to-validate',
               element: (
                 <SuspenseWrapper>
-                  <ApprovalCircuitPage />
+                  <PurchaseRequestValidationPage />
                 </SuspenseWrapper>
               ),
             },
             {
-              path: 'audit',
+              path: 'achats',
               element: (
                 <SuspenseWrapper>
-                  <AuditLogPage />
+                  <PurchasingPage />
                 </SuspenseWrapper>
               ),
             },
             {
-              path: 'report-designer',
+              path: ':id/edit',
               element: (
                 <SuspenseWrapper>
-                  <ReportDesignerPage />
+                  <PurchaseRequestFormPage />
                 </SuspenseWrapper>
               ),
             },
             {
-              path: 'employees',
+              path: ':id',
               element: (
                 <SuspenseWrapper>
-                  <EmployeeManagementPage />
-                </SuspenseWrapper>
-              ),
-            },
-            {
-              path: 'security',
-              element: (
-                <SuspenseWrapper>
-                  <SecurityPage />
-                </SuspenseWrapper>
-              ),
-            },
-            {
-              path: 'fne-config',
-              element: (
-                <SuspenseWrapper>
-                  <FneConfigPage />
+                  <PurchaseRequestDetailPage />
                 </SuspenseWrapper>
               ),
             },
           ],
         },
+      ],
+    },
+    {
+      path: 'admin',
+      element: (
+        <AuthGuard requiredRole="manager">
+          <SuspenseWrapper>
+            <AdminLayout />
+          </SuspenseWrapper>
+        </AuthGuard>
+      ),
+      children: [
         {
-          path: 'notifications',
+          path: 'users',
           element: (
             <SuspenseWrapper>
-              <NotificationsPage />
+              <UserManagementPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'roles',
+          element: (
+            <SuspenseWrapper>
+              <RoleManagementPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'companies',
+          element: (
+            <SuspenseWrapper>
+              <CompanyManagementPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'approval-circuits',
+          element: (
+            <SuspenseWrapper>
+              <ApprovalCircuitPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'audit',
+          element: (
+            <SuspenseWrapper>
+              <AuditLogPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'report-designer',
+          element: (
+            <SuspenseWrapper>
+              <ReportDesignerPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'employees',
+          element: (
+            <SuspenseWrapper>
+              <EmployeeManagementPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'security',
+          element: (
+            <SuspenseWrapper>
+              <SecurityPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'fne-config',
+          element: (
+            <SuspenseWrapper>
+              <FneConfigPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'demande-achat-circuits',
+          element: (
+            <SuspenseWrapper>
+              <DemandeAchatCircuitPage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: 'organization',
+          element: (
+            <SuspenseWrapper>
+              <OrganizationPage />
             </SuspenseWrapper>
           ),
         },
@@ -440,7 +541,6 @@ const router = createBrowserRouter(
   ],
   {
     future: {
-      v7_startTransition: true,
       v7_relativeSplatPath: true,
       v7_fetcherPersist: true,
       v7_normalizeFormMethod: true,

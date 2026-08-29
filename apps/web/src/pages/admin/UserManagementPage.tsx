@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Plus,
@@ -7,15 +7,19 @@ import {
   Pencil,
   Trash2,
   Wallet,
-  ShoppingCart,
   Cog,
   TrendingUp,
   Building2,
   Landmark,
   FileCheck2,
+  ShoppingCart,
+  X,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import { Button, Input, Select, Modal, Badge, DataTable } from '@/components/ui';
-import type { Column } from '@/components/ui/DataTable';
 import {
   useUsers,
   useCreateUser,
@@ -25,10 +29,11 @@ import {
   useCompanies,
   useRoles,
 } from '@/hooks/useAdmin';
+import { useOrgServices } from '@/hooks/useOrganization';
 import type { AdminUser, CreateUserDto, UpdateUserDto } from '@/types/admin';
 import type { ModuleId } from '@/stores/module-store';
 
-type AnyRow = Record<string, unknown>;
+const PAGE_SIZE = 10;
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Administrateur',
@@ -46,7 +51,6 @@ const ROLE_LABELS: Record<string, string> = {
 
 const ALL_MODULES: { id: ModuleId; labelKey: string; icon: typeof Wallet; color: string }[] = [
   { id: 'expense', labelKey: 'modules.expense.name', icon: Wallet, color: 'text-orange-500' },
-  { id: 'sales', labelKey: 'modules.sales.name', icon: ShoppingCart, color: 'text-blue-500' },
   { id: 'fne', labelKey: 'modules.fne.name', icon: FileCheck2, color: 'text-teal-500' },
   {
     id: 'manager-caisse',
@@ -56,13 +60,88 @@ const ALL_MODULES: { id: ModuleId; labelKey: string; icon: typeof Wallet; color:
   },
   { id: 'admin', labelKey: 'modules.admin.name', icon: Cog, color: 'text-emerald-500' },
   { id: 'decision', labelKey: 'modules.decision.name', icon: TrendingUp, color: 'text-purple-500' },
+  {
+    id: 'demande-achat',
+    labelKey: 'modules.demande-achat.name',
+    icon: ShoppingCart,
+    color: 'text-sky-500',
+  },
 ];
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-md bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#e0e6eb] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#0a2540]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[#697386] hover:bg-zinc-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="max-h-[75vh] overflow-y-auto px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' | null }) {
+  if (!active || !dir) return <ArrowUpDown className="h-3 w-3 text-[#aab7c4]" />;
+  return dir === 'asc' ? (
+    <ArrowUp className="h-3 w-3 text-[#0a2540]" />
+  ) : (
+    <ArrowDown className="h-3 w-3 text-[#0a2540]" />
+  );
+}
+
+function RoleBadge({ role }: { role: string }) {
+  const map: Record<string, string> = {
+    admin: 'bg-[#eff6ff] text-[#1e40af]',
+    manager: 'bg-[#eff6ff] text-[#1e40af]',
+    cashier: 'bg-[#dcfce7] text-[#166534]',
+    viewer: 'bg-amber-50 text-amber-800',
+  };
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[role] || map.manager}`}>
+      {ROLE_LABELS[role] || ROLE_LABELS[role.toUpperCase()] || role}
+    </span>
+  );
+}
 
 export default function UserManagementPage() {
   const { t } = useTranslation();
   const { data: users = [], isLoading } = useUsers();
   const { data: companies = [] } = useCompanies();
   const { data: roles = [] } = useRoles();
+  const { data: orgServices = [] } = useOrgServices();
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
@@ -72,8 +151,10 @@ export default function UserManagementPage() {
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
+  const [sortKey, setSortKey] = useState<'firstName' | 'role' | 'lastLogin' | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
+  const [page, setPage] = useState(1);
 
-  // Form state
   const [form, setForm] = useState<
     CreateUserDto & {
       id?: string;
@@ -97,9 +178,35 @@ export default function UserManagementPage() {
       `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey !== key) {
+      setSortKey(key);
+      setSortDir('asc');
+    } else if (sortDir === 'asc') {
+      setSortDir('desc');
+    } else {
+      setSortKey(null);
+      setSortDir(null);
+    }
+    setPage(1);
+  };
+
+  const sorted = useMemo(() => {
+    if (!sortKey || !sortDir) return filtered;
+    return [...filtered].sort((a, b) => {
+      const av = sortKey === 'role' ? a.roleName || a.role : a[sortKey] || '';
+      const bv = sortKey === 'role' ? b.roleName || b.role : b[sortKey] || '';
+      if (av < bv) return sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const pageData = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const openCreate = () => {
     setEditUser(null);
-    // Default to first role if available
     const defaultRoleId = roles.length ? roles[0].id : '';
     setForm({
       email: '',
@@ -123,6 +230,7 @@ export default function UserManagementPage() {
       allowedModules: u.allowedModules || ['expense'],
       companyIds: u.companyIds || [],
       roleId: u.roleId || '',
+      serviceId: u.serviceId || null,
     });
     setShowModal(true);
   };
@@ -135,10 +243,10 @@ export default function UserManagementPage() {
           firstName: form.firstName,
           lastName: form.lastName,
           roleId: form.roleId,
+          serviceId: form.serviceId || null,
+          ...(form.allowedModules?.length ? { allowedModules: form.allowedModules } : {}),
+          ...(form.companyIds?.length ? { companyIds: form.companyIds } : {}),
         };
-        if (form.allowedModules?.length)
-          (dto as Record<string, unknown>).allowedModules = form.allowedModules;
-        if (form.companyIds?.length) (dto as Record<string, unknown>).companyIds = form.companyIds;
         await updateUser.mutateAsync(dto);
       } else {
         const dto: CreateUserDto = {
@@ -147,10 +255,10 @@ export default function UserManagementPage() {
           lastName: form.lastName,
           roleId: form.roleId,
           password: form.password,
+          serviceId: form.serviceId || null,
+          ...(form.allowedModules?.length ? { allowedModules: form.allowedModules } : {}),
+          ...(form.companyIds?.length ? { companyIds: form.companyIds } : {}),
         };
-        if (form.allowedModules?.length)
-          (dto as Record<string, unknown>).allowedModules = form.allowedModules;
-        if (form.companyIds?.length) (dto as Record<string, unknown>).companyIds = form.companyIds;
         await createUser.mutateAsync(dto);
       }
       setShowModal(false);
@@ -176,189 +284,36 @@ export default function UserManagementPage() {
     toggleMfa.mutate({ id: u.id, enabled: !u.mfaEnabled });
   };
 
-  const roleBadge = (role: string) => {
-    const map: Record<string, 'default' | 'success' | 'warning' | 'info'> = {
-      admin: 'default',
-      manager: 'info',
-      cashier: 'success',
-      viewer: 'warning',
-    };
-    return (
-      <Badge variant={map[role] || 'info'}>
-        {ROLE_LABELS[role] || ROLE_LABELS[role.toUpperCase()] || role}
-      </Badge>
-    );
-  };
-
-  const columns: Column<AnyRow>[] = [
-    {
-      key: 'firstName',
-      header: t('admin.users.name'),
-      sortable: true,
-      render: (row) => {
-        const u = row as unknown as AdminUser;
-        return (
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gold/10 text-xs font-bold text-brand-gold">
-              {u.firstName[0]}
-              {u.lastName[0]}
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">
-                {u.firstName} {u.lastName}
-              </p>
-              <p className="text-xs text-gray-500">{u.email}</p>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      key: 'role',
-      header: t('admin.users.role'),
-      sortable: true,
-      render: (row) => {
-        const u = row as unknown as AdminUser;
-        return roleBadge(u.roleName || u.role);
-      },
-    },
-    {
-      key: 'companyNames',
-      header: t('admin.users.companies'),
-      render: (row) => {
-        const u = row as unknown as AdminUser;
-        const names = u.companyNames || [];
-        if (!names.length) return <span className="text-xs text-gray-400">—</span>;
-        return (
-          <div className="flex flex-wrap gap-1">
-            {names.map((name) => (
-              <span
-                key={name}
-                className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200"
-              >
-                <Building2 className="mr-1 h-3 w-3" />
-                {name}
-              </span>
-            ))}
-          </div>
-        );
-      },
-    },
-    {
-      key: 'isActive',
-      header: t('common.status'),
-      render: (row) => {
-        const u = row as unknown as AdminUser;
-        return (
-          <Badge variant={u.isActive ? 'success' : 'destructive'}>
-            {u.isActive ? t('admin.users.active') : t('admin.users.inactive')}
-          </Badge>
-        );
-      },
-    },
-    {
-      key: 'mfaEnabled',
-      header: 'MFA',
-      render: (row) => {
-        const u = row as unknown as AdminUser;
-        if (u.mfaEnabled && u.mfaConfigured) {
-          // MFA fully active
-          return (
-            <button
-              onClick={() => handleToggleMfa(u)}
-              className="group flex items-center gap-1.5 transition-colors"
-              title={t('admin.users.mfaDisableTooltip')}
-            >
-              <ShieldCheck className="h-5 w-5 text-green-600 group-hover:text-red-500" />
-              <span className="text-xs font-medium text-green-700">
-                {t('admin.users.mfaActive')}
-              </span>
-            </button>
-          );
-        }
-        if (u.mfaEnabled && !u.mfaConfigured) {
-          // MFA enabled by admin but user hasn't configured yet
-          return (
-            <button
-              onClick={() => handleToggleMfa(u)}
-              className="group flex items-center gap-1.5 transition-colors"
-              title={t('admin.users.mfaDisableTooltip')}
-            >
-              <Shield className="h-5 w-5 text-amber-500 group-hover:text-red-500" />
-              <span className="text-xs font-medium text-amber-600">
-                {t('admin.users.mfaPending')}
-              </span>
-            </button>
-          );
-        }
-        // MFA disabled
-        return (
-          <button
-            onClick={() => handleToggleMfa(u)}
-            className="group flex items-center gap-1.5 text-gray-400 hover:text-brand-gold transition-colors"
-            title={t('admin.users.mfaEnableTooltip')}
-          >
-            <Shield className="h-5 w-5" />
-            <span className="text-xs">{t('admin.users.mfaOff')}</span>
-          </button>
-        );
-      },
-    },
-    {
-      key: 'lastLogin',
-      header: t('admin.users.lastLogin'),
-      sortable: true,
-      render: (row) => {
-        const u = row as unknown as AdminUser;
-        return (
-          <span className="text-xs text-gray-500">
-            {u.lastLogin ? new Date(u.lastLogin).toLocaleString('fr-FR') : '—'}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'actions',
-      header: t('common.actions'),
-      render: (row) => {
-        const u = row as unknown as AdminUser;
-        return (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => openEdit(u)}
-              className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setConfirmDelete(u)}
-              className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        );
-      },
-    },
-  ];
+  const Th = ({ label, sortKeyName }: { label: string; sortKeyName: typeof sortKey }) => (
+    <th
+      className="cursor-pointer select-none px-3 py-2 text-left text-xs font-medium text-[#697386]"
+      onClick={() => toggleSort(sortKeyName)}
+    >
+      <span className="flex items-center gap-1">
+        {label}
+        <SortIcon active={sortKey === sortKeyName} dir={sortDir} />
+      </span>
+    </th>
+  );
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('admin.users.title')}</h1>
-          <p className="text-sm text-gray-500">{t('admin.users.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[#0a2540]">{t('admin.users.title')}</h1>
+          <p className="text-sm text-[#697386]">{t('admin.users.subtitle')}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="mr-2 h-4 w-4" />
+        <button className="btn-primary" onClick={openCreate}>
+          <Plus className="h-4 w-4" />
           {t('admin.users.addUser')}
-        </Button>
+        </button>
       </div>
 
       {/* Search */}
       <div className="max-w-sm">
-        <Input
+        <input
+          className="input"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('admin.users.searchPlaceholder')}
@@ -367,68 +322,262 @@ export default function UserManagementPage() {
 
       {/* Table */}
       {isLoading ? (
-        <p className="text-sm text-gray-500">{t('common.loading')}</p>
+        <div className="card animate-pulse text-sm text-[#697386]">{t('common.loading')}</div>
       ) : (
-        <DataTable columns={columns} data={filtered as unknown as AnyRow[]} pageSize={10} />
+        <div className="card overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="border-b border-[#e0e6eb] bg-[#f6f9fc]">
+                <tr>
+                  <Th label={t('admin.users.name')} sortKeyName="firstName" />
+                  <Th label={t('admin.users.role')} sortKeyName="role" />
+                  <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                    {t('admin.users.companies')}
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                    {t('common.status')}
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">MFA</th>
+                  <Th label={t('admin.users.lastLogin')} sortKeyName="lastLogin" />
+                  <th className="px-3 py-2 text-left text-xs font-medium text-[#697386]">
+                    {t('common.actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageData.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-6 text-center text-sm text-[#aab7c4]">
+                      {t('common.noData')}
+                    </td>
+                  </tr>
+                )}
+                {pageData.map((u, i) => (
+                  <tr
+                    key={u.id}
+                    className={`border-b border-[#e0e6eb] ${i % 2 === 1 ? 'bg-[#fafbfc]' : ''}`}
+                  >
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gold/10 text-xs font-bold text-brand-gold">
+                          {u.firstName[0]}
+                          {u.lastName[0]}
+                        </div>
+                        <div>
+                          <p className="font-medium text-[#0a2540]">
+                            {u.firstName} {u.lastName}
+                          </p>
+                          <p className="text-xs text-[#aab7c4]">{u.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <RoleBadge role={u.roleName || u.role} />
+                    </td>
+                    <td className="px-3 py-2">
+                      {(u.companyNames || []).length === 0 ? (
+                        <span className="text-xs text-[#aab7c4]">—</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {(u.companyNames || []).map((name) => (
+                            <span
+                              key={name}
+                              className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
+                            >
+                              <Building2 className="mr-1 h-3 w-3" />
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          u.isActive ? 'bg-[#dcfce7] text-[#166534]' : 'bg-[#fee2e2] text-[#991b1b]'
+                        }`}
+                      >
+                        {u.isActive ? t('admin.users.active') : t('admin.users.inactive')}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      {u.mfaEnabled && u.mfaConfigured ? (
+                        <button
+                          onClick={() => handleToggleMfa(u)}
+                          className="group flex items-center gap-1.5"
+                          title={t('admin.users.mfaDisableTooltip')}
+                        >
+                          <ShieldCheck className="h-5 w-5 text-green-600 group-hover:text-red-500" />
+                          <span className="text-xs font-medium text-green-700">
+                            {t('admin.users.mfaActive')}
+                          </span>
+                        </button>
+                      ) : u.mfaEnabled && !u.mfaConfigured ? (
+                        <button
+                          onClick={() => handleToggleMfa(u)}
+                          className="group flex items-center gap-1.5"
+                          title={t('admin.users.mfaDisableTooltip')}
+                        >
+                          <Shield className="h-5 w-5 text-amber-500 group-hover:text-red-500" />
+                          <span className="text-xs font-medium text-amber-600">
+                            {t('admin.users.mfaPending')}
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleMfa(u)}
+                          className="group flex items-center gap-1.5 text-[#aab7c4] hover:text-brand-gold"
+                          title={t('admin.users.mfaEnableTooltip')}
+                        >
+                          <Shield className="h-5 w-5" />
+                          <span className="text-xs">{t('admin.users.mfaOff')}</span>
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-[#697386]">
+                      {u.lastLogin ? new Date(u.lastLogin).toLocaleString('fr-FR') : '—'}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openEdit(u)}
+                          className="rounded-md p-1.5 text-[#697386] hover:bg-zinc-100"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(u)}
+                          className="rounded-md p-1.5 text-[#697386] hover:bg-red-50 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-[#e0e6eb] px-3 py-2 text-xs text-[#697386]">
+              <span>
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} sur{' '}
+                {sorted.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  className="rounded p-1 hover:bg-zinc-100 disabled:opacity-40"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  className="rounded p-1 hover:bg-zinc-100 disabled:opacity-40"
+                  disabled={page === totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Create / Edit Modal */}
-      <Modal
+      <ModalShell
         open={showModal}
         onClose={() => setShowModal(false)}
         title={editUser ? t('admin.users.editUser') : t('admin.users.addUser')}
-        size="md"
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label={t('admin.users.firstName')}
-              value={form.firstName}
-              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-            />
-            <Input
-              label={t('admin.users.lastName')}
-              value={form.lastName}
-              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+            <div>
+              <label className="label">{t('admin.users.firstName')}</label>
+              <input
+                className="input"
+                value={form.firstName}
+                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">{t('admin.users.lastName')}</label>
+              <input
+                className="input"
+                value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="label">{t('admin.users.email')}</label>
+            <input
+              className="input"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              disabled={!!editUser}
             />
           </div>
-          <Input
-            label={t('admin.users.email')}
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            disabled={!!editUser}
-          />
           {!editUser && (
-            <Input
-              label={t('admin.users.password')}
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
+            <div>
+              <label className="label">{t('admin.users.password')}</label>
+              <input
+                className="input"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+            </div>
           )}
-          <Select
-            label={t('admin.users.role')}
-            value={form.roleId}
-            onChange={(e) => setForm({ ...form, roleId: e.target.value })}
-            options={roles.map((r) => ({ value: r.id, label: ROLE_LABELS[r.name] || r.name }))}
-          />
+          <div>
+            <label className="label">{t('admin.users.role')}</label>
+            <select
+              className="input"
+              value={form.roleId}
+              onChange={(e) => setForm({ ...form, roleId: e.target.value })}
+            >
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {ROLE_LABELS[r.name] || r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">{t('admin.users.service', 'Service')}</label>
+            <select
+              className="input"
+              value={form.serviceId || ''}
+              onChange={(e) => setForm({ ...form, serviceId: e.target.value || null })}
+            >
+              <option value="">{t('admin.users.noService', '— Aucun —')}</option>
+              {orgServices.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} {s.department?.name ? `(${s.department.name})` : ''}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-[#aab7c4]">
+              {t(
+                'admin.users.serviceHint',
+                "Le département est déterminé automatiquement par le service. Gérez les listes dans Admin > Configuration > Services & Départements.",
+              )}
+            </p>
+          </div>
           {/* Module assignment */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              {t('admin.users.allowedModules')}
-            </label>
-            <p className="mb-3 text-xs text-gray-500">{t('admin.users.allowedModulesHint')}</p>
+            <label className="label">{t('admin.users.allowedModules')}</label>
+            <p className="mb-3 text-xs text-[#aab7c4]">{t('admin.users.allowedModulesHint')}</p>
             <div className="grid grid-cols-2 gap-2">
               {ALL_MODULES.map((mod) => {
                 const checked = form.allowedModules.includes(mod.id);
                 return (
                   <label
                     key={mod.id}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-                      checked
-                        ? 'border-brand-gold bg-brand-gold/5'
-                        : 'border-gray-200 hover:border-gray-300'
+                    className={`flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 transition-colors ${
+                      checked ? 'border-brand-gold bg-brand-gold/5' : 'border-zinc-200 hover:border-zinc-300'
                     }`}
                   >
                     <input
@@ -440,10 +589,10 @@ export default function UserManagementPage() {
                           : [...form.allowedModules, mod.id];
                         setForm({ ...form, allowedModules: next });
                       }}
-                      className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
+                      className="h-4 w-4 rounded border-zinc-300 text-brand-gold focus:ring-brand-gold"
                     />
                     <mod.icon className={`h-4 w-4 ${mod.color}`} />
-                    <span className="text-sm font-medium text-gray-700">{t(mod.labelKey)}</span>
+                    <span className="text-sm font-medium text-[#0a2540]">{t(mod.labelKey)}</span>
                   </label>
                 );
               })}
@@ -452,19 +601,19 @@ export default function UserManagementPage() {
           {/* Company assignment */}
           {companies.length > 0 && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="label">
                 <Building2 className="mr-1.5 inline h-4 w-4 text-emerald-500" />
                 {t('admin.users.assignedCompanies')}
               </label>
-              <p className="mb-3 text-xs text-gray-500">{t('admin.users.assignedCompaniesHint')}</p>
+              <p className="mb-3 text-xs text-[#aab7c4]">{t('admin.users.assignedCompaniesHint')}</p>
               <select
                 multiple
+                className="input"
                 value={form.companyIds}
                 onChange={(e) => {
                   const selected = Array.from(e.target.selectedOptions, (o) => o.value);
                   setForm({ ...form, companyIds: selected });
                 }}
-                className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                 style={{ minHeight: '120px' }}
               >
                 {companies
@@ -482,7 +631,7 @@ export default function UserManagementPage() {
                     return comp ? (
                       <span
                         key={cid}
-                        className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200"
+                        className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700"
                       >
                         {comp.name}
                         <button
@@ -505,37 +654,50 @@ export default function UserManagementPage() {
             </div>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowModal(false)}>
+            <button className="btn-secondary" onClick={() => setShowModal(false)}>
               {t('common.cancel')}
-            </Button>
-            <Button onClick={handleSubmit} loading={createUser.isPending || updateUser.isPending}>
+            </button>
+            <button
+              className="btn-primary disabled:opacity-50"
+              onClick={handleSubmit}
+              disabled={createUser.isPending || updateUser.isPending}
+            >
+              {(createUser.isPending || updateUser.isPending) && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               {editUser ? t('common.save') : t('common.create')}
-            </Button>
+            </button>
           </div>
         </div>
-      </Modal>
+      </ModalShell>
 
       {/* Delete Confirmation */}
-      <Modal
+      <ModalShell
         open={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
         title={t('admin.users.confirmDelete')}
-        size="sm"
       >
-        <p className="mb-4 text-sm text-gray-600">
+        <p className="mb-4 text-sm text-[#697386]">
           {t('admin.users.confirmDeleteMsg', {
             name: `${confirmDelete?.firstName} ${confirmDelete?.lastName}`,
           })}
         </p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmDelete(null)}>
+          <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>
             {t('common.cancel')}
-          </Button>
-          <Button variant="destructive" onClick={handleDelete} loading={deleteUser.isPending}>
+          </button>
+          <button
+            className="btn-primary bg-red-600 hover:bg-red-700 disabled:opacity-50"
+            onClick={handleDelete}
+            disabled={deleteUser.isPending}
+          >
+            {deleteUser.isPending && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            )}
             {t('common.delete')}
-          </Button>
+          </button>
         </div>
-      </Modal>
+      </ModalShell>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { Repository, In } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
 import { Company } from '../entities/company.entity';
+import { Service } from '../entities/service.entity';
 import { UserLogin } from '../entities/user-login.entity';
 import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 import { AuthService } from '../auth/auth.service';
@@ -40,6 +41,8 @@ export class UsersService {
       .leftJoinAndSelect('user.role', 'role')
       .leftJoinAndSelect('user.company', 'company')
       .leftJoinAndSelect('user.companies', 'companies')
+      .leftJoinAndSelect('user.service', 'service')
+      .leftJoinAndSelect('service.department', 'department')
       .skip(skip)
       .take(perPage)
       .orderBy('user.createdAt', 'DESC');
@@ -70,7 +73,7 @@ export class UsersService {
     const ds = await this.tenantDsService.getDataSource(tenantId);
     const user = await ds.getRepository(User).findOne({
       where: { id },
-      relations: ['role', 'company', 'companies'],
+      relations: ['role', 'company', 'companies', 'service', 'service.department'],
     });
     if (!user) throw new NotFoundException('User not found');
     return this.toResponseDto(user, tenantId);
@@ -96,13 +99,21 @@ export class UsersService {
 
     const passwordHash = await this.authService.hashPassword(dto.password);
 
+    let departmentId = dto.departmentId || null;
+    if (dto.serviceId) {
+      const svc = await ds.getRepository(Service).findOne({ where: { id: dto.serviceId } });
+      if (!svc) throw new NotFoundException('Service not found');
+      departmentId = svc.departmentId;
+    }
+
     const user = ds.getRepository(User).create({
       email: dto.email,
       passwordHash,
       firstName: dto.firstName,
       lastName: dto.lastName,
       roleId: dto.roleId,
-      departmentId: dto.departmentId || null,
+      serviceId: dto.serviceId || null,
+      departmentId,
       companyId: dto.companyId || null,
       allowedModules: dto.allowedModules ? JSON.stringify(dto.allowedModules) : null,
     });
@@ -123,7 +134,7 @@ export class UsersService {
 
     const full = await ds.getRepository(User).findOneOrFail({
       where: { id: saved.id },
-      relations: ['role', 'company', 'companies'],
+      relations: ['role', 'company', 'companies', 'service', 'service.department'],
     });
 
     await this.auditService.log({
@@ -148,7 +159,7 @@ export class UsersService {
     const ds = await this.tenantDsService.getDataSource(tenantId);
     const user = await ds.getRepository(User).findOne({
       where: { id },
-      relations: ['role', 'company', 'companies'],
+      relations: ['role', 'company', 'companies', 'service', 'service.department'],
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -163,6 +174,18 @@ export class UsersService {
       oldValue.roleId = user.roleId; newValue.roleId = dto.roleId;
     }
     if (dto.departmentId !== undefined) { oldValue.departmentId = user.departmentId; newValue.departmentId = dto.departmentId; }
+    let derivedDepartmentId: string | null | undefined;
+    if (dto.serviceId !== undefined) {
+      oldValue.serviceId = user.serviceId;
+      newValue.serviceId = dto.serviceId;
+      if (dto.serviceId) {
+        const svc = await ds.getRepository(Service).findOne({ where: { id: dto.serviceId } });
+        if (!svc) throw new NotFoundException('Service not found');
+        derivedDepartmentId = svc.departmentId;
+      } else {
+        derivedDepartmentId = null;
+      }
+    }
     if (dto.companyId !== undefined) { oldValue.companyId = user.companyId; newValue.companyId = dto.companyId; }
     if (dto.companyIds !== undefined) {
       oldValue.companyIds = (user.companies || []).map((c) => c.id);
@@ -177,6 +200,7 @@ export class UsersService {
     delete updatePayload.mfaConfigured;
     if (dto.allowedModules !== undefined) updatePayload.allowedModules = JSON.stringify(dto.allowedModules);
     if (dto.mfaEnabled === false || dto.mfaConfigured === false) updatePayload.mfaSecret = null;
+    if (derivedDepartmentId !== undefined) updatePayload.departmentId = derivedDepartmentId;
 
     await ds.getRepository(User).update(id, updatePayload);
 
@@ -204,7 +228,7 @@ export class UsersService {
 
     const updated = await ds.getRepository(User).findOneOrFail({
       where: { id },
-      relations: ['role', 'company', 'companies'],
+      relations: ['role', 'company', 'companies', 'service', 'service.department'],
     });
 
     await this.auditService.log({
@@ -250,6 +274,9 @@ export class UsersService {
       permissions: user.role?.permissions || [],
       tenantId,
       departmentId: user.departmentId,
+      departmentName: user.service?.department?.name ?? null,
+      serviceId: user.serviceId,
+      serviceName: user.service?.name ?? null,
       companyId: user.companyId,
       companyName: user.company?.name ?? null,
       companyIds: (user.companies || []).map((c) => c.id),

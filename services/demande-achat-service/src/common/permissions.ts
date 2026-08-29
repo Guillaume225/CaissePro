@@ -1,0 +1,38 @@
+export const PERMISSIONS = {
+  DA_CREATE: 'da.create',
+  DA_READ: 'da.read',
+  DA_UPDATE: 'da.update',
+  DA_DELETE: 'da.delete',
+  DA_SUBMIT: 'da.submit',
+  DA_APPROVE: 'da.approve',
+  DA_REJECT: 'da.reject',
+  DA_RETURN: 'da.return',
+  DA_CANCEL: 'da.cancel',
+  DA_TAKEOVER: 'da.takeover',
+  DA_PROCESS: 'da.process',
+  DA_CLOSE: 'da.close',
+  DA_VIEW_ALL: 'da.view_all',
+  DA_VIEW_REPORT: 'da.view_report',
+  DA_CONFIGURE: 'da.configure',
+} as const;
+
+export const DA_PERMISSIONS = {
+  CREATE: PERMISSIONS.DA_CREATE,
+  READ: PERMISSIONS.DA_READ,
+  UPDATE: PERMISSIONS.DA_UPDATE,
+  DELETE: PERMISSIONS.DA_DELETE,
+  SUBMIT: PERMISSIONS.DA_SUBMIT,
+  APPROVE: PERMISSIONS.DA_APPROVE,
+  REJECT: PERMISSIONS.DA_REJECT,
+  RETURN: PERMISSIONS.DA_RETURN,
+  CANCEL: PERMISSIONS.DA_CANCEL,
+  TAKEOVER: PERMISSIONS.DA_TAKEOVER,
+  PROCESS: PERMISSIONS.DA_PROCESS,
+  CLOSE: PERMISSIONS.DA_CLOSE,
+  VIEW_ALL: PERMISSIONS.DA_VIEW_ALL,
+  VIEW_REPORT: PERMISSIONS.DA_VIEW_REPORT,
+  CONFIGURE: PERMISSIONS.DA_CONFIGURE,
+} as const;
+
+export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+export const ALL_PERMISSIONS = Object.values(PERMISSIONS);

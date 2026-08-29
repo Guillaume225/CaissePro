@@ -11,6 +11,10 @@ export interface User {
   companyName?: string;
   companyIds?: string[];
   companyNames?: string[];
+  departmentId?: string | null;
+  departmentName?: string | null;
+  serviceId?: string | null;
+  serviceName?: string | null;
   avatar?: string;
   permissions: string[];
   allowedModules?: ModuleId[];

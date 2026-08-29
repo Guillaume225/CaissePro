@@ -33,6 +33,9 @@ import {
   BadgeDollarSign,
   Printer,
   Store,
+  ShoppingCart,
+  ClipboardCheck,
+  PackageSearch,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -41,6 +44,7 @@ import { useCashState } from '@/hooks/useClosing';
 import { useAuthStore } from '@/stores/auth-store';
 import { useTabStore } from '@/stores/tab-store';
 import { useModuleStore, type ModuleId } from '@/stores/module-store';
+import { CASH_DAY_GATED_MODULES } from '@/lib/cashDayModules';
 import { useState, useMemo, useEffect } from 'react';
 
 /* ─── Types ─────────────────────────────────────── */
@@ -48,6 +52,7 @@ interface NavItem {
   to: string;
   labelKey: string;
   icon: LucideIcon;
+  permission?: string;
 }
 
 interface NavSection {
@@ -249,13 +254,84 @@ const modules: ModuleDef[] = [
       },
     ],
   },
+  {
+    id: 'demande-achat',
+    labelKey: 'modules.demande-achat.name',
+    icon: ShoppingCart,
+    color: 'text-sky-400',
+    bgColor: 'bg-sky-500/15',
+    sections: [
+      {
+        titleKey: 'modules.demande-achat.myRequests_section',
+        items: [
+          {
+            to: '/demande-achat/new',
+            labelKey: 'modules.demande-achat.new',
+            icon: FileText,
+            permission: 'da.create',
+          },
+          {
+            to: '/demande-achat',
+            labelKey: 'modules.demande-achat.list',
+            icon: ClipboardList,
+            permission: 'da.create',
+          },
+        ],
+      },
+      {
+        titleKey: 'modules.demande-achat.validation_section',
+        items: [
+          {
+            to: '/demande-achat/to-validate',
+            labelKey: 'modules.demande-achat.toValidate',
+            icon: ClipboardCheck,
+            permission: 'da.approve',
+          },
+        ],
+      },
+      {
+        titleKey: 'modules.demande-achat.purchasing_section',
+        items: [
+          {
+            to: '/demande-achat/achats',
+            labelKey: 'modules.demande-achat.purchasing',
+            icon: PackageSearch,
+            permission: 'da.takeover',
+          },
+        ],
+      },
+      {
+        titleKey: 'modules.demande-achat.overview_section',
+        items: [
+          {
+            to: '/demande-achat/dashboard',
+            labelKey: 'modules.demande-achat.dashboard',
+            icon: LayoutDashboard,
+            permission: 'da.view_report',
+          },
+          { to: '/notifications', labelKey: 'nav.notifications', icon: Bell },
+        ],
+      },
+      {
+        titleKey: 'modules.demande-achat.config_section',
+        items: [
+          {
+            to: '/admin/demande-achat-circuits',
+            labelKey: 'modules.demande-achat.circuits',
+            icon: GitBranch,
+            permission: 'da.configure',
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 /* ─── Component ─────────────────────────────────── */
 export function Sidebar({ pendingExpenses = 0 }: { pendingExpenses?: number }) {
   const { t } = useTranslation();
   const { collapsed, toggle } = useSidebarStore();
-  const { user, logout } = useAuthStore();
+  const { user, logout, hasPermission } = useAuthStore();
   const { openTab } = useTabStore();
   const { activeModule, setActiveModule } = useModuleStore();
   const { data: cashState } = useCashState();
@@ -285,12 +361,15 @@ export function Sidebar({ pendingExpenses = 0 }: { pendingExpenses?: number }) {
     return hasModules && hasCompany;
   }, [user]);
 
-  // Cash day must be open for non-admin/manager users to see navigation
+  // Cash day must be open for non-admin/manager users to see navigation —
+  // but only within modules that actually manipulate a physical cash
+  // register (expense/manager-caisse). It has no meaning for e.g. e-DA.
   const cashDayOpen = useMemo(() => {
     if (!user) return false;
     if (user.role === 'admin' || user.role === 'manager') return true;
+    if (!CASH_DAY_GATED_MODULES.includes(activeModule)) return true;
     return cashState?.status === 'OPEN';
-  }, [user, cashState]);
+  }, [user, cashState, activeModule]);
 
   // Auto-switch to first allowed module if current is not allowed
   const effectiveModule = useMemo(() => {
@@ -336,7 +415,12 @@ export function Sidebar({ pendingExpenses = 0 }: { pendingExpenses?: number }) {
       <nav className="flex-1 overflow-y-auto px-3 py-3 scrollbar-thin">
         {hasAccess &&
           cashDayOpen &&
-          effectiveModule.sections.map((section, sIdx) => (
+          effectiveModule.sections.map((section, sIdx) => {
+            const visibleItems = section.items.filter(
+              (item) => !item.permission || hasPermission(item.permission),
+            );
+            if (visibleItems.length === 0) return null;
+            return (
             <div key={sIdx} className={cn(sIdx > 0 && 'mt-4')}>
               {!collapsed && (
                 <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
@@ -346,7 +430,7 @@ export function Sidebar({ pendingExpenses = 0 }: { pendingExpenses?: number }) {
               {collapsed && sIdx > 0 && <div className="mx-auto my-2 h-px w-6 bg-sidebar-border" />}
 
               <div className="space-y-0.5">
-                {section.items.map((item) => {
+                {visibleItems.map((item) => {
                   const badge = getBadge(item.to);
                   const isActive =
                     item.to === '/'
@@ -388,7 +472,8 @@ export function Sidebar({ pendingExpenses = 0 }: { pendingExpenses?: number }) {
                 })}
               </div>
             </div>
-          ))}
+            );
+          })}
       </nav>
 
       {/* ── User profile ──────────────────────────── */}

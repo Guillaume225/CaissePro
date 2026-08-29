@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { Role } from './role.entity';
 import { Company } from './company.entity';
+import { Service } from './service.entity';
 
 @Entity('users')
 export class User {
@@ -39,6 +40,13 @@ export class User {
 
   @Column({ type: 'uuid', name: 'department_id', nullable: true })
   departmentId!: string | null;
+
+  @Column({ type: 'uuid', name: 'service_id', nullable: true })
+  serviceId!: string | null;
+
+  @ManyToOne(() => Service, { nullable: true, eager: true })
+  @JoinColumn({ name: 'service_id' })
+  service!: Service | null;
 
   @Column({ type: 'uuid', name: 'company_id', nullable: true })
   companyId!: string | null;

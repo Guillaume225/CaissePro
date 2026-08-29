@@ -271,6 +271,22 @@ services:
           - /api/fne-accounting
         strip_path: true
 
+  - name: erp-settings
+    url: http://sales-service:3003/api/v1/erp-settings
+    routes:
+      - name: erp-settings-route
+        paths:
+          - /api/erp-settings
+        strip_path: true
+
+  - name: erp
+    url: http://sales-service:3003/api/v1/erp
+    routes:
+      - name: erp-route
+        paths:
+          - /api/erp
+        strip_path: true
+
   # ── Audit Service (3004) ───────────────────────────────
   - name: audit-service
     url: http://audit-service:3004/api/v1/audit/logs
@@ -305,4 +321,37 @@ services:
       - name: reports-route
         paths:
           - /api/reports
+        strip_path: true
+
+  # ── Demande d'Achat Service (3007) ─────────────────────
+  - name: demande-achat
+    url: http://demande-achat-service:3007/api/v1/purchase-requests
+    routes:
+      - name: demande-achat-route
+        paths:
+          - /api/demandes-achat
+        strip_path: true
+
+  - name: demande-achat-circuits
+    url: http://demande-achat-service:3007/api/v1/approval-circuits
+    routes:
+      - name: demande-achat-circuits-route
+        paths:
+          - /api/demandes-achat/circuits
+        strip_path: true
+
+  - name: demande-achat-purchasing
+    url: http://demande-achat-service:3007/api/v1/purchasing
+    routes:
+      - name: demande-achat-purchasing-route
+        paths:
+          - /api/demandes-achat/achats
+        strip_path: true
+
+  - name: demande-achat-dashboard
+    url: http://demande-achat-service:3007/api/v1/dashboard/stats
+    routes:
+      - name: demande-achat-dashboard-route
+        paths:
+          - /api/dashboard-demande-achat
         strip_path: true

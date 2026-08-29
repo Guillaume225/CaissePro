@@ -2,7 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useTabStore } from './tab-store';
 
-export type ModuleId = 'expense' | 'fne' | 'admin' | 'decision' | 'manager-caisse';
+export type ModuleId =
+  | 'expense'
+  | 'fne'
+  | 'admin'
+  | 'decision'
+  | 'manager-caisse'
+  | 'demande-achat';
 
 interface ModuleState {
   activeModule: ModuleId;

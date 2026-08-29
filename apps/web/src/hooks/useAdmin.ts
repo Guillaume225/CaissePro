@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
+import type { ModuleId } from '@/stores/module-store';
 import type {
   AdminUser,
   CreateUserDto,
@@ -58,11 +59,15 @@ function mapBackendUser(u: Record<string, unknown>): AdminUser {
     isActive: u.isActive as boolean,
     mfaEnabled: u.mfaEnabled as boolean,
     mfaConfigured: (u.mfaConfigured as boolean) ?? false,
-    allowedModules: (u.allowedModules as string[]) || [],
+    allowedModules: (u.allowedModules as ModuleId[]) || [],
     lastLogin: (u.lastLogin as string) || undefined,
     createdAt: u.createdAt as string,
     companyIds: (u.companyIds as string[]) || [],
     companyNames: (u.companyNames as string[]) || [],
+    serviceId: (u.serviceId as string | null) ?? null,
+    serviceName: (u.serviceName as string | null) ?? null,
+    departmentId: (u.departmentId as string | null) ?? null,
+    departmentName: (u.departmentName as string | null) ?? null,
   };
 }
 
@@ -110,6 +115,7 @@ export function useCreateUser() {
       };
       if (dto.allowedModules?.length) payload.allowedModules = dto.allowedModules;
       if (dto.companyIds?.length) payload.companyIds = dto.companyIds;
+      if (dto.serviceId !== undefined) payload.serviceId = dto.serviceId;
       const { data } = await api.post('/users', payload);
       return mapBackendUser(data.data ?? data);
     },
@@ -134,6 +140,7 @@ export function useUpdateUser() {
       if (dto.isActive !== undefined) backendDto.isActive = dto.isActive;
       if (dto.allowedModules?.length) backendDto.allowedModules = dto.allowedModules;
       if (dto.companyIds?.length) backendDto.companyIds = dto.companyIds;
+      if (dto.serviceId !== undefined) backendDto.serviceId = dto.serviceId;
 
       const { data } = await api.patch(`/users/${id}`, backendDto);
       return mapBackendUser(data.data ?? data);

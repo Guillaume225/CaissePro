@@ -59,6 +59,7 @@ const MODULE_LABELS: Record<ModuleId, string> = {
   admin: 'Administration',
   decision: 'Décisionnaire',
   'manager-caisse': 'Manager Caisse',
+  'demande-achat': 'Demande d’Achat',
 };
 
 const MODULE_SUGGESTIONS: Record<ModuleId, Array<{ key: string; label: string }>> = {
@@ -86,6 +87,11 @@ const MODULE_SUGGESTIONS: Record<ModuleId, Array<{ key: string; label: string }>
     { key: 'state', label: 'État de la caisse ?' },
     { key: 'history', label: 'Clôtures récentes ?' },
     { key: 'entries', label: 'Écritures en attente ?' },
+  ],
+  'demande-achat': [
+    { key: 'pending', label: 'Demandes en attente de validation ?' },
+    { key: 'create', label: 'Comment créer une demande d’achat ?' },
+    { key: 'status', label: 'Statut de mes demandes ?' },
   ],
 };
 
