@@ -46,3 +46,8 @@ export const smsConfig = registerAs('sms', () => ({
   apiUrl: process.env.SMS_API_URL || '',
   apiKey: process.env.SMS_API_KEY || '',
 }));
+
+export const pushConfig = registerAs('push', () => ({
+  provider: process.env.PUSH_PROVIDER || 'fcm',
+  fcmServiceAccountJson: process.env.FCM_SERVICE_ACCOUNT_JSON || '',
+}));

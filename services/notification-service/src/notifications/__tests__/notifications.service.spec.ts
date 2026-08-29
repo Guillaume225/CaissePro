@@ -3,9 +3,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { SelectQueryBuilder } from 'typeorm';
 import { NotificationsService } from '@/notifications/notifications.service';
 import { Notification } from '@/entities/notification.entity';
+import { DeviceToken } from '@/entities/device-token.entity';
 import { NotificationsGateway } from '@/notifications/notifications.gateway';
 import { EmailService } from '@/channels/email/email.service';
 import { SMS_PROVIDER } from '@/channels/sms/sms-provider.interface';
+import { PUSH_PROVIDER } from '@/channels/push/push-provider.interface';
 import { NotificationType, NotificationChannel } from '@/common/enums';
 
 describe('NotificationsService', () => {
@@ -15,6 +17,8 @@ describe('NotificationsService', () => {
   let gateway: jest.Mocked<Partial<NotificationsGateway>>;
   let emailService: jest.Mocked<Partial<EmailService>>;
   let smsProvider: { send: jest.Mock };
+  let pushProvider: { send: jest.Mock };
+  let deviceTokenRepo: Record<string, jest.Mock>;
 
   function makeNotification(overrides: Partial<Notification> = {}): Notification {
     const n = new Notification();
@@ -73,13 +77,24 @@ describe('NotificationsService', () => {
       send: jest.fn().mockResolvedValue(undefined),
     };
 
+    pushProvider = {
+      send: jest.fn().mockResolvedValue({ invalidTokens: [] }),
+    };
+
+    deviceTokenRepo = {
+      find: jest.fn().mockResolvedValue([]),
+      delete: jest.fn().mockResolvedValue({ affected: 0 }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationsService,
         { provide: getRepositoryToken(Notification), useValue: repo },
+        { provide: getRepositoryToken(DeviceToken), useValue: deviceTokenRepo },
         { provide: NotificationsGateway, useValue: gateway },
         { provide: EmailService, useValue: emailService },
         { provide: SMS_PROVIDER, useValue: smsProvider },
+        { provide: PUSH_PROVIDER, useValue: pushProvider },
       ],
     }).compile();
 
@@ -164,6 +179,47 @@ describe('NotificationsService', () => {
     it('should delegate to SMS provider', async () => {
       await service.sendSms('+237600000000', 'Hello SMS');
       expect(smsProvider.send).toHaveBeenCalledWith('+237600000000', 'Hello SMS');
+    });
+  });
+
+  /* ------------------------------------------------------------------ */
+  /*  sendPush                                                          */
+  /* ------------------------------------------------------------------ */
+
+  describe('sendPush', () => {
+    it('should skip when the user has no device tokens', async () => {
+      deviceTokenRepo.find.mockResolvedValueOnce([]);
+
+      await service.sendPush('user-1', 'Title', 'Body', {});
+
+      expect(pushProvider.send).not.toHaveBeenCalled();
+    });
+
+    it('should send to all of the user device tokens', async () => {
+      deviceTokenRepo.find.mockResolvedValueOnce([
+        { id: 't1', userId: 'user-1', platform: 'android', token: 'tok-1' },
+        { id: 't2', userId: 'user-1', platform: 'ios', token: 'tok-2' },
+      ]);
+
+      await service.sendPush('user-1', 'Title', 'Body', { entityId: 'x' });
+
+      expect(pushProvider.send).toHaveBeenCalledWith(
+        ['tok-1', 'tok-2'],
+        'Title',
+        'Body',
+        { entityId: 'x' },
+      );
+    });
+
+    it('should prune tokens the provider reports as invalid', async () => {
+      deviceTokenRepo.find.mockResolvedValueOnce([
+        { id: 't1', userId: 'user-1', platform: 'android', token: 'tok-1' },
+      ]);
+      pushProvider.send.mockResolvedValueOnce({ invalidTokens: ['tok-1'] });
+
+      await service.sendPush('user-1', 'Title', 'Body', {});
+
+      expect(deviceTokenRepo.delete).toHaveBeenCalledWith({ token: expect.anything() });
     });
   });
 

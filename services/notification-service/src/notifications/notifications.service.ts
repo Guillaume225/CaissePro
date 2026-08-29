@@ -1,11 +1,13 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Notification } from '@/entities/notification.entity';
+import { DeviceToken } from '@/entities/device-token.entity';
 import { NotificationType, NotificationChannel } from '@/common/enums';
 import { NotificationsGateway } from './notifications.gateway';
 import { EmailService } from '@/channels/email/email.service';
 import { SmsProvider, SMS_PROVIDER } from '@/channels/sms/sms-provider.interface';
+import { PushProvider, PUSH_PROVIDER } from '@/channels/push/push-provider.interface';
 import { ListNotificationsQueryDto } from './dto';
 
 export interface CreateNotificationInput {
@@ -34,10 +36,14 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepo: Repository<Notification>,
+    @InjectRepository(DeviceToken)
+    private readonly deviceTokenRepo: Repository<DeviceToken>,
     private readonly gateway: NotificationsGateway,
     private readonly emailService: EmailService,
     @Inject(SMS_PROVIDER)
     private readonly smsProvider: SmsProvider,
+    @Inject(PUSH_PROVIDER)
+    private readonly pushProvider: PushProvider,
   ) {}
 
   /* ------------------------------------------------------------------ */
@@ -99,6 +105,31 @@ export class NotificationsService {
 
   async sendSms(to: string, message: string): Promise<void> {
     await this.smsProvider.send(to, message);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Push (FCM)                                                        */
+  /* ------------------------------------------------------------------ */
+
+  async sendPush(
+    recipientId: string,
+    title: string,
+    body: string,
+    data: Record<string, string>,
+  ): Promise<void> {
+    const deviceTokens = await this.deviceTokenRepo.find({ where: { userId: recipientId } });
+    if (deviceTokens.length === 0) return;
+
+    const { invalidTokens } = await this.pushProvider.send(
+      deviceTokens.map((t) => t.token),
+      title,
+      body,
+      data,
+    );
+
+    if (invalidTokens.length > 0) {
+      await this.deviceTokenRepo.delete({ token: In(invalidTokens) });
+    }
   }
 
   /* ------------------------------------------------------------------ */

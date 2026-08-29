@@ -159,6 +159,15 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
           await this.notificationsService.sendSms(phone, message);
         }
       }
+
+      if (channels.includes(NotificationChannel.PUSH)) {
+        const pushData: Record<string, string> = {
+          type: rule.type,
+          entityType: rule.entityType,
+          entityId: entityId ?? '',
+        };
+        await this.notificationsService.sendPush(recipientId, title, message, pushData);
+      }
     }
   }
 

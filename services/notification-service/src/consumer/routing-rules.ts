@@ -186,7 +186,7 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
     title: 'Demande d’achat à valider',
     message:
       'La demande d’achat #{{number}} ({{subject}}) de {{amount}} FCFA nécessite votre validation (niveau {{currentApprovalLevel}}).',
-    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL, NotificationChannel.PUSH],
     getRecipients: recipientFromArrayField('approverIds'),
     entityType: 'purchase_request',
     getEntityId: entityIdFrom('purchaseRequestId'),

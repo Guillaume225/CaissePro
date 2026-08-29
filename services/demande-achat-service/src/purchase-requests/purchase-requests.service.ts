@@ -15,6 +15,8 @@ import { PurchaseRequestAttachment } from '../entities/purchase-request-attachme
 import { PurchaseRequestApproval } from '../entities/purchase-request-approval.entity';
 import { PurchaseRequestHistory } from '../entities/purchase-request-history.entity';
 import { User } from '../entities/user.entity';
+import { Role } from '../entities/role.entity';
+import { DA_PERMISSIONS } from '../common/permissions';
 import {
   PurchaseRequestPriority,
   PurchaseRequestStatus,
@@ -62,14 +64,7 @@ const PURCHASING_STATUSES = [
   PurchaseRequestStatus.IN_PROCESS,
 ];
 
-/**
- * routing-rules.ts has no role→users resolution mechanism (see
- * expense.submitted's unresolved approverIds for precedent), so
- * da.validated_transmitted is published with an empty purchasingUserIds
- * array plus the configured role name for now — wire up real recipient
- * resolution (e.g. a lookup against auth-service) once that mechanism
- * exists.
- */
+/** Informational label only — actual purchasing recipients are resolved by DA_PERMISSIONS.PROCESS, not this name. */
 const PURCHASING_ROLE = process.env.PURCHASING_ROLE || 'ACHATS';
 
 @Injectable()
@@ -97,6 +92,43 @@ export class PurchaseRequestsService {
     if (uniqueIds.length === 0) return new Map();
     const users = await ds.getRepository(User).find({ where: { id: In(uniqueIds) } });
     return new Map(users.map((u) => [u.id, `${u.firstName} ${u.lastName}`.trim()]));
+  }
+
+  /** Active user IDs whose role name matches one of `roleNames`. */
+  private async resolveUserIdsByRoleNames(ds: DataSource, roleNames: string[]): Promise<string[]> {
+    const uniqueNames = [...new Set(roleNames.filter((n): n is string => !!n))];
+    if (uniqueNames.length === 0) return [];
+    const roles = await ds.getRepository(Role).find({ where: { name: In(uniqueNames) } });
+    if (roles.length === 0) return [];
+    const users = await ds
+      .getRepository(User)
+      .find({ where: { roleId: In(roles.map((r) => r.id)), isActive: true } });
+    return users.map((u) => u.id);
+  }
+
+  /**
+   * Recipient IDs for a set of approval steps: approvers with an explicit
+   * `approverId` are used directly, and steps left generic (`approverId`
+   * null, resolved by role at approval time) are expanded to every active
+   * user currently holding that role.
+   */
+  private async resolveApproverIds(
+    ds: DataSource,
+    approvals: PurchaseRequestApproval[],
+  ): Promise<string[]> {
+    const explicit = approvals.map((a) => a.approverId).filter((v): v is string => !!v);
+    const roleNames = approvals.filter((a) => !a.approverId).map((a) => a.role);
+    const byRole = await this.resolveUserIdsByRoleNames(ds, roleNames);
+    return [...new Set([...explicit, ...byRole])];
+  }
+
+  /** Active user IDs entitled to handle purchasing (pricing, take-over, processing). */
+  private async resolvePurchasingUserIds(ds: DataSource): Promise<string[]> {
+    const roles = await ds.getRepository(Role).find();
+    const roleIds = roles.filter((r) => r.permissions.includes(DA_PERMISSIONS.PROCESS)).map((r) => r.id);
+    if (roleIds.length === 0) return [];
+    const users = await ds.getRepository(User).find({ where: { roleId: In(roleIds), isActive: true } });
+    return users.map((u) => u.id);
   }
 
   async findAll(
@@ -466,7 +498,7 @@ export class PurchaseRequestsService {
     await this.eventsService.publish(DemandeAchatEvent.TO_PRICE, {
       ...this.basePayload(tenantId, result.request, { actorId: user.id }),
       purchasingRole: PURCHASING_ROLE,
-      purchasingUserIds: [] as string[],
+      purchasingUserIds: await this.resolvePurchasingUserIds(ds),
     });
 
     return this.findById(tenantId, id);
@@ -654,9 +686,7 @@ export class PurchaseRequestsService {
       return { request, minLevel, firstLevelApprovers };
     });
 
-    const approverIds = result.firstLevelApprovers
-      .map((a) => a.approverId)
-      .filter((v): v is string => !!v);
+    const approverIds = await this.resolveApproverIds(ds, result.firstLevelApprovers);
     await this.eventsService.publish(DemandeAchatEvent.TO_VALIDATE, {
       ...this.basePayload(tenantId, result.request, { actorId: user.id }),
       currentApprovalLevel: result.minLevel,
@@ -718,7 +748,7 @@ export class PurchaseRequestsService {
       await requestRepo.save(request);
 
       const nextApprovers = pending.filter((a) => a.level === nextLevel);
-      const approverIds = nextApprovers.map((a) => a.approverId).filter((v): v is string => !!v);
+      const approverIds = await this.resolveApproverIds(ds, nextApprovers);
       await this.eventsService.publish(DemandeAchatEvent.TO_VALIDATE, {
         ...this.basePayload(tenantId, request, { actorId: user.id }),
         currentApprovalLevel: nextLevel,
@@ -761,7 +791,7 @@ export class PurchaseRequestsService {
         this.basePayload(tenantId, request, {
           actorId: user.id,
           purchasingRole: PURCHASING_ROLE,
-          purchasingUserIds: [] as string[],
+          purchasingUserIds: await this.resolvePurchasingUserIds(ds),
         }),
       );
     }
@@ -975,7 +1005,7 @@ export class PurchaseRequestsService {
     await this.eventsService.publish(DemandeAchatEvent.TO_PRICE, {
       ...this.basePayload(tenantId, request, { actorId: user.id }),
       purchasingRole: PURCHASING_ROLE,
-      purchasingUserIds: [] as string[],
+      purchasingUserIds: await this.resolvePurchasingUserIds(ds),
     });
 
     return this.findById(tenantId, id);

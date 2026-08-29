@@ -13,6 +13,7 @@ import {
   rabbitmqConfig,
   smtpConfig,
   smsConfig,
+  pushConfig,
 } from '@/config';
 import { RedisModule } from '@/redis/redis.module';
 import { AuthModule } from '@/auth/auth.module';
@@ -20,6 +21,7 @@ import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { RolesGuard, PermissionsGuard } from '@/common/guards';
 import { Notification } from '@/entities/notification.entity';
 import { NotificationPreference } from '@/entities/notification-preference.entity';
+import { DeviceToken } from '@/entities/device-token.entity';
 import { NotificationsModule } from '@/notifications/notifications.module';
 import { ConsumerModule } from '@/consumer/consumer.module';
 
@@ -35,6 +37,7 @@ import { ConsumerModule } from '@/consumer/consumer.module';
         rabbitmqConfig,
         smtpConfig,
         smsConfig,
+        pushConfig,
       ],
     }),
 
@@ -47,7 +50,7 @@ import { ConsumerModule } from '@/consumer/consumer.module';
         username: config.get<string>('database.username'),
         password: config.get<string>('database.password'),
         database: config.get<string>('database.database'),
-        entities: [Notification, NotificationPreference],
+        entities: [Notification, NotificationPreference, DeviceToken],
         synchronize: config.get<string>('app.nodeEnv') !== 'production',
         logging: config.get<string>('app.nodeEnv') === 'development',
         options: { encrypt: false, trustServerCertificate: true },

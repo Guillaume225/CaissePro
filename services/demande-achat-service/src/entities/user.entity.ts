@@ -21,4 +21,10 @@ export class User {
 
   @Column({ type: 'varchar', length: 100, name: 'last_name' })
   lastName!: string;
+
+  @Column({ type: 'uuid', name: 'role_id' })
+  roleId!: string;
+
+  @Column({ type: 'bit', name: 'is_active', default: true })
+  isActive!: boolean;
 }
