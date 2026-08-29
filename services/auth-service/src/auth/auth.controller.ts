@@ -1,8 +1,10 @@
-import { Controller, Post, Body, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Delete, Body, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
+  LoginPinDto,
+  SetPinDto,
   RefreshTokenDto,
   ForgotPasswordDto,
   ResetPasswordDto,
@@ -25,6 +27,46 @@ export class AuthController {
     return {
       success: true,
       data: tokens,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Public()
+  @Post('login-pin')
+  @HttpCode(HttpStatus.OK)
+  async loginPin(@Body() dto: LoginPinDto, @Req() req: Request) {
+    const ip = req.ip || req.socket.remoteAddress || '';
+    const userAgent = req.headers['user-agent'] || '';
+    const tokens = await this.authService.loginPin(dto, ip, userAgent);
+    return {
+      success: true,
+      data: tokens,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post('pin')
+  @HttpCode(HttpStatus.OK)
+  async setPin(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: SetPinDto,
+  ) {
+    await this.authService.setPin(userId, tenantId, dto.pin);
+    return {
+      success: true,
+      data: { message: 'PIN configured successfully' },
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Delete('pin')
+  @HttpCode(HttpStatus.OK)
+  async removePin(@CurrentUser('id') userId: string, @CurrentUser('tenantId') tenantId: string) {
+    await this.authService.removePin(userId, tenantId);
+    return {
+      success: true,
+      data: { message: 'PIN removed successfully' },
       timestamp: new Date().toISOString(),
     };
   }

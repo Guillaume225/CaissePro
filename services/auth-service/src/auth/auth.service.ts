@@ -21,7 +21,10 @@ import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/audit-log.entity';
-import { JwtPayload, AuthTokens, LoginDto, MfaSetupResponse } from './dto';
+import { JwtPayload, AuthTokens, LoginDto, LoginPinDto, MfaSetupResponse } from './dto';
+
+/** Only accounts holding this permission may set or use a PIN — see cahier-chargeMobile.txt §6.3. */
+const PIN_LOGIN_PERMISSION = 'da.approve';
 
 const MFA_LOGIN_PREFIX = 'mfa_login:';
 const MFA_SETUP_LOGIN_PREFIX = 'mfa_login_setup:';
@@ -40,6 +43,7 @@ const REFRESH_PREFIX = 'refresh:';
 const BLACKLIST_PREFIX = 'bl:';
 const RESET_TOKEN_PREFIX = 'reset:';
 const LOGIN_ATTEMPTS_PREFIX = 'login_attempts:';
+const PIN_ATTEMPTS_PREFIX = 'pin_attempts:';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_BLOCK_SECONDS = 900;
 const RESET_TOKEN_EXPIRY = 3600;
@@ -170,6 +174,128 @@ export class AuthService {
     });
 
     return tokens;
+  }
+
+  /**
+   * PIN-based login for the Valideur mobile app — replaces password entry on
+   * mobile (biometric unlock on the device gates access to the PIN itself,
+   * client-side; the server only ever sees the PIN). Restricted to accounts
+   * holding PIN_LOGIN_PERMISSION and with a PIN already configured via
+   * setPin(); the permission is re-checked here (not just at set-time) so a
+   * demoted user's old PIN stops working immediately.
+   */
+  async loginPin(dto: LoginPinDto, ip: string, userAgent: string): Promise<AuthTokens | MfaChallengeResponse> {
+    const attemptsKey = `${PIN_ATTEMPTS_PREFIX}${dto.email}`;
+    const attempts = await this.redis.get(attemptsKey);
+    if (attempts && parseInt(attempts, 10) >= MAX_LOGIN_ATTEMPTS) {
+      throw new ForbiddenException(
+        'Account temporarily locked due to too many failed attempts. Try again in 15 minutes.',
+      );
+    }
+
+    const loginEntry = await this.userLoginRepo.findOne({
+      where: { email: dto.email, isActive: true },
+    });
+    if (!loginEntry) {
+      await this.incrementLoginAttempts(attemptsKey);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const ds = await this.tenantDsService.getDataSource(loginEntry.tenantId);
+    const user = await ds.getRepository(User).findOne({
+      where: { email: dto.email },
+      relations: ['role'],
+    });
+
+    if (!user || !user.isActive) {
+      await this.incrementLoginAttempts(attemptsKey);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.role.permissions.includes(PIN_LOGIN_PERMISSION) || !user.pinHash) {
+      await this.incrementLoginAttempts(attemptsKey);
+      throw new UnauthorizedException('PIN login is not available for this account');
+    }
+
+    const pinValid = await bcrypt.compare(dto.pin, user.pinHash);
+    if (!pinValid) {
+      await this.incrementLoginAttempts(attemptsKey);
+      await this.auditService.log({
+        userId: user.id,
+        action: AuditAction.LOGIN_FAILED,
+        entityType: 'auth',
+        entityId: user.id,
+        newValue: { reason: 'invalid_pin' },
+        ipAddress: ip,
+        userAgent,
+      });
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.mfaEnabled) {
+      if (!dto.mfaCode) {
+        const mfaToken = uuidv4();
+        await this.redis.set(
+          `${MFA_LOGIN_PREFIX}${mfaToken}`,
+          JSON.stringify({ userId: user.id, tenantId: loginEntry.tenantId }),
+          'EX', 300,
+        );
+        return { requiresMfa: true, mfaToken };
+      }
+      if (!user.mfaSecret) {
+        throw new BadRequestException('MFA is enabled but secret is missing. Complete MFA setup first.');
+      }
+      const isValid = authenticator.verify({ token: dto.mfaCode, secret: user.mfaSecret });
+      if (!isValid) {
+        await this.incrementLoginAttempts(attemptsKey);
+        throw new UnauthorizedException('Invalid MFA code');
+      }
+    }
+
+    await this.redis.del(attemptsKey);
+    await ds.getRepository(User).update(user.id, { lastLogin: new Date() });
+
+    const tokens = await this.generateTokens(user, loginEntry.tenantId);
+
+    await this.auditService.log({
+      userId: user.id,
+      action: AuditAction.LOGIN,
+      entityType: 'auth',
+      entityId: user.id,
+      newValue: { method: 'pin' },
+      ipAddress: ip,
+      userAgent,
+    });
+
+    return tokens;
+  }
+
+  /** Sets or changes the calling user's mobile PIN. Restricted to PIN_LOGIN_PERMISSION holders. */
+  async setPin(userId: string, tenantId: string, pin: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const user = await ds.getRepository(User).findOne({ where: { id: userId }, relations: ['role'] });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (!user.role.permissions.includes(PIN_LOGIN_PERMISSION)) {
+      throw new ForbiddenException('PIN login is reserved to accounts that can validate purchase requests');
+    }
+
+    const pinHash = await bcrypt.hash(pin, BCRYPT_ROUNDS);
+    await ds.getRepository(User).update(userId, { pinHash });
+
+    await this.auditService.log({
+      userId,
+      action: AuditAction.UPDATE,
+      entityType: 'user',
+      entityId: userId,
+      newValue: { pinConfigured: true },
+    });
+  }
+
+  /** Removes the calling user's mobile PIN, forcing password login again. */
+  async removePin(userId: string, tenantId: string): Promise<void> {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    await ds.getRepository(User).update(userId, { pinHash: null });
   }
 
   async refresh(refreshToken: string, ip: string, userAgent: string): Promise<AuthTokens> {
@@ -378,6 +504,7 @@ export class AuthService {
       passwordHash: hash,
       passwordResetToken: null,
       passwordResetExpires: null,
+      pinHash: null, // force PIN re-setup after a password reset
     });
     await this.redis.del(`${RESET_TOKEN_PREFIX}${token}`);
 

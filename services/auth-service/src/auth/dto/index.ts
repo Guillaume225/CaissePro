@@ -42,6 +42,31 @@ export class ResetPasswordDto {
   password!: string;
 }
 
+export class LoginPinDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @Matches(/^\d{4,6}$/, { message: 'PIN must be 4 to 6 digits' })
+  pin!: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  @MaxLength(6)
+  mfaCode?: string;
+
+  @IsOptional()
+  @IsString()
+  mfaToken?: string;
+}
+
+export class SetPinDto {
+  @IsString()
+  @Matches(/^\d{4,6}$/, { message: 'PIN must be 4 to 6 digits' })
+  pin!: string;
+}
+
 export class VerifyMfaDto {
   @IsString()
   @MinLength(6)

@@ -25,6 +25,10 @@ export class User {
   @Column({ type: 'varchar', length: 255, name: 'password_hash' })
   passwordHash!: string;
 
+  /** PIN-based login credential for the Valideur mobile app (da.approve gated) — null until set. */
+  @Column({ type: 'nvarchar', length: 255, name: 'pin_hash', nullable: true })
+  pinHash!: string | null;
+
   @Column({ type: 'varchar', length: 100, name: 'first_name' })
   firstName!: string;
 
