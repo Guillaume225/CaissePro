@@ -8,6 +8,7 @@ import { PurchaseRequestApproval } from '../entities/purchase-request-approval.e
 import { PurchaseRequestHistory } from '../entities/purchase-request-history.entity';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
+import { Supplier } from '../entities/supplier.entity';
 import { PurchaseRequestApprovalCircuit } from '../approval-circuits/purchase-request-approval-circuit.entity';
 import { PurchaseRequestApprovalCircuitStep } from '../approval-circuits/purchase-request-approval-circuit-step.entity';
 
@@ -23,6 +24,7 @@ const TENANT_ENTITIES = [
   PurchaseRequestHistory,
   User,
   Role,
+  Supplier,
   PurchaseRequestApprovalCircuit,
   PurchaseRequestApprovalCircuitStep,
 ];

@@ -22,6 +22,7 @@ import {
   Calculator,
   ClipboardList,
   Upload,
+  Search,
 } from 'lucide-react';
 import api from '@/lib/api';
 import {
@@ -40,7 +41,7 @@ import {
   useRejectPurchaseRequest,
   useReturnPurchaseRequest,
 } from '@/hooks/usePurchaseRequestApprovals';
-import { useProcessPurchaseRequest } from '@/hooks/usePurchasing';
+import { useProcessPurchaseRequest, useSuppliers } from '@/hooks/usePurchasing';
 import { useAuthStore } from '@/stores/auth-store';
 import { extractApiErrorMessage } from '@/lib/errors';
 import { formatCFA, formatDate, formatDateTime } from '@/lib/format';
@@ -388,6 +389,20 @@ export default function PurchaseRequestDetailPage() {
     expectedDate: '',
     observation: '',
   });
+  const [supplierFields, setSupplierFields] = useState({
+    name: '',
+    code: '',
+    taxNumber: '',
+    rccm: '',
+  });
+  const [supplierSearch, setSupplierSearch] = useState('');
+  const [supplierDropdownOpen, setSupplierDropdownOpen] = useState(false);
+  const { data: supplierResults = [] } = useSuppliers(supplierSearch);
+  const supplierFieldsComplete =
+    supplierFields.name.trim() !== '' &&
+    supplierFields.code.trim() !== '' &&
+    supplierFields.taxNumber.trim() !== '' &&
+    supplierFields.rccm.trim() !== '';
   const [actionError, setActionError] = useState<string | null>(null);
   const onErr = { onError: (err: unknown) => setActionError(extractApiErrorMessage(err)) };
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -428,6 +443,9 @@ export default function PurchaseRequestDetailPage() {
     setActiveModal(null);
     setMotif('');
     setComment('');
+    setSupplierFields({ name: '', code: '', taxNumber: '', rccm: '' });
+    setSupplierSearch('');
+    setSupplierDropdownOpen(false);
   };
 
   if (isLoading || !request) {
@@ -959,11 +977,15 @@ export default function PurchaseRequestDetailPage() {
             </button>
             <button
               className="btn-primary disabled:opacity-50"
-              disabled={processMutation.isPending}
+              disabled={processMutation.isPending || !supplierFieldsComplete}
               onClick={() =>
                 processMutation.mutate(
                   {
                     id: request.id,
+                    supplierName: supplierFields.name.trim(),
+                    supplierCode: supplierFields.code.trim(),
+                    supplierTaxNumber: supplierFields.taxNumber.trim(),
+                    supplierRccm: supplierFields.rccm.trim(),
                     comment: comment.trim() || undefined,
                     additionalInfo: processFields.additionalInfo.trim() || undefined,
                     expectedDate: processFields.expectedDate || undefined,
@@ -980,6 +1002,80 @@ export default function PurchaseRequestDetailPage() {
         }
       >
         <div className="space-y-3">
+          <div className="rounded-md border border-gray-200 p-3 space-y-3">
+            <div className="text-sm font-medium text-gray-700">{t('demandeAchat.detail.supplierSection')}</div>
+            <div className="relative">
+              <label className="label">{t('demandeAchat.detail.supplierSearch')}</label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  className="input pl-8"
+                  value={supplierSearch}
+                  placeholder={t('demandeAchat.detail.supplierSearchPlaceholder')}
+                  onChange={(e) => {
+                    setSupplierSearch(e.target.value);
+                    setSupplierDropdownOpen(true);
+                  }}
+                  onFocus={() => setSupplierDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setSupplierDropdownOpen(false), 150)}
+                />
+              </div>
+              {supplierDropdownOpen && supplierResults.length > 0 && (
+                <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
+                  {supplierResults.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setSupplierFields({ name: s.name, code: s.code, taxNumber: s.taxNumber, rccm: s.rccm });
+                        setSupplierSearch(s.name);
+                        setSupplierDropdownOpen(false);
+                      }}
+                    >
+                      <span className="font-medium">{s.name}</span>{' '}
+                      <span className="text-gray-500">({s.code})</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">{t('demandeAchat.detail.supplierName')} *</label>
+                <input
+                  className="input"
+                  value={supplierFields.name}
+                  onChange={(e) => setSupplierFields((p) => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label">{t('demandeAchat.detail.supplierCode')} *</label>
+                <input
+                  className="input"
+                  value={supplierFields.code}
+                  onChange={(e) => setSupplierFields((p) => ({ ...p, code: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label">{t('demandeAchat.detail.supplierTaxNumber')} *</label>
+                <input
+                  className="input"
+                  value={supplierFields.taxNumber}
+                  onChange={(e) => setSupplierFields((p) => ({ ...p, taxNumber: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label">{t('demandeAchat.detail.supplierRccm')} *</label>
+                <input
+                  className="input"
+                  value={supplierFields.rccm}
+                  onChange={(e) => setSupplierFields((p) => ({ ...p, rccm: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
           <div>
             <label className="label">{t('demandeAchat.detail.processComment')}</label>
             <textarea className="input" rows={2} value={comment} onChange={(e) => setComment(e.target.value)} />

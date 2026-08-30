@@ -259,7 +259,14 @@
       "processComment": "Processing comment",
       "additionalInfo": "Additional information",
       "expectedDate": "Expected processing date",
-      "observation": "Observation"
+      "observation": "Observation",
+      "supplierSection": "Selected supplier",
+      "supplierSearch": "Search an existing supplier",
+      "supplierSearchPlaceholder": "Supplier name or code...",
+      "supplierName": "Full name",
+      "supplierCode": "Supplier code",
+      "supplierTaxNumber": "Tax ID (CC number)",
+      "supplierRccm": "RCCM"
     },
     "history": {
       "CREATED": "Request created",

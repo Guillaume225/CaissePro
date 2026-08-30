@@ -15,6 +15,7 @@ import { RolesGuard, PermissionsGuard } from './common/guards';
 import { ApprovalCircuitsModule } from './approval-circuits/approval-circuits.module';
 import { PurchaseRequestsModule } from './purchase-requests/purchase-requests.module';
 import { PurchasingModule } from './purchasing/purchasing.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AppController } from './app.controller';
 
@@ -61,6 +62,7 @@ import { AppController } from './app.controller';
     ApprovalCircuitsModule,
     PurchaseRequestsModule,
     PurchasingModule,
+    SuppliersModule,
     DashboardModule,
   ],
   controllers: [AppController],

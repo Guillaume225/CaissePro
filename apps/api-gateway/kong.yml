@@ -355,3 +355,11 @@ services:
         paths:
           - /api/dashboard-demande-achat
         strip_path: true
+
+  - name: demande-achat-suppliers
+    url: http://demande-achat-service:3007/api/v1/suppliers
+    routes:
+      - name: demande-achat-suppliers-route
+        paths:
+          - /api/demandes-achat/fournisseurs
+        strip_path: true

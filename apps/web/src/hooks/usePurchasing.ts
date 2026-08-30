@@ -5,6 +5,7 @@ import type {
   PurchasingFilters,
   PurchaseRequestDashboard,
   ProcessPurchaseRequestPayload,
+  Supplier,
 } from '@/types/demande-achat';
 import { PR_KEYS } from './usePurchaseRequests';
 
@@ -68,6 +69,21 @@ export function useProcessPurchaseRequest() {
       await api.post(`/demandes-achat/achats/${id}/process`, payload);
     },
     onSuccess: (_, { id }) => invalidateAfterAction(qc, id),
+  });
+}
+
+// ── Fournisseurs (sélection à l'étape "Proposition d'achat") ──
+export function useSuppliers(search: string) {
+  return useQuery({
+    queryKey: ['suppliers', search] as const,
+    queryFn: async (): Promise<Supplier[]> => {
+      const { data } = await api.get('/demandes-achat/fournisseurs', {
+        params: search ? { search } : undefined,
+      });
+      return data.data ?? data;
+    },
+    enabled: search.length >= 2,
+    staleTime: 30_000,
   });
 }
 

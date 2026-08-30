@@ -222,6 +222,28 @@ export class CancelPurchaseRequestDto {
 }
 
 export class ProcessPurchaseRequestDto {
+  // Fournisseur choisi pour ce bon de commande — obligatoire (RG : le
+  // fournisseur doit être identifié avant de générer le bon de commande).
+  @IsString()
+  @IsNotEmpty({ message: 'supplierName is required' })
+  @MaxLength(255)
+  supplierName!: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'supplierCode is required' })
+  @MaxLength(100)
+  supplierCode!: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'supplierTaxNumber is required' })
+  @MaxLength(100)
+  supplierTaxNumber!: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'supplierRccm is required' })
+  @MaxLength(100)
+  supplierRccm!: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(2000)

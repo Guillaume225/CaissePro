@@ -259,7 +259,14 @@
       "processComment": "Commentaire de traitement",
       "additionalInfo": "Informations complémentaires",
       "expectedDate": "Date prévue de traitement",
-      "observation": "Observation"
+      "observation": "Observation",
+      "supplierSection": "Fournisseur retenu",
+      "supplierSearch": "Rechercher un fournisseur existant",
+      "supplierSearchPlaceholder": "Nom ou code fournisseur...",
+      "supplierName": "Nom et prénom",
+      "supplierCode": "Code fournisseur",
+      "supplierTaxNumber": "Numéro CC",
+      "supplierRccm": "RCCM"
     },
     "history": {
       "CREATED": "Création de la DA",

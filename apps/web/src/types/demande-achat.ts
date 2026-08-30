@@ -115,6 +115,11 @@ export interface PurchaseRequest {
   takenOverAt?: string;
   takenOverById?: string;
   takenOverByName?: string;
+  supplierId?: string | null;
+  supplierName?: string | null;
+  supplierCode?: string | null;
+  supplierTaxNumber?: string | null;
+  supplierRccm?: string | null;
   processedAt?: string;
   closedAt?: string;
   closeComment?: string;
@@ -226,10 +231,25 @@ export interface CreatePurchaseRequestPayload {
 export type UpdatePurchaseRequestPayload = Partial<CreatePurchaseRequestPayload>;
 
 export interface ProcessPurchaseRequestPayload {
+  supplierName: string;
+  supplierCode: string;
+  supplierTaxNumber: string;
+  supplierRccm: string;
   comment?: string;
   additionalInfo?: string;
   expectedDate?: string;
   observation?: string;
+}
+
+// ── Fournisseur ──────────────────────────────────────────
+export interface Supplier {
+  id: string;
+  name: string;
+  code: string;
+  taxNumber: string;
+  rccm: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ── API Responses ────────────────────────────────────────

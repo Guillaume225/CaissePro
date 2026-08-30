@@ -3,6 +3,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PurchaseRequestsService } from './purchase-requests.service';
 import { PurchaseRequestsController } from './purchase-requests.controller';
+import { SuppliersModule } from '../suppliers/suppliers.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PurchaseRequestsController } from './purchase-requests.controller';
       }),
       inject: [ConfigService],
     }),
+    SuppliersModule,
   ],
   controllers: [PurchaseRequestsController],
   providers: [PurchaseRequestsService],

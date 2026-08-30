@@ -26,6 +26,7 @@ import {
 } from '../entities/enums';
 import { TenantDataSourceService, tenantSchema } from '../tenant/tenant-datasource.service';
 import { EventsService, DemandeAchatEvent } from '../events/events.service';
+import { SuppliersService } from '../suppliers/suppliers.service';
 import {
   CreatePurchaseRequestDto,
   UpdatePurchaseRequestDto,
@@ -67,6 +68,7 @@ export class PurchaseRequestsService {
   constructor(
     private readonly tenantDsService: TenantDataSourceService,
     private readonly eventsService: EventsService,
+    private readonly suppliersService: SuppliersService,
   ) {}
 
   /* ─────────────────────────────────────────────────────────── */
@@ -1117,9 +1119,23 @@ export class PurchaseRequestsService {
       throw new BadRequestException('Only TRANSMITTED requests can be moved to processed');
     }
 
+    // Le fournisseur est enregistré (créé ou mis à jour par code) pour
+    // pouvoir être resélectionné sur une future demande sans ressaisie.
+    const supplier = await this.suppliersService.upsert(tenantId, {
+      name: dto.supplierName,
+      code: dto.supplierCode,
+      taxNumber: dto.supplierTaxNumber,
+      rccm: dto.supplierRccm,
+    });
+
     const fromStatus = request.status;
     request.status = PurchaseRequestStatus.PROCESSED;
     request.processedAt = new Date();
+    request.supplierId = supplier.id;
+    request.supplierName = dto.supplierName;
+    request.supplierCode = dto.supplierCode;
+    request.supplierTaxNumber = dto.supplierTaxNumber;
+    request.supplierRccm = dto.supplierRccm;
     request.processingComment = dto.comment || null;
     request.additionalInfo = dto.additionalInfo || null;
     request.expectedProcessingDate = dto.expectedDate || null;
@@ -1330,6 +1346,11 @@ export class PurchaseRequestsService {
       takenOverAt: request.takenOverAt?.toISOString() || null,
       takenOverById: request.takenOverById,
       takenOverByName: request.takenOverById ? (userNames.get(request.takenOverById) ?? null) : null,
+      supplierId: request.supplierId,
+      supplierName: request.supplierName,
+      supplierCode: request.supplierCode,
+      supplierTaxNumber: request.supplierTaxNumber,
+      supplierRccm: request.supplierRccm,
       processingComment: request.processingComment,
       additionalInfo: request.additionalInfo,
       expectedProcessingDate: request.expectedProcessingDate,

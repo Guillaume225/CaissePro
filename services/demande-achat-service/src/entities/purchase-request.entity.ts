@@ -102,6 +102,22 @@ export class PurchaseRequest {
   @Column({ type: 'datetimeoffset', name: 'processed_at', nullable: true })
   processedAt!: Date | null;
 
+  /** Fournisseur choisi par l'acheteur à l'étape "Proposition d'achat" — figé sur la demande, pas de lecture-jointure vers suppliers. */
+  @Column({ type: 'uuid', name: 'supplier_id', nullable: true })
+  supplierId!: string | null;
+
+  @Column({ type: 'varchar', length: 255, name: 'supplier_name', nullable: true })
+  supplierName!: string | null;
+
+  @Column({ type: 'varchar', length: 100, name: 'supplier_code', nullable: true })
+  supplierCode!: string | null;
+
+  @Column({ type: 'varchar', length: 100, name: 'supplier_tax_number', nullable: true })
+  supplierTaxNumber!: string | null;
+
+  @Column({ type: 'varchar', length: 100, name: 'supplier_rccm', nullable: true })
+  supplierRccm!: string | null;
+
   @Column({ type: 'datetimeoffset', name: 'closed_at', nullable: true })
   closedAt!: Date | null;
 
