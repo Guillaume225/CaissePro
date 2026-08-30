@@ -420,6 +420,9 @@
       },
       "fne": {
         "description": "Electronic standardized invoicing (Côte d'Ivoire)"
+      },
+      "demande-achat": {
+        "description": "Purchase requests, pricing, validation and purchasing tracking"
       }
     }
   },

@@ -23,6 +23,8 @@ import {
   BadgeDollarSign,
   History,
   FileCheck2,
+  ShoppingCart,
+  LayoutDashboard,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -146,6 +148,25 @@ const moduleFlows: ModuleFlow[] = [
     steps: [
       { to: '/fne/invoices', labelKey: 'modules.fne.list', icon: FileText },
       { to: '/fne/invoices/new', labelKey: 'modules.fne.new', icon: CreditCard },
+    ],
+  },
+  {
+    id: 'demande-achat',
+    labelKey: 'modules.demande-achat.name',
+    descriptionKey: 'dashboard.flows.demande-achat.description',
+    icon: ShoppingCart,
+    color: 'text-sky-600',
+    bgColor: 'bg-sky-50',
+    borderColor: 'border-sky-200',
+    ringColor: 'bg-sky-100 text-sky-600',
+    steps: [
+      {
+        to: '/demande-achat/dashboard',
+        labelKey: 'modules.demande-achat.dashboard',
+        icon: LayoutDashboard,
+      },
+      { to: '/demande-achat/new', labelKey: 'modules.demande-achat.new', icon: FileText },
+      { to: '/demande-achat', labelKey: 'modules.demande-achat.list', icon: ClipboardList },
     ],
   },
 ];

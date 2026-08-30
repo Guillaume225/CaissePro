@@ -420,6 +420,9 @@
       },
       "fne": {
         "description": "Facturation normalisée électronique (Côte d'Ivoire)"
+      },
+      "demande-achat": {
+        "description": "Demandes d'achat, chiffrage, validation et suivi des achats"
       }
     }
   },
