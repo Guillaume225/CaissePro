@@ -120,6 +120,9 @@ export interface PurchaseRequest {
   supplierCode?: string | null;
   supplierTaxNumber?: string | null;
   supplierRccm?: string | null;
+  sagePosted?: boolean;
+  sagePostedAt?: string | null;
+  sageError?: string | null;
   processedAt?: string;
   closedAt?: string;
   closeComment?: string;

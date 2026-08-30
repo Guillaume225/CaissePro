@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Upload,
   Search,
+  RefreshCw,
 } from 'lucide-react';
 import api from '@/lib/api';
 import {
@@ -41,7 +42,7 @@ import {
   useRejectPurchaseRequest,
   useReturnPurchaseRequest,
 } from '@/hooks/usePurchaseRequestApprovals';
-import { useProcessPurchaseRequest, useSuppliers } from '@/hooks/usePurchasing';
+import { useProcessPurchaseRequest, useSuppliers, useRetrySage } from '@/hooks/usePurchasing';
 import { useAuthStore } from '@/stores/auth-store';
 import { extractApiErrorMessage } from '@/lib/errors';
 import { formatCFA, formatDate, formatDateTime } from '@/lib/format';
@@ -377,6 +378,7 @@ export default function PurchaseRequestDetailPage() {
   const rejectMutation = useRejectPurchaseRequest();
   const returnMutation = useReturnPurchaseRequest();
   const processMutation = useProcessPurchaseRequest();
+  const retrySageMutation = useRetrySage();
   const uploadAttachment = useUploadPurchaseRequestAttachment(id ?? '');
   const deleteAttachment = useDeletePurchaseRequestAttachment(id ?? '');
 
@@ -478,6 +480,8 @@ export default function PurchaseRequestDetailPage() {
   const canReject = hasPermission('da.reject') && isEligibleApprover;
   const canReturn = hasPermission('da.return') && isEligibleApprover;
   const canProcess = hasPermission('da.process') && request.status === 'TRANSMITTED';
+  const canRetrySage =
+    hasPermission('da.process') && request.status === 'PROCESSED' && !!request.sageError;
   const isAwaitingPricing = request.status === 'IN_VALIDATION' && request.currentApprovalLevel == null;
   const canPrice = isAwaitingPricing && hasPermission('da.process');
   const canManageAttachments =
@@ -791,6 +795,53 @@ export default function PurchaseRequestDetailPage() {
               </div>
             )}
           </div>
+
+          {request.supplierName && (
+            <div className="card space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
+                {t('demandeAchat.detail.supplierSection')}
+              </h2>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <Field label={t('demandeAchat.detail.supplierName')} value={request.supplierName} />
+                <Field label={t('demandeAchat.detail.supplierCode')} value={request.supplierCode ?? '—'} />
+                <Field label={t('demandeAchat.detail.supplierTaxNumber')} value={request.supplierTaxNumber ?? '—'} />
+                <Field label={t('demandeAchat.detail.supplierRccm')} value={request.supplierRccm ?? '—'} />
+              </div>
+              <div className="flex items-center justify-between border-t border-[#e0e6eb] pt-3">
+                {request.sagePosted ? (
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {t('demandeAchat.detail.sagePosted')}
+                    {request.sagePostedAt && (
+                      <span className="font-normal text-[#aab7c4]">
+                        · {formatDateTime(request.sagePostedAt)}
+                      </span>
+                    )}
+                  </span>
+                ) : request.sageError ? (
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                    <XCircle className="h-4 w-4" />
+                    {t('demandeAchat.detail.sageError')}
+                  </span>
+                ) : (
+                  <span className="text-sm text-[#aab7c4]">{t('demandeAchat.detail.sagePending')}</span>
+                )}
+                {canRetrySage && (
+                  <button
+                    className="btn-secondary"
+                    disabled={retrySageMutation.isPending}
+                    onClick={() => retrySageMutation.mutate(request.id, onErr)}
+                  >
+                    <RefreshCw className={cn('h-4 w-4', retrySageMutation.isPending && 'animate-spin')} />
+                    {t('demandeAchat.detail.retrySage')}
+                  </button>
+                )}
+              </div>
+              {request.sageError && (
+                <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{request.sageError}</p>
+              )}
+            </div>
+          )}
 
           {canPrice && (
             <PricingSection

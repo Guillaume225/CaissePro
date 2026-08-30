@@ -266,7 +266,11 @@
       "supplierName": "Nom et prénom",
       "supplierCode": "Code fournisseur",
       "supplierTaxNumber": "Numéro CC",
-      "supplierRccm": "RCCM"
+      "supplierRccm": "RCCM",
+      "sagePosted": "Envoyé à Sage",
+      "sageError": "Échec de l'envoi vers Sage",
+      "sagePending": "En attente d'envoi vers Sage",
+      "retrySage": "Renvoyer vers Sage"
     },
     "history": {
       "CREATED": "Création de la DA",

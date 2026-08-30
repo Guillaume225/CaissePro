@@ -375,6 +375,12 @@ export interface ErpSettingRecord {
   autoPostOnClosing: boolean;
   certifyAfterAccounting: boolean;
   isActive: boolean;
+  poQueueName: string;
+  poProcessusClass: string;
+  poProcessusMethod: string;
+  poParametersClass: string;
+  poParametersCode: string;
+  autoPostPurchaseOrders: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -395,6 +401,12 @@ export interface UpsertErpSettingPayload {
   autoPostOnClosing?: boolean;
   certifyAfterAccounting?: boolean;
   isActive?: boolean;
+  poQueueName?: string;
+  poProcessusClass?: string;
+  poProcessusMethod?: string;
+  poParametersClass?: string;
+  poParametersCode?: string;
+  autoPostPurchaseOrders?: boolean;
 }
 
 export interface ErpPostResult {

@@ -72,6 +72,17 @@ export function useProcessPurchaseRequest() {
   });
 }
 
+// ── Renvoi manuel vers Sage (si l'envoi automatique a échoué) ──
+export function useRetrySage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      await api.post(`/demandes-achat/achats/${id}/retry-sage`);
+    },
+    onSuccess: (_, id) => invalidateAfterAction(qc, id),
+  });
+}
+
 // ── Fournisseurs (sélection à l'étape "Proposition d'achat") ──
 export function useSuppliers(search: string) {
   return useQuery({

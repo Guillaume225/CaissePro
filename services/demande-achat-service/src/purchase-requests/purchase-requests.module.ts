@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PurchaseRequestsService } from './purchase-requests.service';
 import { PurchaseRequestsController } from './purchase-requests.controller';
 import { SuppliersModule } from '../suppliers/suppliers.module';
+import { SageModule } from '../sage/sage.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SuppliersModule } from '../suppliers/suppliers.module';
       inject: [ConfigService],
     }),
     SuppliersModule,
+    SageModule,
   ],
   controllers: [PurchaseRequestsController],
   providers: [PurchaseRequestsService],

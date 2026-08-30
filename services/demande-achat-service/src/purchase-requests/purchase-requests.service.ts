@@ -27,6 +27,7 @@ import {
 import { TenantDataSourceService, tenantSchema } from '../tenant/tenant-datasource.service';
 import { EventsService, DemandeAchatEvent } from '../events/events.service';
 import { SuppliersService } from '../suppliers/suppliers.service';
+import { SagePurchaseOrderService } from '../sage/sage-po.service';
 import {
   CreatePurchaseRequestDto,
   UpdatePurchaseRequestDto,
@@ -69,6 +70,7 @@ export class PurchaseRequestsService {
     private readonly tenantDsService: TenantDataSourceService,
     private readonly eventsService: EventsService,
     private readonly suppliersService: SuppliersService,
+    private readonly sagePoService: SagePurchaseOrderService,
   ) {}
 
   /* ─────────────────────────────────────────────────────────── */
@@ -1112,6 +1114,7 @@ export class PurchaseRequestsService {
     const ds = await this.tenantDsService.getDataSource(tenantId);
     const requestRepo = ds.getRepository(PurchaseRequest);
     const historyRepo = ds.getRepository(PurchaseRequestHistory);
+    const lineRepo = ds.getRepository(PurchaseRequestLine);
 
     const request = await requestRepo.findOne({ where: { id } });
     if (!request) throw new NotFoundException('Purchase request not found');
@@ -1156,6 +1159,49 @@ export class PurchaseRequestsService {
       DemandeAchatEvent.PROCESSED,
       this.basePayload(tenantId, request, { actorId: user.id }),
     );
+
+    // Envoi automatique vers Sage (bon de commande) — jamais bloquant : une
+    // erreur ici ne doit pas faire échouer la génération du bon de commande,
+    // elle est juste consignée sur la demande pour un renvoi manuel ultérieur.
+    try {
+      const lines = await lineRepo.find({ where: { purchaseRequestId: id } });
+      const result = await this.sagePoService.postPurchaseOrder(tenantId, request, lines);
+      await requestRepo.update(id, {
+        sagePosted: result.success,
+        sagePostedAt: result.success ? new Date() : null,
+        sageError: result.success ? null : result.message,
+      });
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`[SAGE-BC] Échec inattendu de l'envoi vers Sage pour ${request.number}: ${errorMsg}`);
+      await requestRepo.update(id, { sagePosted: false, sageError: errorMsg });
+    }
+
+    return this.findById(tenantId, id);
+  }
+
+  /**
+   * Renvoie manuellement vers Sage un bon de commande dont l'envoi
+   * automatique a échoué (ex : API Sage momentanément indisponible).
+   */
+  async retrySage(tenantId: string, id: string) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const requestRepo = ds.getRepository(PurchaseRequest);
+    const lineRepo = ds.getRepository(PurchaseRequestLine);
+
+    const request = await requestRepo.findOne({ where: { id } });
+    if (!request) throw new NotFoundException('Purchase request not found');
+    if (request.status !== PurchaseRequestStatus.PROCESSED) {
+      throw new BadRequestException('Only PROCESSED requests can be resent to Sage');
+    }
+
+    const lines = await lineRepo.find({ where: { purchaseRequestId: id } });
+    const result = await this.sagePoService.postPurchaseOrder(tenantId, request, lines);
+    await requestRepo.update(id, {
+      sagePosted: result.success,
+      sagePostedAt: result.success ? new Date() : null,
+      sageError: result.success ? null : result.message,
+    });
 
     return this.findById(tenantId, id);
   }
@@ -1351,6 +1397,9 @@ export class PurchaseRequestsService {
       supplierCode: request.supplierCode,
       supplierTaxNumber: request.supplierTaxNumber,
       supplierRccm: request.supplierRccm,
+      sagePosted: request.sagePosted,
+      sagePostedAt: request.sagePostedAt?.toISOString() || null,
+      sageError: request.sageError,
       processingComment: request.processingComment,
       additionalInfo: request.additionalInfo,
       expectedProcessingDate: request.expectedProcessingDate,

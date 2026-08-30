@@ -266,7 +266,11 @@
       "supplierName": "Full name",
       "supplierCode": "Supplier code",
       "supplierTaxNumber": "Tax ID (CC number)",
-      "supplierRccm": "RCCM"
+      "supplierRccm": "RCCM",
+      "sagePosted": "Sent to Sage",
+      "sageError": "Failed to send to Sage",
+      "sagePending": "Awaiting send to Sage",
+      "retrySage": "Resend to Sage"
     },
     "history": {
       "CREATED": "Request created",

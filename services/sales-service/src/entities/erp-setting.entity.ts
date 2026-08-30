@@ -71,6 +71,31 @@ export class ErpSetting {
   @Column({ type: 'bit', name: 'is_active', default: true })
   isActive!: boolean;
 
+  /**
+   * Paramètres du processus Sage dédié aux bons de commande (e-DA), distinct
+   * du processus factures/écritures ci-dessus (className/parameters différents
+   * côté Sage — TProcessusImportContrat / TParametreImportContrat). L'hôte
+   * (apiUrl) et le jeton (accessToken) restent partagés avec la config FNE.
+   */
+  @Column({ type: 'varchar', length: 100, name: 'po_queue_name', default: 'QTask' })
+  poQueueName!: string;
+
+  @Column({ type: 'varchar', length: 255, name: 'po_processus_class', default: 'TProcessusImportContrat' })
+  poProcessusClass!: string;
+
+  @Column({ type: 'varchar', length: 255, name: 'po_processus_method', default: 'ExecuterAutomate' })
+  poProcessusMethod!: string;
+
+  @Column({ type: 'varchar', length: 255, name: 'po_parameters_class', default: 'TParametreImportContrat' })
+  poParametersClass!: string;
+
+  @Column({ type: 'varchar', length: 255, name: 'po_parameters_code', default: 'GenerationAPI_CommandeAchat' })
+  poParametersCode!: string;
+
+  /** Envoie le bon de commande vers Sage dès sa génération (étape "Proposition d'achat"). */
+  @Column({ type: 'bit', name: 'auto_post_purchase_orders', default: true })
+  autoPostPurchaseOrders!: boolean;
+
   @CreateDateColumn({ name: 'created_at', type: 'datetimeoffset' })
   createdAt!: Date;
 

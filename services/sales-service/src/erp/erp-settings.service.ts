@@ -18,6 +18,12 @@ export interface UpsertErpSettingDto {
   autoPostOnClosing?: boolean;
   certifyAfterAccounting?: boolean;
   isActive?: boolean;
+  poQueueName?: string;
+  poProcessusClass?: string;
+  poProcessusMethod?: string;
+  poParametersClass?: string;
+  poParametersCode?: string;
+  autoPostPurchaseOrders?: boolean;
 }
 
 @Injectable()
@@ -61,6 +67,12 @@ export class ErpSettingsService {
         autoPostOnClosing: dto.autoPostOnClosing ?? existing.autoPostOnClosing,
         certifyAfterAccounting: dto.certifyAfterAccounting ?? existing.certifyAfterAccounting,
         isActive: dto.isActive ?? existing.isActive,
+        poQueueName: dto.poQueueName ?? existing.poQueueName,
+        poProcessusClass: dto.poProcessusClass ?? existing.poProcessusClass,
+        poProcessusMethod: dto.poProcessusMethod ?? existing.poProcessusMethod,
+        poParametersClass: dto.poParametersClass ?? existing.poParametersClass,
+        poParametersCode: dto.poParametersCode ?? existing.poParametersCode,
+        autoPostPurchaseOrders: dto.autoPostPurchaseOrders ?? existing.autoPostPurchaseOrders,
       });
       return repo.save(existing);
     }
@@ -81,6 +93,12 @@ export class ErpSettingsService {
       autoPostOnClosing: dto.autoPostOnClosing ?? false,
       certifyAfterAccounting: dto.certifyAfterAccounting ?? false,
       isActive: dto.isActive ?? true,
+      poQueueName: dto.poQueueName ?? 'QTask',
+      poProcessusClass: dto.poProcessusClass ?? 'TProcessusImportContrat',
+      poProcessusMethod: dto.poProcessusMethod ?? 'ExecuterAutomate',
+      poParametersClass: dto.poParametersClass ?? 'TParametreImportContrat',
+      poParametersCode: dto.poParametersCode ?? 'GenerationAPI_CommandeAchat',
+      autoPostPurchaseOrders: dto.autoPostPurchaseOrders ?? true,
     });
     return repo.save(entity);
   }

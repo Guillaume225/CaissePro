@@ -118,6 +118,16 @@ export class PurchaseRequest {
   @Column({ type: 'varchar', length: 100, name: 'supplier_rccm', nullable: true })
   supplierRccm!: string | null;
 
+  /** Envoi automatique du bon de commande vers Sage à la génération (voir SagePurchaseOrderService). */
+  @Column({ type: 'bit', name: 'sage_posted', default: false })
+  sagePosted!: boolean;
+
+  @Column({ type: 'datetimeoffset', name: 'sage_posted_at', nullable: true })
+  sagePostedAt!: Date | null;
+
+  @Column({ type: 'text', name: 'sage_error', nullable: true })
+  sageError!: string | null;
+
   @Column({ type: 'datetimeoffset', name: 'closed_at', nullable: true })
   closedAt!: Date | null;
 

@@ -167,6 +167,12 @@ export default function FneConfigPage() {
     autoPostOnClosing: false,
     certifyAfterAccounting: false,
     isActive: true,
+    poQueueName: 'QTask',
+    poProcessusClass: 'TProcessusImportContrat',
+    poProcessusMethod: 'ExecuterAutomate',
+    poParametersClass: 'TParametreImportContrat',
+    poParametersCode: 'GenerationAPI_CommandeAchat',
+    autoPostPurchaseOrders: true,
   });
 
   // Sync ERP form when data is loaded
@@ -187,6 +193,12 @@ export default function FneConfigPage() {
         autoPostOnClosing: erpSetting.autoPostOnClosing,
         certifyAfterAccounting: erpSetting.certifyAfterAccounting,
         isActive: erpSetting.isActive,
+        poQueueName: erpSetting.poQueueName ?? 'QTask',
+        poProcessusClass: erpSetting.poProcessusClass ?? 'TProcessusImportContrat',
+        poProcessusMethod: erpSetting.poProcessusMethod ?? 'ExecuterAutomate',
+        poParametersClass: erpSetting.poParametersClass ?? 'TParametreImportContrat',
+        poParametersCode: erpSetting.poParametersCode ?? 'GenerationAPI_CommandeAchat',
+        autoPostPurchaseOrders: erpSetting.autoPostPurchaseOrders,
       });
     } else if (!erpLoading && erpCompanyId) {
       setErpForm({
@@ -204,6 +216,12 @@ export default function FneConfigPage() {
         autoPostOnClosing: false,
         certifyAfterAccounting: false,
         isActive: true,
+        poQueueName: 'QTask',
+        poProcessusClass: 'TProcessusImportContrat',
+        poProcessusMethod: 'ExecuterAutomate',
+        poParametersClass: 'TParametreImportContrat',
+        poParametersCode: 'GenerationAPI_CommandeAchat',
+        autoPostPurchaseOrders: true,
       });
     }
   }, [erpSetting, erpLoading, erpCompanyId]);
@@ -875,6 +893,12 @@ export default function FneConfigPage() {
       autoPostOnClosing: erpForm.autoPostOnClosing,
       certifyAfterAccounting: erpForm.certifyAfterAccounting,
       isActive: erpForm.isActive,
+      poQueueName: erpForm.poQueueName || undefined,
+      poProcessusClass: erpForm.poProcessusClass || undefined,
+      poProcessusMethod: erpForm.poProcessusMethod || undefined,
+      poParametersClass: erpForm.poParametersClass || undefined,
+      poParametersCode: erpForm.poParametersCode || undefined,
+      autoPostPurchaseOrders: erpForm.autoPostPurchaseOrders,
     });
     setErpSaved(true);
     setTimeout(() => setErpSaved(false), 3000);
@@ -1047,6 +1071,94 @@ export default function FneConfigPage() {
                   className={inputClass}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Purchase orders (e-DA) processus config */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+                <Database className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Bons de commande (e-DA)</h3>
+                <p className="text-xs text-gray-500">
+                  Processus Sage dédié à l&apos;envoi des bons de commande — utilise la même URL et le
+                  même token que ci-dessus
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Nom de file (Queue)</label>
+                  <input
+                    value={erpForm.poQueueName}
+                    onChange={(e) => setErpForm((f) => ({ ...f, poQueueName: e.target.value }))}
+                    placeholder="QTask"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Code paramètres</label>
+                  <input
+                    value={erpForm.poParametersCode}
+                    onChange={(e) => setErpForm((f) => ({ ...f, poParametersCode: e.target.value }))}
+                    placeholder="GenerationAPI_CommandeAchat"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Classe processus</label>
+                  <input
+                    value={erpForm.poProcessusClass}
+                    onChange={(e) => setErpForm((f) => ({ ...f, poProcessusClass: e.target.value }))}
+                    placeholder="TProcessusImportContrat"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">Méthode processus</label>
+                  <input
+                    value={erpForm.poProcessusMethod}
+                    onChange={(e) => setErpForm((f) => ({ ...f, poProcessusMethod: e.target.value }))}
+                    placeholder="ExecuterAutomate"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Classe paramètres</label>
+                <input
+                  value={erpForm.poParametersClass}
+                  onChange={(e) => setErpForm((f) => ({ ...f, poParametersClass: e.target.value }))}
+                  placeholder="TParametreImportContrat"
+                  className={inputClass}
+                />
+              </div>
+
+              <label className="flex items-center gap-3 cursor-pointer pt-2">
+                <input
+                  type="checkbox"
+                  checked={erpForm.autoPostPurchaseOrders}
+                  onChange={(e) => setErpForm((f) => ({ ...f, autoPostPurchaseOrders: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300 text-brand-gold focus:ring-brand-gold"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Envoi automatique à la génération du bon de commande
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Envoie le bon de commande à Sage dès que l&apos;acheteur renseigne le fournisseur et
+                    valide la demande d&apos;achat (étape &quot;Proposition d&apos;achat&quot;)
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
 

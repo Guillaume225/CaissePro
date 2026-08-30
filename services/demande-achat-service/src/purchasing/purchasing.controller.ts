@@ -33,4 +33,11 @@ export class PurchasingController {
   ) {
     return this.service.process(user.tenantId, id, dto, user);
   }
+
+  /** Renvoie manuellement vers Sage un bon de commande dont l'envoi automatique a échoué. */
+  @Post(':id/retry-sage')
+  @Permissions(DA_PERMISSIONS.PROCESS)
+  retrySage(@Param('id', ParseLooseUUIDPipe) id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.service.retrySage(tenantId, id);
+  }
 }
