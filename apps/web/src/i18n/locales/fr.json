@@ -136,7 +136,7 @@
       "new": "Nouvelle demande",
       "list": "Mes demandes",
       "toValidate": "À valider",
-      "purchasing": "Achats",
+      "purchasing": "Demandes à traiter",
       "all": "Toutes les demandes",
       "dashboard": "Tableau de bord",
       "circuits": "Circuits de validation"
@@ -146,7 +146,7 @@
     "list": {
       "title": "Mes demandes d'achat",
       "subtitle": "Suivi de vos demandes d'achat (e-DA)",
-      "allTitle": "Toutes les demandes d'achat",
+      "allTitle": "Demandes validées",
       "allSubtitle": "Vue d'ensemble de toutes les demandes d'achat (e-DA)",
       "newRequest": "Nouvelle demande",
       "allStatuses": "Tous les statuts",
