@@ -20,6 +20,7 @@ import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 const FIELD_SEPARATOR = ';';
 const LINE_SEPARATOR = '\n';
 const SAGE_PRODUCT_CODE = 'PROD-DIVERS';
+const CSV_HEADER = 'Reference DA;DateBC;CodeFournisseur;DesignationProduit;CodeProduit;PrixUnitaire;Qte';
 
 export interface SagePoPostResult {
   success: boolean;
@@ -172,24 +173,31 @@ export class SagePurchaseOrderService {
   }
 
   /**
-   * Reference DA;DateBC;CodeFournisseur;DesignationProduit;CodeProduit;PrixUnitaire;Qte
-   * One line per purchase-request line. CodeProduit is always "PROD-DIVERS"
-   * for every bon de commande — e-DA lines aren't matched to a Sage product
-   * catalog, they're all booked under this single generic product code.
+   * CSV_HEADER, then one line per purchase-request line:
+   *   Reference DA;DateBC;CodeFournisseur;DesignationProduit;CodeProduit;PrixUnitaire;Qte
+   * The header row is required — Sage's TProcessusImportContrat parser
+   * silently accepts a headerless body (HTTP 200, message queued) but
+   * inserts 0 rows without it (confirmed against BC/ExempleContenuCommandeAchat.csv).
+   * CodeProduit is always "PROD-DIVERS" for every bon de commande — e-DA
+   * lines aren't matched to a Sage product catalog, they're all booked
+   * under this single generic product code.
    */
   private buildRequestBody(request: PurchaseRequest, lines: PurchaseRequestLine[]): string {
     const dateBc = this.formatDate(request.processedAt ?? new Date());
-    const rows = lines.map((l) =>
-      [
-        request.number ?? '',
-        dateBc,
-        request.supplierCode ?? '',
-        this.sanitizeForSage(l.designation).substring(0, 100),
-        SAGE_PRODUCT_CODE,
-        this.formatAmount(Number(l.estimatedUnitPrice)),
-        this.formatAmount(Number(l.quantity)),
-      ].join(FIELD_SEPARATOR),
-    );
+    const rows: string[] = [CSV_HEADER];
+    for (const l of lines) {
+      rows.push(
+        [
+          request.number ?? '',
+          dateBc,
+          request.supplierCode ?? '',
+          this.sanitizeForSage(l.designation).substring(0, 100),
+          SAGE_PRODUCT_CODE,
+          this.formatAmount(Number(l.estimatedUnitPrice)),
+          this.formatAmount(Number(l.quantity)),
+        ].join(FIELD_SEPARATOR),
+      );
+    }
     return rows.join(LINE_SEPARATOR);
   }
 
