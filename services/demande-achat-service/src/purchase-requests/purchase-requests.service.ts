@@ -135,6 +135,7 @@ export class PurchaseRequestsService {
     tenantId: string,
     query: ListPurchaseRequestsQueryDto,
     forcedRequesterId?: string,
+    excludeInProgress = false,
   ) {
     const ds = await this.tenantDsService.getDataSource(tenantId);
     const requestRepo = ds.getRepository(PurchaseRequest);
@@ -148,6 +149,15 @@ export class PurchaseRequestsService {
       qb.andWhere('pr.requesterId = :forcedRequesterId', { forcedRequesterId });
     } else if (query.requesterId) {
       qb.andWhere('pr.requesterId = :requesterId', { requesterId: query.requesterId });
+    }
+    // "Toutes les demandes" only shows requests whose validation circuit has
+    // concluded (positively or negatively) — drafts and anything still on
+    // "Demandes d'achat à traiter" (awaiting pricing or an active approval
+    // level) belong there instead, not in this overview.
+    if (excludeInProgress) {
+      qb.andWhere('pr.status NOT IN (:...inProgressStatuses)', {
+        inProgressStatuses: [PurchaseRequestStatus.DRAFT, PurchaseRequestStatus.IN_VALIDATION],
+      });
     }
     this.applyCommonFilters(qb, query);
 
@@ -1045,6 +1055,38 @@ export class PurchaseRequestsService {
       .createQueryBuilder('pr')
       .where('pr.status = :status', { status: PurchaseRequestStatus.IN_VALIDATION })
       .andWhere('pr.currentApprovalLevel IS NULL');
+    this.applyCommonFilters(qb, query, true);
+
+    qb.orderBy('pr.submittedAt', 'ASC');
+    qb.skip((page - 1) * perPage).take(perPage);
+    const [items, total] = await qb.getManyAndCount();
+    const requesterNames = await this.resolveRequesterNames(ds, items);
+
+    return {
+      data: items.map((r) => this.toResponseDto(r, [], [], [], [], requesterNames)),
+      meta: {
+        page,
+        perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+        hasNextPage: page * perPage < total,
+        hasPreviousPage: page > 1,
+      },
+    };
+  }
+
+  /** Requests currently mid-circuit, awaiting a validator's decision at the active level. */
+  async findInCircuit(tenantId: string, query: PurchasingListQueryDto) {
+    const ds = await this.tenantDsService.getDataSource(tenantId);
+    const requestRepo = ds.getRepository(PurchaseRequest);
+
+    const page = query.page || 1;
+    const perPage = Math.min(query.perPage || 25, 100);
+
+    const qb = requestRepo
+      .createQueryBuilder('pr')
+      .where('pr.status = :status', { status: PurchaseRequestStatus.IN_VALIDATION })
+      .andWhere('pr.currentApprovalLevel IS NOT NULL');
     this.applyCommonFilters(qb, query, true);
 
     qb.orderBy('pr.submittedAt', 'ASC');

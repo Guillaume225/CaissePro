@@ -16,6 +16,13 @@ export class PurchasingController {
     return this.service.findToPrice(tenantId, query);
   }
 
+  /** Requests currently mid-circuit, awaiting a validator's decision. */
+  @Get('in-circuit')
+  @Permissions(DA_PERMISSIONS.PROCESS)
+  findInCircuit(@CurrentUser('tenantId') tenantId: string, @Query() query: PurchasingListQueryDto) {
+    return this.service.findInCircuit(tenantId, query);
+  }
+
   /** RG08 — list requests owned by purchasing, gated by da.takeover. */
   @Get('to-process')
   @Permissions(DA_PERMISSIONS.TAKEOVER)

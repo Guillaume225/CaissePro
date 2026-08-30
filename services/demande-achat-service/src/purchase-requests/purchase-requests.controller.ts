@@ -53,7 +53,7 @@ export class PurchaseRequestsController {
   @Get()
   @Permissions(DA_PERMISSIONS.VIEW_ALL)
   findAll(@CurrentUser('tenantId') tenantId: string, @Query() query: ListPurchaseRequestsQueryDto) {
-    return this.service.findAll(tenantId, query);
+    return this.service.findAll(tenantId, query, undefined, true);
   }
 
   @Get(':id')

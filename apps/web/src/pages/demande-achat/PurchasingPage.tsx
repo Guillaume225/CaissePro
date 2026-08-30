@@ -1,40 +1,31 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { PackageSearch, PackageCheck, Wrench, Eye, Calculator } from 'lucide-react';
-import { usePurchasingQueue, usePurchasingToPrice, useTakeoverPurchaseRequest } from '@/hooks/usePurchasing';
-import { formatCFA, formatDate } from '@/lib/format';
-import { extractApiErrorMessage } from '@/lib/errors';
-import { PRIORITY_BADGE_CLASSES, PURCHASING_QUEUE_STATUSES, STATUS_BADGE_CLASSES } from './constants';
-import type { PurchaseRequestPriority, PurchaseRequestStatus } from '@/types/demande-achat';
+import { PackageSearch, Eye, Calculator } from 'lucide-react';
+import { usePurchasingInCircuit, usePurchasingToPrice } from '@/hooks/usePurchasing';
+import { formatCFA } from '@/lib/format';
+import { PRIORITY_BADGE_CLASSES, STATUS_BADGE_CLASSES } from './constants';
+import type { PurchaseRequestPriority } from '@/types/demande-achat';
 
 export default function PurchasingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [view, setView] = useState<'to-price' | 'to-process'>('to-price');
+  const [view, setView] = useState<'to-price' | 'in-circuit'>('to-price');
   const [service, setService] = useState('');
   const [priority, setPriority] = useState<PurchaseRequestPriority | ''>('');
-  const [status, setStatus] = useState<PurchaseRequestStatus | ''>('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
 
   const toPriceQuery = usePurchasingToPrice({
     service: service || undefined,
     priority: priority || undefined,
     perPage: 100,
   });
-  const toProcessQuery = usePurchasingQueue({
+  const inCircuitQuery = usePurchasingInCircuit({
     service: service || undefined,
     priority: priority || undefined,
-    status: status || undefined,
-    dateFrom: dateFrom || undefined,
-    dateTo: dateTo || undefined,
     perPage: 100,
   });
-  const { data, isLoading } = view === 'to-price' ? toPriceQuery : toProcessQuery;
-  const takeoverMutation = useTakeoverPurchaseRequest();
-  const [actionError, setActionError] = useState<string | null>(null);
+  const { data, isLoading } = view === 'to-price' ? toPriceQuery : inCircuitQuery;
 
   const requests = data?.data ?? [];
 
@@ -58,46 +49,23 @@ export default function PurchasingPage() {
           {view === 'to-price' && toPriceQuery.data?.meta.total ? ` (${toPriceQuery.data.meta.total})` : ''}
         </button>
         <button
-          onClick={() => setView('to-process')}
+          onClick={() => setView('in-circuit')}
           className={`px-3 py-2 text-sm font-medium ${
-            view === 'to-process'
+            view === 'in-circuit'
               ? 'border-b-2 border-brand-gold text-brand-gold'
               : 'text-[#697386] hover:text-[#0a2540]'
           }`}
         >
-          {t('demandeAchat.purchasing.toProcess', 'À traiter')}
+          {t('demandeAchat.purchasing.inCircuit', 'En circuit de validation')}
+          {view === 'in-circuit' && inCircuitQuery.data?.meta.total
+            ? ` (${inCircuitQuery.data.meta.total})`
+            : ''}
         </button>
       </div>
 
-      {actionError && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{actionError}</div>
-      )}
-
       {/* Filters */}
       <div className="card">
-        <div className={`grid grid-cols-2 gap-3 ${view === 'to-price' ? 'sm:grid-cols-2' : 'sm:grid-cols-5'}`}>
-          {view === 'to-process' && (
-            <>
-              <div>
-                <label className="label">{t('common.date')}</label>
-                <input
-                  type="date"
-                  className="input h-9"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="label">&nbsp;</label>
-                <input
-                  type="date"
-                  className="input h-9"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                />
-              </div>
-            </>
-          )}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
           <div>
             <label className="label">{t('demandeAchat.fields.service')}</label>
             <input
@@ -119,23 +87,6 @@ export default function PurchasingPage() {
               <option value="VERY_URGENT">{t('demandeAchat.priority.VERY_URGENT')}</option>
             </select>
           </div>
-          {view === 'to-process' && (
-            <div>
-              <label className="label">{t('common.status')}</label>
-              <select
-                className="input h-9"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as PurchaseRequestStatus | '')}
-              >
-                <option value="">{t('demandeAchat.list.allStatuses')}</option>
-                {PURCHASING_QUEUE_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {t(`demandeAchat.status.${s}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
       </div>
 
@@ -155,6 +106,9 @@ export default function PurchasingPage() {
                     <th className="px-3 py-2">{t('demandeAchat.fields.service')}</th>
                     <th className="px-3 py-2">{t('demandeAchat.fields.subject')}</th>
                     <th className="px-3 py-2">{t('common.amount')}</th>
+                    {view === 'in-circuit' && (
+                      <th className="px-3 py-2">{t('demandeAchat.purchasing.approvalLevel', 'Palier')}</th>
+                    )}
                     <th className="px-3 py-2">{t('common.status')}</th>
                     <th className="px-3 py-2">{t('common.actions')}</th>
                   </tr>
@@ -162,7 +116,10 @@ export default function PurchasingPage() {
                 <tbody>
                   {requests.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-3 py-10 text-center text-sm text-[#aab7c4]">
+                      <td
+                        colSpan={view === 'in-circuit' ? 8 : 7}
+                        className="px-3 py-10 text-center text-sm text-[#aab7c4]"
+                      >
                         <PackageSearch className="mx-auto mb-2 h-8 w-8 text-[#e0e6eb]" />
                         {t('demandeAchat.purchasing.empty')}
                       </td>
@@ -183,6 +140,9 @@ export default function PurchasingPage() {
                       <td className="px-3 py-2 font-semibold text-[#0a2540]">
                         {formatCFA(r.totalEstimatedAmount)}
                       </td>
+                      {view === 'in-circuit' && (
+                        <td className="px-3 py-2 text-[#697386]">{r.currentApprovalLevel ?? '—'}</td>
+                      )}
                       <td className="px-3 py-2">
                         <span
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASSES[r.status]}`}
@@ -212,32 +172,6 @@ export default function PurchasingPage() {
                               title={t('demandeAchat.actions.pricing', 'Chiffrer')}
                             >
                               <Calculator className="h-4 w-4" />
-                            </button>
-                          )}
-                          {r.status === 'TRANSMITTED' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                takeoverMutation.mutate(r.id, {
-                                  onError: (err) => setActionError(extractApiErrorMessage(err)),
-                                });
-                              }}
-                              className="rounded-md p-1.5 text-blue-500 hover:bg-blue-50 hover:text-blue-700"
-                              title={t('demandeAchat.actions.takeover')}
-                            >
-                              <PackageCheck className="h-4 w-4" />
-                            </button>
-                          )}
-                          {(r.status === 'TAKEN_OVER' || r.status === 'IN_PROCESS') && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/demande-achat/${r.id}`);
-                              }}
-                              className="rounded-md p-1.5 text-purple-500 hover:bg-purple-50 hover:text-purple-700"
-                              title={t('demandeAchat.actions.process')}
-                            >
-                              <Wrench className="h-4 w-4" />
                             </button>
                           )}
                         </div>

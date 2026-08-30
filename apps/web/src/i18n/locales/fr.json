@@ -287,7 +287,10 @@
     "purchasing": {
       "title": "Demandes d'achat à traiter",
       "subtitle": "Espace du service achats",
-      "empty": "Aucune demande à traiter"
+      "empty": "Aucune demande à traiter",
+      "toPrice": "À chiffrer",
+      "inCircuit": "En circuit de validation",
+      "approvalLevel": "Palier"
     },
     "dashboard": {
       "title": "Tableau de bord — Demandes d'achat",

@@ -287,7 +287,10 @@
     "purchasing": {
       "title": "Purchase requests to process",
       "subtitle": "Purchasing department workspace",
-      "empty": "No requests to process"
+      "empty": "No requests to process",
+      "toPrice": "To price",
+      "inCircuit": "In validation circuit",
+      "approvalLevel": "Level"
     },
     "dashboard": {
       "title": "Dashboard — Purchase Requests",
