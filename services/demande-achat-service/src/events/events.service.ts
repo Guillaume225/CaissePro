@@ -15,10 +15,7 @@ export enum DemandeAchatEvent {
   APPROVED = 'da.approved',
   REJECTED = 'da.rejected',
   VALIDATED_TRANSMITTED = 'da.validated_transmitted',
-  TAKEN_OVER = 'da.taken_over',
-  PROCESSING = 'da.processing',
   PROCESSED = 'da.processed',
-  CLOSED = 'da.closed',
   CANCELLED = 'da.cancelled',
 }
 

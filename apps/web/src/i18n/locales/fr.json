@@ -215,10 +215,10 @@
       "SUBMITTED": "Soumise",
       "IN_VALIDATION": "En validation",
       "VALIDATED": "Validée",
-      "TRANSMITTED": "Transmise aux achats",
+      "TRANSMITTED": "Proposition d'achat",
       "TAKEN_OVER": "Prise en charge",
       "IN_PROCESS": "En traitement",
-      "PROCESSED": "Traitée",
+      "PROCESSED": "Bon de commande généré",
       "CLOSED": "Clôturée",
       "REJECTED": "Rejetée",
       "RETURNED": "Retournée",
@@ -245,9 +245,7 @@
       "reject": "Rejeter",
       "return": "Retourner",
       "cancel": "Annuler",
-      "takeover": "Prendre en charge",
-      "process": "Traiter",
-      "close": "Clôturer"
+      "process": "Générer le bon de commande"
     },
     "detail": {
       "history": "Historique",
@@ -261,8 +259,7 @@
       "processComment": "Commentaire de traitement",
       "additionalInfo": "Informations complémentaires",
       "expectedDate": "Date prévue de traitement",
-      "observation": "Observation",
-      "closeCommentRequired": "Commentaire de clôture (obligatoire)"
+      "observation": "Observation"
     },
     "history": {
       "CREATED": "Création de la DA",
@@ -271,9 +268,9 @@
       "REJECTED": "Rejet",
       "RETURNED": "Retour au demandeur",
       "VALIDATED": "Demande validée",
-      "TRANSMITTED": "Transmission au service achats",
+      "TRANSMITTED": "Proposition d'achat émise",
       "TAKEN_OVER": "Prise en charge par les achats",
-      "PROCESSED": "Demande traitée",
+      "PROCESSED": "Bon de commande généré",
       "CLOSED": "Clôture de la demande",
       "CANCELLED": "Annulation",
       "COMMENT": "Commentaire"

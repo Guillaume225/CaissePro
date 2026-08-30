@@ -215,10 +215,10 @@
       "SUBMITTED": "Submitted",
       "IN_VALIDATION": "Under review",
       "VALIDATED": "Approved",
-      "TRANSMITTED": "Transmitted to Purchasing",
+      "TRANSMITTED": "Purchase proposal",
       "TAKEN_OVER": "Taken over",
       "IN_PROCESS": "Processing",
-      "PROCESSED": "Processed",
+      "PROCESSED": "Purchase order generated",
       "CLOSED": "Closed",
       "REJECTED": "Rejected",
       "RETURNED": "Returned",
@@ -245,9 +245,7 @@
       "reject": "Reject",
       "return": "Return",
       "cancel": "Cancel",
-      "takeover": "Take over",
-      "process": "Process",
-      "close": "Close"
+      "process": "Generate purchase order"
     },
     "detail": {
       "history": "History",
@@ -261,8 +259,7 @@
       "processComment": "Processing comment",
       "additionalInfo": "Additional information",
       "expectedDate": "Expected processing date",
-      "observation": "Observation",
-      "closeCommentRequired": "Closing comment (required)"
+      "observation": "Observation"
     },
     "history": {
       "CREATED": "Request created",
@@ -271,9 +268,9 @@
       "REJECTED": "Rejected",
       "RETURNED": "Returned to requester",
       "VALIDATED": "Request approved",
-      "TRANSMITTED": "Transmitted to Purchasing",
+      "TRANSMITTED": "Purchase proposal issued",
       "TAKEN_OVER": "Taken over by Purchasing",
-      "PROCESSED": "Request processed",
+      "PROCESSED": "Purchase order generated",
       "CLOSED": "Request closed",
       "CANCELLED": "Cancelled",
       "COMMENT": "Comment"

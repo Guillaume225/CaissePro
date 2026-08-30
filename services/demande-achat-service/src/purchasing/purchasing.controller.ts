@@ -2,7 +2,7 @@ import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
 import { PurchaseRequestsService, WorkflowUser } from '../purchase-requests/purchase-requests.service';
 import { Permissions, CurrentUser } from '../common/decorators';
 import { DA_PERMISSIONS } from '../common/permissions';
-import { ProcessPurchaseRequestDto, ClosePurchaseRequestDto, PurchasingListQueryDto } from '../purchase-requests/dto';
+import { ProcessPurchaseRequestDto, PurchasingListQueryDto } from '../purchase-requests/dto';
 import { ParseLooseUUIDPipe } from '../common/pipes/parse-loose-uuid.pipe';
 
 @Controller('purchasing')
@@ -23,19 +23,7 @@ export class PurchasingController {
     return this.service.findInCircuit(tenantId, query);
   }
 
-  /** RG08 — list requests owned by purchasing, gated by da.takeover. */
-  @Get('to-process')
-  @Permissions(DA_PERMISSIONS.TAKEOVER)
-  findToProcess(@CurrentUser('tenantId') tenantId: string, @Query() query: PurchasingListQueryDto) {
-    return this.service.findToProcess(tenantId, query);
-  }
-
-  @Post(':id/takeover')
-  @Permissions(DA_PERMISSIONS.TAKEOVER)
-  takeover(@Param('id', ParseLooseUUIDPipe) id: string, @CurrentUser() user: WorkflowUser) {
-    return this.service.takeover(user.tenantId, id, user);
-  }
-
+  /** TRANSMITTED ("Proposition d'achat") -> PROCESSED ("Bon de commande généré"), en une seule étape. */
   @Post(':id/process')
   @Permissions(DA_PERMISSIONS.PROCESS)
   process(
@@ -44,15 +32,5 @@ export class PurchasingController {
     @CurrentUser() user: WorkflowUser,
   ) {
     return this.service.process(user.tenantId, id, dto, user);
-  }
-
-  @Post(':id/close')
-  @Permissions(DA_PERMISSIONS.CLOSE)
-  close(
-    @Param('id', ParseLooseUUIDPipe) id: string,
-    @Body() dto: ClosePurchaseRequestDto,
-    @CurrentUser() user: WorkflowUser,
-  ) {
-    return this.service.close(user.tenantId, id, dto, user);
   }
 }

@@ -242,13 +242,6 @@ export class ProcessPurchaseRequestDto {
   observation?: string;
 }
 
-export class ClosePurchaseRequestDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(2000)
-  comment!: string;
-}
-
 export class AddCommentDto {
   @IsString()
   @IsNotEmpty()

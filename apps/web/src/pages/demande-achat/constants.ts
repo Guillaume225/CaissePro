@@ -45,31 +45,25 @@ export const DASHBOARD_STATUSES: PurchaseRequestStatus[] = [
   'REJECTED',
   'VALIDATED',
   'TRANSMITTED',
-  'TAKEN_OVER',
-  'IN_PROCESS',
   'PROCESSED',
-  'CLOSED',
 ];
 
-export const PURCHASING_QUEUE_STATUSES: PurchaseRequestStatus[] = [
-  'TRANSMITTED',
-  'TAKEN_OVER',
-  'IN_PROCESS',
-];
+export const PURCHASING_QUEUE_STATUSES: PurchaseRequestStatus[] = ['TRANSMITTED'];
 
 // ── Lifecycle tracker (§4 du cahier des charges) ──
 // Le parcours nominal d'une DA. REJETÉE/RETOURNÉE/ANNULÉE sont des sorties
 // alternatives, pas des étapes de ce parcours — elles s'affichent à part.
+// Prise en charge / En traitement / Clôturée ont été retirées du parcours
+// actif (une seule action fait passer de TRANSMITTED à PROCESSED) ; ces
+// statuts restent des valeurs valides pour l'affichage des demandes
+// historiques déjà dans ces états.
 export const MAIN_LIFECYCLE_STEPS: PurchaseRequestStatus[] = [
   'DRAFT',
   'SUBMITTED',
   'IN_VALIDATION',
   'VALIDATED',
   'TRANSMITTED',
-  'TAKEN_OVER',
-  'IN_PROCESS',
   'PROCESSED',
-  'CLOSED',
 ];
 
 export const BRANCH_STATUSES: PurchaseRequestStatus[] = ['REJECTED', 'RETURNED', 'CANCELLED'];

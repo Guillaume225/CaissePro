@@ -33,7 +33,6 @@ import {
   RejectReturnDto,
   CancelPurchaseRequestDto,
   ProcessPurchaseRequestDto,
-  ClosePurchaseRequestDto,
   AddCommentDto,
   ListPurchaseRequestsQueryDto,
   PurchasingListQueryDto,
@@ -56,12 +55,6 @@ const CANCELLABLE_STATUSES = [
   PurchaseRequestStatus.IN_VALIDATION,
   PurchaseRequestStatus.VALIDATED,
   PurchaseRequestStatus.RETURNED,
-];
-
-const PURCHASING_STATUSES = [
-  PurchaseRequestStatus.TRANSMITTED,
-  PurchaseRequestStatus.TAKEN_OVER,
-  PurchaseRequestStatus.IN_PROCESS,
 ];
 
 /** Informational label only — actual purchasing recipients are resolved by DA_PERMISSIONS.PROCESS, not this name. */
@@ -1107,76 +1100,12 @@ export class PurchaseRequestsService {
     };
   }
 
-  async findToProcess(tenantId: string, query: PurchasingListQueryDto) {
-    const ds = await this.tenantDsService.getDataSource(tenantId);
-    const requestRepo = ds.getRepository(PurchaseRequest);
-
-    const page = query.page || 1;
-    const perPage = Math.min(query.perPage || 25, 100);
-
-    const qb = requestRepo.createQueryBuilder('pr');
-    if (query.status) {
-      const statuses = query.status.split(',').map((s) => s.trim());
-      qb.andWhere('pr.status IN (:...statuses)', { statuses });
-    } else {
-      qb.andWhere('pr.status IN (:...statuses)', { statuses: PURCHASING_STATUSES });
-    }
-    this.applyCommonFilters(qb, query, true);
-
-    qb.orderBy('pr.transmittedAt', 'ASC');
-    qb.skip((page - 1) * perPage).take(perPage);
-    const [items, total] = await qb.getManyAndCount();
-    const requesterNames = await this.resolveRequesterNames(ds, items);
-
-    return {
-      data: items.map((r) => this.toResponseDto(r, [], [], [], [], requesterNames)),
-      meta: {
-        page,
-        perPage,
-        total,
-        totalPages: Math.ceil(total / perPage),
-        hasNextPage: page * perPage < total,
-        hasPreviousPage: page > 1,
-      },
-    };
-  }
-
-  /** RG08 */
-  async takeover(tenantId: string, id: string, user: WorkflowUser) {
-    const ds = await this.tenantDsService.getDataSource(tenantId);
-    const requestRepo = ds.getRepository(PurchaseRequest);
-    const historyRepo = ds.getRepository(PurchaseRequestHistory);
-
-    const request = await requestRepo.findOne({ where: { id } });
-    if (!request) throw new NotFoundException('Purchase request not found');
-    if (request.status !== PurchaseRequestStatus.TRANSMITTED) {
-      throw new BadRequestException('Only TRANSMITTED requests can be taken over');
-    }
-
-    const fromStatus = request.status;
-    request.status = PurchaseRequestStatus.TAKEN_OVER;
-    request.takenOverById = user.id;
-    request.takenOverAt = new Date();
-    await requestRepo.save(request);
-
-    await historyRepo.save(
-      historyRepo.create({
-        purchaseRequestId: id,
-        actorId: user.id,
-        action: PurchaseRequestHistoryAction.TAKEN_OVER,
-        fromStatus,
-        toStatus: PurchaseRequestStatus.TAKEN_OVER,
-        comment: null,
-      }),
-    );
-    await this.eventsService.publish(
-      DemandeAchatEvent.TAKEN_OVER,
-      this.basePayload(tenantId, request, { actorId: user.id }),
-    );
-
-    return this.findById(tenantId, id);
-  }
-
+  /**
+   * Directement TRANSMITTED -> PROCESSED ("Bon de commande généré") : les
+   * étapes intermédiaires prise en charge / en traitement / clôturée ont été
+   * retirées du parcours, une seule action fait passer la demande à l'état
+   * final une fois le bon de commande émis.
+   */
   async process(tenantId: string, id: string, dto: ProcessPurchaseRequestDto, user: WorkflowUser) {
     const ds = await this.tenantDsService.getDataSource(tenantId);
     const requestRepo = ds.getRepository(PurchaseRequest);
@@ -1184,12 +1113,13 @@ export class PurchaseRequestsService {
 
     const request = await requestRepo.findOne({ where: { id } });
     if (!request) throw new NotFoundException('Purchase request not found');
-    if (request.status !== PurchaseRequestStatus.TAKEN_OVER) {
-      throw new BadRequestException('Only TAKEN_OVER requests can be moved to processing');
+    if (request.status !== PurchaseRequestStatus.TRANSMITTED) {
+      throw new BadRequestException('Only TRANSMITTED requests can be moved to processed');
     }
 
     const fromStatus = request.status;
-    request.status = PurchaseRequestStatus.IN_PROCESS;
+    request.status = PurchaseRequestStatus.PROCESSED;
+    request.processedAt = new Date();
     request.processingComment = dto.comment || null;
     request.additionalInfo = dto.additionalInfo || null;
     request.expectedProcessingDate = dto.expectedDate || null;
@@ -1200,69 +1130,15 @@ export class PurchaseRequestsService {
       historyRepo.create({
         purchaseRequestId: id,
         actorId: user.id,
-        action: PurchaseRequestHistoryAction.PROCESSING,
-        fromStatus,
-        toStatus: PurchaseRequestStatus.IN_PROCESS,
-        comment: dto.comment || null,
-      }),
-    );
-    await this.eventsService.publish(
-      DemandeAchatEvent.PROCESSING,
-      this.basePayload(tenantId, request, { actorId: user.id }),
-    );
-
-    return this.findById(tenantId, id);
-  }
-
-  /** RG09 */
-  async close(tenantId: string, id: string, dto: ClosePurchaseRequestDto, user: WorkflowUser) {
-    const ds = await this.tenantDsService.getDataSource(tenantId);
-    const requestRepo = ds.getRepository(PurchaseRequest);
-    const historyRepo = ds.getRepository(PurchaseRequestHistory);
-
-    const request = await requestRepo.findOne({ where: { id } });
-    if (!request) throw new NotFoundException('Purchase request not found');
-    if (request.status !== PurchaseRequestStatus.IN_PROCESS) {
-      throw new BadRequestException('Only IN_PROCESS requests can be closed');
-    }
-
-    const now = new Date();
-
-    request.status = PurchaseRequestStatus.PROCESSED;
-    request.processedAt = now;
-    await requestRepo.save(request);
-    await historyRepo.save(
-      historyRepo.create({
-        purchaseRequestId: id,
-        actorId: user.id,
         action: PurchaseRequestHistoryAction.PROCESSED,
-        fromStatus: PurchaseRequestStatus.IN_PROCESS,
+        fromStatus,
         toStatus: PurchaseRequestStatus.PROCESSED,
-        comment: null,
+        comment: dto.comment || null,
       }),
     );
     await this.eventsService.publish(
       DemandeAchatEvent.PROCESSED,
       this.basePayload(tenantId, request, { actorId: user.id }),
-    );
-
-    request.status = PurchaseRequestStatus.CLOSED;
-    request.closedAt = now;
-    request.closeComment = dto.comment;
-    await requestRepo.save(request);
-    await historyRepo.save(
-      historyRepo.create({
-        purchaseRequestId: id,
-        actorId: user.id,
-        action: PurchaseRequestHistoryAction.CLOSED,
-        fromStatus: PurchaseRequestStatus.PROCESSED,
-        toStatus: PurchaseRequestStatus.CLOSED,
-        comment: dto.comment,
-      }),
-    );
-    await this.eventsService.publish(
-      DemandeAchatEvent.CLOSED,
-      this.basePayload(tenantId, request, { actorId: user.id, comment: dto.comment }),
     );
 
     return this.findById(tenantId, id);

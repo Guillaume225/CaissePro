@@ -260,40 +260,10 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
     getEntityId: entityIdFrom('purchaseRequestId'),
   },
 
-  'da.taken_over': {
-    type: NotificationType.DA_TAKEN_OVER,
-    title: 'Demande d’achat prise en charge',
-    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été prise en charge par le service achats.',
-    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
-    getRecipients: recipientFromField('requesterId'),
-    entityType: 'purchase_request',
-    getEntityId: entityIdFrom('purchaseRequestId'),
-  },
-
-  'da.processing': {
-    type: NotificationType.DA_PROCESSING,
-    title: 'Demande d’achat en cours de traitement',
-    message: 'Votre demande d’achat #{{number}} ({{subject}}) est en cours de traitement par le service achats.',
-    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
-    getRecipients: recipientFromField('requesterId'),
-    entityType: 'purchase_request',
-    getEntityId: entityIdFrom('purchaseRequestId'),
-  },
-
   'da.processed': {
     type: NotificationType.DA_PROCESSED,
-    title: 'Demande d’achat traitée',
-    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été traitée.',
-    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
-    getRecipients: recipientFromField('requesterId'),
-    entityType: 'purchase_request',
-    getEntityId: entityIdFrom('purchaseRequestId'),
-  },
-
-  'da.closed': {
-    type: NotificationType.DA_CLOSED,
-    title: 'Demande d’achat clôturée',
-    message: 'Votre demande d’achat #{{number}} ({{subject}}) a été clôturée. {{comment}}',
+    title: 'Bon de commande généré',
+    message: 'Le bon de commande de votre demande d’achat #{{number}} ({{subject}}) a été généré.',
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
     getRecipients: recipientFromField('requesterId'),
     entityType: 'purchase_request',

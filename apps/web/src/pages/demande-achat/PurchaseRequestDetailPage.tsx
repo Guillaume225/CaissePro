@@ -40,11 +40,7 @@ import {
   useRejectPurchaseRequest,
   useReturnPurchaseRequest,
 } from '@/hooks/usePurchaseRequestApprovals';
-import {
-  useTakeoverPurchaseRequest,
-  useProcessPurchaseRequest,
-  useClosePurchaseRequest,
-} from '@/hooks/usePurchasing';
+import { useProcessPurchaseRequest } from '@/hooks/usePurchasing';
 import { useAuthStore } from '@/stores/auth-store';
 import { extractApiErrorMessage } from '@/lib/errors';
 import { formatCFA, formatDate, formatDateTime } from '@/lib/format';
@@ -110,7 +106,7 @@ function ModalShell({
   );
 }
 
-type ActionModal = 'approve' | 'reject' | 'return' | 'cancel' | 'process' | 'close' | null;
+type ActionModal = 'approve' | 'reject' | 'return' | 'cancel' | 'process' | null;
 
 /** Where a branched-off request (rejected/returned/cancelled) left the main path. */
 function branchAnchorStatus(request: PurchaseRequest): (typeof MAIN_LIFECYCLE_STEPS)[number] {
@@ -379,9 +375,7 @@ export default function PurchaseRequestDetailPage() {
   const approveMutation = useApprovePurchaseRequest();
   const rejectMutation = useRejectPurchaseRequest();
   const returnMutation = useReturnPurchaseRequest();
-  const takeoverMutation = useTakeoverPurchaseRequest();
   const processMutation = useProcessPurchaseRequest();
-  const closeMutation = useClosePurchaseRequest();
   const uploadAttachment = useUploadPurchaseRequestAttachment(id ?? '');
   const deleteAttachment = useDeletePurchaseRequestAttachment(id ?? '');
 
@@ -465,9 +459,7 @@ export default function PurchaseRequestDetailPage() {
   const canApprove = hasPermission('da.approve') && isEligibleApprover;
   const canReject = hasPermission('da.reject') && isEligibleApprover;
   const canReturn = hasPermission('da.return') && isEligibleApprover;
-  const canTakeover = hasPermission('da.takeover') && request.status === 'TRANSMITTED';
-  const canProcess = hasPermission('da.process') && request.status === 'TAKEN_OVER';
-  const canClose = hasPermission('da.close') && request.status === 'IN_PROCESS';
+  const canProcess = hasPermission('da.process') && request.status === 'TRANSMITTED';
   const isAwaitingPricing = request.status === 'IN_VALIDATION' && request.currentApprovalLevel == null;
   const canPrice = isAwaitingPricing && hasPermission('da.process');
   const canManageAttachments =
@@ -475,7 +467,7 @@ export default function PurchaseRequestDetailPage() {
   const canReopen = hasPermission('da.process') && request.status === 'CANCELLED';
 
   const hasActions =
-    canEdit || canSubmit || canCancel || canApprove || canReject || canReturn || canTakeover || canProcess || canClose || canReopen;
+    canEdit || canSubmit || canCancel || canApprove || canReject || canReturn || canProcess || canReopen;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -558,26 +550,10 @@ export default function PurchaseRequestDetailPage() {
               {t('demandeAchat.actions.return')}
             </button>
           )}
-          {canTakeover && (
-            <button
-              className="btn-primary"
-              onClick={() => takeoverMutation.mutate(request.id, onErr)}
-              disabled={takeoverMutation.isPending}
-            >
-              <PackageCheck className="h-4 w-4" />
-              {t('demandeAchat.actions.takeover')}
-            </button>
-          )}
           {canProcess && (
             <button className="btn-primary" onClick={() => setActiveModal('process')}>
-              <Wrench className="h-4 w-4" />
+              <PackageCheck className="h-4 w-4" />
               {t('demandeAchat.actions.process')}
-            </button>
-          )}
-          {canClose && (
-            <button className="btn-primary" onClick={() => setActiveModal('close')}>
-              <Lock className="h-4 w-4" />
-              {t('demandeAchat.actions.close')}
             </button>
           )}
           {canReopen && (
@@ -1038,32 +1014,6 @@ export default function PurchaseRequestDetailPage() {
         </div>
       </ModalShell>
 
-      {/* ── Close modal ── */}
-      <ModalShell
-        open={activeModal === 'close'}
-        onClose={closeModal}
-        title={t('demandeAchat.actions.close')}
-        footer={
-          <>
-            <button className="btn-secondary" onClick={closeModal}>
-              {t('common.cancel')}
-            </button>
-            <button
-              className="btn-primary disabled:opacity-50"
-              disabled={!comment.trim() || closeMutation.isPending}
-              onClick={() =>
-                closeMutation.mutate({ id: request.id, comment: comment.trim() }, { onSuccess: closeModal, ...onErr })
-              }
-            >
-              <Lock className="h-4 w-4" />
-              {t('common.confirm')}
-            </button>
-          </>
-        }
-      >
-        <label className="label">{t('demandeAchat.detail.closeCommentRequired')}</label>
-        <textarea className="input" rows={3} autoFocus value={comment} onChange={(e) => setComment(e.target.value)} />
-      </ModalShell>
     </div>
   );
 }
