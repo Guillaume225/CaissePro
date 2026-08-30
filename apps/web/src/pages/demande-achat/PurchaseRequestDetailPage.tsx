@@ -488,7 +488,7 @@ export default function PurchaseRequestDetailPage() {
     canEdit || canSubmit || canCancel || canApprove || canReject || canReturn || canProcess || canReopen;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
@@ -596,258 +596,266 @@ export default function PurchaseRequestDetailPage() {
         </div>
       )}
 
-      {/* General info */}
-      <div className="card space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
-          {t('demandeAchat.form.generalInfo')}
-        </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Field label={t('demandeAchat.fields.requester')} value={request.requesterName ?? '—'} />
-          <Field label={t('demandeAchat.fields.service')} value={request.service} />
-          <Field label={t('demandeAchat.fields.department')} value={request.department} />
-          <Field label={t('demandeAchat.fields.desiredDate')} value={formatDate(request.desiredDate)} />
-          <Field label={t('demandeAchat.fields.project')} value={request.project || '—'} />
-          <Field label={t('demandeAchat.fields.costCenter')} value={request.costCenter || '—'} />
-          <Field label={t('demandeAchat.fields.budget')} value={request.budget || '—'} />
-          <Field label={t('demandeAchat.fields.site')} value={request.site || '—'} />
-        </div>
-        <div className="border-t border-[#e0e6eb] pt-3">
-          <p className="text-xs font-medium text-[#697386]">{t('demandeAchat.fields.justification')}</p>
-          <p className="mt-1 text-sm text-[#0a2540]">{request.justification}</p>
-        </div>
-        {request.urgencyReason && (
-          <div className="border-t border-[#e0e6eb] pt-3">
-            <p className="text-xs font-medium text-[#697386]">{t('demandeAchat.fields.urgencyReason')}</p>
-            <p className="mt-1 text-sm text-[#0a2540]">{request.urgencyReason}</p>
-          </div>
-        )}
-        {request.generalComment && (
-          <div className="border-t border-[#e0e6eb] pt-3">
-            <p className="text-xs font-medium text-[#697386]">{t('demandeAchat.fields.generalComment')}</p>
-            <p className="mt-1 text-sm text-[#0a2540]">{request.generalComment}</p>
-          </div>
-        )}
-      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        {/* ── Left column: attachments (top) + history (below) ── */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Attachments */}
+          <div className="card space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
+              {t('demandeAchat.form.attachments')}
+            </h2>
 
-      {canPrice && (
-        <PricingSection
-          request={request}
-          updatePricingMutation={updatePricingMutation}
-          submitToCircuitMutation={submitToCircuitMutation}
-        />
-      )}
-      {isAwaitingPricing && !canPrice && (
-        <div className="card flex items-center gap-2 border-amber-200 bg-amber-50 text-sm text-amber-800">
-          <Calculator className="h-4 w-4 shrink-0" />
-          {t(
-            'demandeAchat.detail.awaitingPricing',
-            'Cette demande attend le chiffrage (prix + devis) par le service achats avant son entrée dans le circuit de validation.',
-          )}
-        </div>
-      )}
-
-      {/* Lines */}
-      <div className="card space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
-          {t('demandeAchat.form.lines')}
-        </h2>
-        <div className="overflow-x-auto rounded-md border border-[#e0e6eb]">
-          <table className="w-full border-collapse text-sm">
-            <thead className="border-b border-[#e0e6eb] bg-[#f6f9fc]">
-              <tr className="text-left text-xs font-medium text-[#697386]">
-                <th className="px-3 py-2">{t('demandeAchat.fields.designation')}</th>
-                <th className="px-3 py-2">{t('demandeAchat.fields.quantity')}</th>
-                <th className="px-3 py-2">{t('demandeAchat.fields.unit')}</th>
-                <th className="px-3 py-2 text-right">{t('demandeAchat.fields.estimatedUnitPrice')}</th>
-                <th className="px-3 py-2 text-right">{t('demandeAchat.fields.estimatedAmount')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {request.lines.map((l, i) => (
-                <tr key={l.id} className={`border-b border-[#e0e6eb] ${i % 2 === 1 ? 'bg-[#fafbfc]' : ''}`}>
-                  <td className="px-3 py-2">
-                    <p className="font-medium text-[#0a2540]">{l.designation}</p>
-                    {l.description && <p className="text-xs text-[#aab7c4]">{l.description}</p>}
-                  </td>
-                  <td className="px-3 py-2 text-[#697386]">{l.quantity}</td>
-                  <td className="px-3 py-2 text-[#697386]">{l.unit}</td>
-                  <td className="px-3 py-2 text-right text-[#697386]">
-                    {formatCFA(l.estimatedUnitPrice)}
-                  </td>
-                  <td className="px-3 py-2 text-right font-medium text-[#0a2540]">
-                    {formatCFA(l.estimatedAmount)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t border-[#e0e6eb] bg-[#f6f9fc]">
-                <td colSpan={4} className="px-3 py-2 text-right text-sm font-semibold text-[#0a2540]">
-                  {t('common.total')}
-                </td>
-                <td className="px-3 py-2 text-right text-sm font-bold text-brand-gold">
-                  {formatCFA(request.totalEstimatedAmount)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      {/* Attachments */}
-      <div className="card space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
-          {t('demandeAchat.form.attachments')}
-        </h2>
-
-        {canManageAttachments && (
-          <div className="flex items-center gap-2">
-            <select
-              value={docType}
-              onChange={(e) => setDocType(e.target.value as PurchaseRequestDocumentType)}
-              className="input h-9 w-56"
-            >
-              {DOCUMENT_TYPES.map((dt) => (
-                <option key={dt} value={dt}>
-                  {t(`demandeAchat.documentType.${dt}`)}
-                </option>
-              ))}
-            </select>
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(false);
-                handleFiles(e.dataTransfer.files);
-              }}
-              className={cn(
-                'flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-3 text-sm transition-colors',
-                dragOver ? 'border-brand-gold bg-brand-gold/5' : 'border-gray-300 text-gray-500',
-              )}
-            >
-              <Upload className="h-4 w-4" />
-              {t('demandeAchat.form.dropFiles')}
-              <label className="cursor-pointer text-brand-gold hover:underline">
-                {t('demandeAchat.form.browseFiles')}
-                <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
-              </label>
-            </div>
-          </div>
-        )}
-
-        {request.attachments.length > 0 ? (
-          <ul className="divide-y divide-[#e0e6eb]">
-            {request.attachments.map((a) => (
-              <li key={a.id} className="flex items-center gap-2 py-2 text-sm">
-                <Paperclip className="h-4 w-4 text-[#aab7c4]" />
-                <button
-                  type="button"
-                  onClick={() => downloadAttachment(a.id, a.fileName)}
-                  disabled={downloadingId === a.id}
-                  className="text-[#0a2540] underline decoration-dotted hover:text-brand-gold disabled:opacity-50"
+            {canManageAttachments && (
+              <div className="flex items-center gap-2">
+                <select
+                  value={docType}
+                  onChange={(e) => setDocType(e.target.value as PurchaseRequestDocumentType)}
+                  className="input h-9 w-56"
                 >
-                  {a.fileName}
-                </button>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-600">
-                  {t(`demandeAchat.documentType.${a.documentType}`)}
-                </span>
-                <span className="ml-auto text-xs text-[#aab7c4]">{formatDateTime(a.uploadedAt)}</span>
-                <button
-                  type="button"
-                  onClick={() => downloadAttachment(a.id, a.fileName)}
-                  disabled={downloadingId === a.id}
-                  className="rounded-md p-1.5 text-[#697386] hover:bg-zinc-100 disabled:opacity-50"
-                  title={t('common.download', 'Télécharger')}
-                >
-                  <Download className="h-4 w-4" />
-                </button>
-                {canManageAttachments && (
-                  <button
-                    type="button"
-                    onClick={() => deleteAttachment.mutate(a.id, onErr)}
-                    className="rounded-md p-1.5 text-[#697386] hover:bg-red-50 hover:text-red-600"
-                    title={t('common.delete')}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-[#aab7c4]">{t('demandeAchat.form.noAttachments')}</p>
-        )}
-      </div>
-
-      {/* History timeline + comments */}
-      <div className="card space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
-          {t('demandeAchat.detail.history')}
-        </h2>
-        <div className="space-y-4">
-          {request.history.length === 0 && (
-            <p className="text-sm text-[#aab7c4]">{t('demandeAchat.detail.noHistory')}</p>
-          )}
-          {request.history.map((h) => {
-            const Icon = HISTORY_ICON[h.action] || Clock;
-            const isComment = h.action === 'COMMENT';
-            return (
-              <div key={h.id} className="flex gap-3">
+                  {DOCUMENT_TYPES.map((dt) => (
+                    <option key={dt} value={dt}>
+                      {t(`demandeAchat.documentType.${dt}`)}
+                    </option>
+                  ))}
+                </select>
                 <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    handleFiles(e.dataTransfer.files);
+                  }}
                   className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
-                    isComment ? 'bg-blue-100 text-blue-600' : 'bg-zinc-100 text-zinc-600',
+                    'flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-3 text-sm transition-colors',
+                    dragOver ? 'border-brand-gold bg-brand-gold/5' : 'border-gray-300 text-gray-500',
                   )}
                 >
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-[#0a2540]">
-                      {h.actorName || t('demandeAchat.detail.system')}
-                    </p>
-                    <span className="text-xs text-[#aab7c4]">{formatDateTime(h.createdAt)}</span>
-                  </div>
-                  <p className="text-xs text-[#697386]">
-                    {t(`demandeAchat.history.${h.action}`)}
-                    {h.toStatus && ` → ${t(`demandeAchat.status.${h.toStatus}`)}`}
-                  </p>
-                  {h.comment && (
-                    <div className="mt-1 rounded-md bg-zinc-50 px-3 py-2 text-sm text-[#0a2540]">
-                      {h.comment}
-                    </div>
-                  )}
+                  <Upload className="h-4 w-4" />
+                  {t('demandeAchat.form.dropFiles')}
+                  <label className="cursor-pointer text-brand-gold hover:underline">
+                    {t('demandeAchat.form.browseFiles')}
+                    <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+                  </label>
                 </div>
               </div>
-            );
-          })}
+            )}
+
+            {request.attachments.length > 0 ? (
+              <ul className="divide-y divide-[#e0e6eb]">
+                {request.attachments.map((a) => (
+                  <li key={a.id} className="flex items-center gap-2 py-2 text-sm">
+                    <Paperclip className="h-4 w-4 text-[#aab7c4]" />
+                    <button
+                      type="button"
+                      onClick={() => downloadAttachment(a.id, a.fileName)}
+                      disabled={downloadingId === a.id}
+                      className="text-[#0a2540] underline decoration-dotted hover:text-brand-gold disabled:opacity-50"
+                    >
+                      {a.fileName}
+                    </button>
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-600">
+                      {t(`demandeAchat.documentType.${a.documentType}`)}
+                    </span>
+                    <span className="ml-auto text-xs text-[#aab7c4]">{formatDateTime(a.uploadedAt)}</span>
+                    <button
+                      type="button"
+                      onClick={() => downloadAttachment(a.id, a.fileName)}
+                      disabled={downloadingId === a.id}
+                      className="rounded-md p-1.5 text-[#697386] hover:bg-zinc-100 disabled:opacity-50"
+                      title={t('common.download', 'Télécharger')}
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+                    {canManageAttachments && (
+                      <button
+                        type="button"
+                        onClick={() => deleteAttachment.mutate(a.id, onErr)}
+                        className="rounded-md p-1.5 text-[#697386] hover:bg-red-50 hover:text-red-600"
+                        title={t('common.delete')}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[#aab7c4]">{t('demandeAchat.form.noAttachments')}</p>
+            )}
+          </div>
+
+          {/* History timeline + comments */}
+          <div className="card space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
+              {t('demandeAchat.detail.history')}
+            </h2>
+            <div className="space-y-4">
+              {request.history.length === 0 && (
+                <p className="text-sm text-[#aab7c4]">{t('demandeAchat.detail.noHistory')}</p>
+              )}
+              {request.history.map((h) => {
+                const Icon = HISTORY_ICON[h.action] || Clock;
+                const isComment = h.action === 'COMMENT';
+                return (
+                  <div key={h.id} className="flex gap-3">
+                    <div
+                      className={cn(
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+                        isComment ? 'bg-blue-100 text-blue-600' : 'bg-zinc-100 text-zinc-600',
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-[#0a2540]">
+                          {h.actorName || t('demandeAchat.detail.system')}
+                        </p>
+                        <span className="text-xs text-[#aab7c4]">{formatDateTime(h.createdAt)}</span>
+                      </div>
+                      <p className="text-xs text-[#697386]">
+                        {t(`demandeAchat.history.${h.action}`)}
+                        {h.toStatus && ` → ${t(`demandeAchat.status.${h.toStatus}`)}`}
+                      </p>
+                      {h.comment && (
+                        <div className="mt-1 rounded-md bg-zinc-50 px-3 py-2 text-sm text-[#0a2540]">
+                          {h.comment}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Comment box */}
+            <div className="flex gap-2 border-t border-[#e0e6eb] pt-4">
+              <input
+                className="input"
+                placeholder={t('demandeAchat.detail.commentPlaceholder')}
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+              />
+              <button
+                className="btn-secondary disabled:opacity-50"
+                disabled={!commentInput.trim() || commentMutation.isPending}
+                onClick={() => {
+                  commentMutation.mutate(
+                    { id: request.id, message: commentInput.trim() },
+                    { onSuccess: () => setCommentInput(''), ...onErr },
+                  );
+                }}
+              >
+                <MessageSquare className="h-4 w-4" />
+                {t('demandeAchat.detail.addComment')}
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Comment box */}
-        <div className="flex gap-2 border-t border-[#e0e6eb] pt-4">
-          <input
-            className="input"
-            placeholder={t('demandeAchat.detail.commentPlaceholder')}
-            value={commentInput}
-            onChange={(e) => setCommentInput(e.target.value)}
-          />
-          <button
-            className="btn-secondary disabled:opacity-50"
-            disabled={!commentInput.trim() || commentMutation.isPending}
-            onClick={() => {
-              commentMutation.mutate(
-                { id: request.id, message: commentInput.trim() },
-                { onSuccess: () => setCommentInput(''), ...onErr },
-              );
-            }}
-          >
-            <MessageSquare className="h-4 w-4" />
-            {t('demandeAchat.detail.addComment')}
-          </button>
+        {/* ── Right column: general info, pricing, lines ── */}
+        <div className="space-y-6 lg:col-span-3">
+          {/* General info */}
+          <div className="card space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
+              {t('demandeAchat.form.generalInfo')}
+            </h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <Field label={t('demandeAchat.fields.requester')} value={request.requesterName ?? '—'} />
+              <Field label={t('demandeAchat.fields.service')} value={request.service} />
+              <Field label={t('demandeAchat.fields.department')} value={request.department} />
+              <Field label={t('demandeAchat.fields.desiredDate')} value={formatDate(request.desiredDate)} />
+              <Field label={t('demandeAchat.fields.project')} value={request.project || '—'} />
+              <Field label={t('demandeAchat.fields.costCenter')} value={request.costCenter || '—'} />
+              <Field label={t('demandeAchat.fields.budget')} value={request.budget || '—'} />
+              <Field label={t('demandeAchat.fields.site')} value={request.site || '—'} />
+            </div>
+            <div className="border-t border-[#e0e6eb] pt-3">
+              <p className="text-xs font-medium text-[#697386]">{t('demandeAchat.fields.justification')}</p>
+              <p className="mt-1 text-sm text-[#0a2540]">{request.justification}</p>
+            </div>
+            {request.urgencyReason && (
+              <div className="border-t border-[#e0e6eb] pt-3">
+                <p className="text-xs font-medium text-[#697386]">{t('demandeAchat.fields.urgencyReason')}</p>
+                <p className="mt-1 text-sm text-[#0a2540]">{request.urgencyReason}</p>
+              </div>
+            )}
+            {request.generalComment && (
+              <div className="border-t border-[#e0e6eb] pt-3">
+                <p className="text-xs font-medium text-[#697386]">{t('demandeAchat.fields.generalComment')}</p>
+                <p className="mt-1 text-sm text-[#0a2540]">{request.generalComment}</p>
+              </div>
+            )}
+          </div>
+
+          {canPrice && (
+            <PricingSection
+              request={request}
+              updatePricingMutation={updatePricingMutation}
+              submitToCircuitMutation={submitToCircuitMutation}
+            />
+          )}
+          {isAwaitingPricing && !canPrice && (
+            <div className="card flex items-center gap-2 border-amber-200 bg-amber-50 text-sm text-amber-800">
+              <Calculator className="h-4 w-4 shrink-0" />
+              {t(
+                'demandeAchat.detail.awaitingPricing',
+                'Cette demande attend le chiffrage (prix + devis) par le service achats avant son entrée dans le circuit de validation.',
+              )}
+            </div>
+          )}
+
+          {/* Lines */}
+          <div className="card space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#697386]">
+              {t('demandeAchat.form.lines')}
+            </h2>
+            <div className="overflow-x-auto rounded-md border border-[#e0e6eb]">
+              <table className="w-full border-collapse text-sm">
+                <thead className="border-b border-[#e0e6eb] bg-[#f6f9fc]">
+                  <tr className="text-left text-xs font-medium text-[#697386]">
+                    <th className="px-3 py-2">{t('demandeAchat.fields.designation')}</th>
+                    <th className="px-3 py-2">{t('demandeAchat.fields.quantity')}</th>
+                    <th className="px-3 py-2">{t('demandeAchat.fields.unit')}</th>
+                    <th className="px-3 py-2 text-right">{t('demandeAchat.fields.estimatedUnitPrice')}</th>
+                    <th className="px-3 py-2 text-right">{t('demandeAchat.fields.estimatedAmount')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {request.lines.map((l, i) => (
+                    <tr key={l.id} className={`border-b border-[#e0e6eb] ${i % 2 === 1 ? 'bg-[#fafbfc]' : ''}`}>
+                      <td className="px-3 py-2">
+                        <p className="font-medium text-[#0a2540]">{l.designation}</p>
+                        {l.description && <p className="text-xs text-[#aab7c4]">{l.description}</p>}
+                      </td>
+                      <td className="px-3 py-2 text-[#697386]">{l.quantity}</td>
+                      <td className="px-3 py-2 text-[#697386]">{l.unit}</td>
+                      <td className="px-3 py-2 text-right text-[#697386]">
+                        {formatCFA(l.estimatedUnitPrice)}
+                      </td>
+                      <td className="px-3 py-2 text-right font-medium text-[#0a2540]">
+                        {formatCFA(l.estimatedAmount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-[#e0e6eb] bg-[#f6f9fc]">
+                    <td colSpan={4} className="px-3 py-2 text-right text-sm font-semibold text-[#0a2540]">
+                      {t('common.total')}
+                    </td>
+                    <td className="px-3 py-2 text-right text-sm font-bold text-brand-gold">
+                      {formatCFA(request.totalEstimatedAmount)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
