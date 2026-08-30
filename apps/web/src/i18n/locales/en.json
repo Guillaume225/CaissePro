@@ -401,30 +401,7 @@
     "noAlerts": "No active alerts",
     "salesForecast": "7-Day Sales Forecast",
     "forecastTrend": "Predicted trend",
-    "forecastDisclaimer": "AI-based forecast — for informational purposes only",
-    "flows": {
-      "title": "General Dashboard",
-      "subtitle": "Quickly access each module's workflow",
-      "open": "Open",
-      "expense": {
-        "description": "Entry, tracking and expense control"
-      },
-      "admin": {
-        "description": "Users, roles and system configuration"
-      },
-      "manager-caisse": {
-        "description": "Cash register configuration, closing and accounting"
-      },
-      "decision": {
-        "description": "Reports, analytics and AI-powered insights"
-      },
-      "fne": {
-        "description": "Electronic standardized invoicing (Côte d'Ivoire)"
-      },
-      "demande-achat": {
-        "description": "Purchase requests, pricing, validation and purchasing tracking"
-      }
-    }
+    "forecastDisclaimer": "AI-based forecast — for informational purposes only"
   },
   "dashboards": {
     "expense": {

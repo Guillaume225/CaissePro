@@ -20,19 +20,19 @@ interface TabState {
   closeAllTabs: () => void;
 }
 
-const GENERAL_TAB: Tab = {
-  id: '/general',
-  path: '/general',
-  labelKey: 'nav.general',
-  icon: 'Home',
+const DASHBOARD_TAB: Tab = {
+  id: '/',
+  path: '/',
+  labelKey: 'nav.dashboard',
+  icon: 'LayoutDashboard',
   pinned: true,
 };
 
 export const useTabStore = create<TabState>()(
   persist(
     (set, get) => ({
-      tabs: [GENERAL_TAB],
-      activeTabId: '/general',
+      tabs: [DASHBOARD_TAB],
+      activeTabId: '/',
 
       openTab: (tab) => {
         const { tabs } = get();
@@ -52,7 +52,7 @@ export const useTabStore = create<TabState>()(
 
         const newTabs = tabs.filter((t) => t.id !== id);
         if (newTabs.length === 0) {
-          set({ tabs: [GENERAL_TAB], activeTabId: '/general' });
+          set({ tabs: [DASHBOARD_TAB], activeTabId: '/' });
           return;
         }
         if (activeTabId === id) {
@@ -73,11 +73,25 @@ export const useTabStore = create<TabState>()(
       },
 
       closeAllTabs: () => {
-        set({ tabs: [GENERAL_TAB], activeTabId: '/general' });
+        set({ tabs: [DASHBOARD_TAB], activeTabId: '/' });
       },
     }),
     {
       name: 'caisseflow-tabs',
+      version: 1,
+      // v0 -> v1: the pinned "Général" tab (/general) was replaced by a
+      // pinned "Tableau de bord" tab (/) — rewrite any session's persisted
+      // tabs so it doesn't keep resurrecting the removed tab forever.
+      migrate: (persistedState, version) => {
+        const state = persistedState as { tabs?: Tab[]; activeTabId?: string | null } | undefined;
+        if (version >= 1 || !state) return state;
+
+        const tabs = (state.tabs ?? []).map((t) => (t.id === '/general' ? DASHBOARD_TAB : t));
+        if (!tabs.some((t) => t.id === '/')) tabs.unshift(DASHBOARD_TAB);
+
+        const activeTabId = state.activeTabId === '/general' ? '/' : state.activeTabId;
+        return { ...state, tabs, activeTabId };
+      },
       partialize: (state) => ({
         tabs: state.tabs,
         activeTabId: state.activeTabId,

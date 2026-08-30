@@ -401,30 +401,7 @@
     "noAlerts": "Aucune alerte en cours",
     "salesForecast": "Prévision ventes 7j",
     "forecastTrend": "Tendance prévue",
-    "forecastDisclaimer": "Prévision basée sur l'IA — à titre indicatif",
-    "flows": {
-      "title": "Tableau de bord général",
-      "subtitle": "Accédez rapidement aux flux de chaque module",
-      "open": "Ouvrir",
-      "expense": {
-        "description": "Saisie, suivi et contrôle des dépenses"
-      },
-      "admin": {
-        "description": "Utilisateurs, rôles et configuration système"
-      },
-      "manager-caisse": {
-        "description": "Configuration, clôture et comptabilité de la caisse"
-      },
-      "decision": {
-        "description": "Rapports, analyses et aide à la décision IA"
-      },
-      "fne": {
-        "description": "Facturation normalisée électronique (Côte d'Ivoire)"
-      },
-      "demande-achat": {
-        "description": "Demandes d'achat, chiffrage, validation et suivi des achats"
-      }
-    }
+    "forecastDisclaimer": "Prévision basée sur l'IA — à titre indicatif"
   },
   "dashboards": {
     "expense": {

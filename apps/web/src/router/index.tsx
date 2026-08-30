@@ -7,7 +7,6 @@ import { EmployeeGuard } from '@/guards/EmployeeGuard';
 // ── Lazy-loaded pages ───────────────────────────
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const GeneralPage = lazy(() => import('@/pages/GeneralPage'));
 const DemandePage = lazy(() => import('@/pages/DemandePage'));
 const EmployeeLoginPage = lazy(() => import('@/pages/EmployeeLoginPage'));
 
@@ -133,14 +132,6 @@ const router = createBrowserRouter(
           element: (
             <SuspenseWrapper>
               <DashboardPage />
-            </SuspenseWrapper>
-          ),
-        },
-        {
-          path: 'general',
-          element: (
-            <SuspenseWrapper>
-              <GeneralPage />
             </SuspenseWrapper>
           ),
         },
