@@ -301,7 +301,7 @@ const modules: ModuleDef[] = [
             to: '/demande-achat/achats',
             labelKey: 'modules.demande-achat.purchasing',
             icon: PackageSearch,
-            permission: 'da.takeover',
+            permission: 'da.process',
           },
           {
             to: '/demande-achat/all',
