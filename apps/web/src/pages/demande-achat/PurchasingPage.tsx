@@ -56,7 +56,7 @@ export default function PurchasingPage() {
               : 'text-[#697386] hover:text-[#0a2540]'
           }`}
         >
-          {t('demandeAchat.purchasing.inCircuit', 'En circuit de validation')}
+          {t('demandeAchat.purchasing.inCircuit', 'Encours de validation')}
           {view === 'in-circuit' && inCircuitQuery.data?.meta.total
             ? ` (${inCircuitQuery.data.meta.total})`
             : ''}

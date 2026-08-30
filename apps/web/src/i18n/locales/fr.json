@@ -289,7 +289,7 @@
       "subtitle": "Espace du service achats",
       "empty": "Aucune demande à traiter",
       "toPrice": "À chiffrer",
-      "inCircuit": "En circuit de validation",
+      "inCircuit": "Encours de validation",
       "approvalLevel": "Palier"
     },
     "dashboard": {
