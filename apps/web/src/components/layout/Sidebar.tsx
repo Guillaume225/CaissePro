@@ -263,6 +263,18 @@ const modules: ModuleDef[] = [
     bgColor: 'bg-sky-500/15',
     sections: [
       {
+        titleKey: 'modules.demande-achat.overview_section',
+        items: [
+          {
+            to: '/demande-achat/dashboard',
+            labelKey: 'modules.demande-achat.dashboard',
+            icon: LayoutDashboard,
+            permission: 'da.view_report',
+          },
+          { to: '/notifications', labelKey: 'nav.notifications', icon: Bell },
+        ],
+      },
+      {
         titleKey: 'modules.demande-achat.myRequests_section',
         items: [
           {
@@ -305,18 +317,6 @@ const modules: ModuleDef[] = [
             icon: ListChecks,
             permission: 'da.view_all',
           },
-        ],
-      },
-      {
-        titleKey: 'modules.demande-achat.overview_section',
-        items: [
-          {
-            to: '/demande-achat/dashboard',
-            labelKey: 'modules.demande-achat.dashboard',
-            icon: LayoutDashboard,
-            permission: 'da.view_report',
-          },
-          { to: '/notifications', labelKey: 'nav.notifications', icon: Bell },
         ],
       },
       {
