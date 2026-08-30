@@ -19,6 +19,7 @@ import { TenantDataSourceService } from '../tenant/tenant-datasource.service';
 
 const FIELD_SEPARATOR = ';';
 const LINE_SEPARATOR = '\n';
+const SAGE_PRODUCT_CODE = 'PROD-DIVERS';
 
 export interface SagePoPostResult {
   success: boolean;
@@ -172,7 +173,9 @@ export class SagePurchaseOrderService {
 
   /**
    * Reference DA;DateBC;CodeFournisseur;DesignationProduit;CodeProduit;PrixUnitaire;Qte
-   * One line per purchase-request line.
+   * One line per purchase-request line. CodeProduit is always "PROD-DIVERS"
+   * for every bon de commande — e-DA lines aren't matched to a Sage product
+   * catalog, they're all booked under this single generic product code.
    */
   private buildRequestBody(request: PurchaseRequest, lines: PurchaseRequestLine[]): string {
     const dateBc = this.formatDate(request.processedAt ?? new Date());
@@ -182,7 +185,7 @@ export class SagePurchaseOrderService {
         dateBc,
         request.supplierCode ?? '',
         this.sanitizeForSage(l.designation).substring(0, 100),
-        l.articleReference ?? '',
+        SAGE_PRODUCT_CODE,
         this.formatAmount(Number(l.estimatedUnitPrice)),
         this.formatAmount(Number(l.quantity)),
       ].join(FIELD_SEPARATOR),
