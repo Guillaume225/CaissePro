@@ -14,15 +14,18 @@ import {
   Landmark,
   FileCheck2,
   ShoppingCart,
+  CheckCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { useUnreadCount } from '@/hooks/useDashboard';
+import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useDashboard';
 import { useAuthStore } from '@/stores/auth-store';
 import { useSwitchCompany } from '@/hooks/useAdmin';
 import { useModuleStore, type ModuleId } from '@/stores/module-store';
 import { useTabStore } from '@/stores/tab-store';
+import { getNotificationRoute } from '@/lib/notificationRoutes';
+import type { AppNotification } from '@/types/dashboard';
 
 /* ─── Module definitions (Header) ─────────────── */
 interface HeaderModule {
@@ -139,7 +142,11 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [companyOpen, setCompanyOpen] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const { data: notificationCount = 0 } = useUnreadCount();
+  const { data: notifications = [] } = useNotifications();
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
   const { user } = useAuthStore();
   const switchCompany = useSwitchCompany();
   const { activeModule, setActiveModule } = useModuleStore();
@@ -150,6 +157,7 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
   const companyRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -158,10 +166,18 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
       if (companyRef.current && !companyRef.current.contains(target)) setCompanyOpen(false);
       if (searchRef.current && !searchRef.current.contains(target)) setSearchOpen(false);
       if (langRef.current && !langRef.current.contains(target)) setLangOpen(false);
+      if (notifRef.current && !notifRef.current.contains(target)) setNotifOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleNotifClick = (notif: AppNotification) => {
+    if (!notif.isRead) markAsRead.mutate(notif.id);
+    const route = getNotificationRoute(notif.entityType, notif.entityId);
+    if (route) navigate(route);
+    setNotifOpen(false);
+  };
 
   // ── Module filtering ─────────────────────────
   const visibleModules = useMemo(() => {
@@ -359,18 +375,86 @@ export function Header({ onAIClick }: { onAIClick?: () => void }) {
         </div>
 
         {/* Notifications */}
-        <Link
-          to="/notifications"
-          className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4.5 w-4.5" />
-          {notificationCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-              {notificationCount > 99 ? '99+' : notificationCount}
-            </span>
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setNotifOpen(!notifOpen)}
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4.5 w-4.5" />
+            {notificationCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
+          </button>
+          {notifOpen && (
+            <div className="absolute right-0 top-full z-50 mt-1 w-96 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2.5">
+                <span className="text-sm font-semibold text-gray-900">
+                  {t('notifications.title')}
+                </span>
+                {notificationCount > 0 && (
+                  <button
+                    className="flex items-center gap-1 text-xs font-medium text-brand-gold hover:text-brand-gold-dark disabled:opacity-50"
+                    onClick={() => markAllAsRead.mutate()}
+                    disabled={markAllAsRead.isPending}
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" />
+                    {t('notifications.markAllRead')}
+                  </button>
+                )}
+              </div>
+              <div className="max-h-96 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+                    <Bell className="h-8 w-8 text-gray-200" />
+                    <p className="text-sm text-gray-400">{t('notifications.noNotifications')}</p>
+                  </div>
+                ) : (
+                  notifications.slice(0, 8).map((notif) => (
+                    <button
+                      key={notif.id}
+                      onClick={() => handleNotifClick(notif)}
+                      className={cn(
+                        'flex w-full items-start gap-3 border-b border-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-50',
+                        !notif.isRead && 'bg-brand-gold/5',
+                      )}
+                    >
+                      <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-brand-gold" style={{ visibility: notif.isRead ? 'hidden' : 'visible' }} />
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={cn(
+                            'truncate text-sm',
+                            notif.isRead ? 'font-normal text-gray-700' : 'font-semibold text-gray-900',
+                          )}
+                        >
+                          {notif.title}
+                        </p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">{notif.message}</p>
+                        <span className="mt-1 block text-[10px] text-gray-400">
+                          {new Date(notif.createdAt).toLocaleString([], {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+              <Link
+                to="/notifications"
+                onClick={() => setNotifOpen(false)}
+                className="block border-t border-gray-100 px-4 py-2.5 text-center text-xs font-medium text-brand-gold hover:bg-gray-50"
+              >
+                {t('notifications.viewAll', 'Voir toutes les notifications')}
+              </Link>
+            </div>
           )}
-        </Link>
+        </div>
 
         {/* Language selector */}
         <div className="relative" ref={langRef}>

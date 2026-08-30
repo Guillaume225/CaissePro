@@ -539,7 +539,8 @@
     "noNotifications": "Aucune notification",
     "today": "Aujourd'hui",
     "yesterday": "Hier",
-    "earlier": "Plus ancien"
+    "earlier": "Plus ancien",
+    "viewAll": "Voir toutes les notifications"
   },
   "chatbot": {
     "placeholder": "Posez votre question...",

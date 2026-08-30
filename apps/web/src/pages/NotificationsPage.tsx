@@ -19,6 +19,7 @@ import {
   useMarkAsRead,
   useMarkAllAsRead,
 } from '@/hooks/useDashboard';
+import { getNotificationRoute } from '@/lib/notificationRoutes';
 import type { AppNotification, NotificationType } from '@/types/dashboard';
 
 const NOTIF_TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
@@ -63,7 +64,8 @@ export default function NotificationsPage() {
 
   const handleClick = (notif: AppNotification) => {
     if (!notif.isRead) markAsRead.mutate(notif.id);
-    if (notif.entityRoute) navigate(notif.entityRoute);
+    const route = getNotificationRoute(notif.entityType, notif.entityId);
+    if (route) navigate(route);
   };
 
   return (
@@ -146,7 +148,9 @@ export default function NotificationsPage() {
                     )}
                   >
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50">
-                      {NOTIF_TYPE_ICONS[notif.type]}
+                      {(NOTIF_TYPE_ICONS as Record<string, React.ReactNode>)[notif.type] ?? (
+                        <Bell className="h-4 w-4 text-gray-400" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
