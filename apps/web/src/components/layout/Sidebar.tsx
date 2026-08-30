@@ -16,7 +16,6 @@ import {
   FolderTree,
   Cog,
   ClipboardList,
-  Bell,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -97,7 +96,6 @@ const modules: ModuleDef[] = [
         titleKey: 'modules.expense.tracking',
         items: [
           { to: '/expenses/cash-reports', labelKey: 'modules.expense.cashReports', icon: Printer },
-          { to: '/notifications', labelKey: 'nav.notifications', icon: Bell },
         ],
       },
     ],
@@ -123,10 +121,6 @@ const modules: ModuleDef[] = [
           { to: '/fne/products', labelKey: 'modules.fne.products', icon: ShoppingBag },
           { to: '/fne/accounting', labelKey: 'modules.fne.accounting', icon: BookOpen },
         ],
-      },
-      {
-        titleKey: 'modules.fne.tracking',
-        items: [{ to: '/notifications', labelKey: 'nav.notifications', icon: Bell }],
       },
     ],
   },
@@ -167,7 +161,6 @@ const modules: ModuleDef[] = [
         items: [
           { to: '/admin/audit', labelKey: 'modules.admin.audit', icon: ClipboardList },
           { to: '/admin/report-designer', labelKey: 'modules.admin.reportDesigner', icon: Printer },
-          { to: '/notifications', labelKey: 'nav.notifications', icon: Bell },
         ],
       },
     ],
@@ -271,7 +264,6 @@ const modules: ModuleDef[] = [
             icon: LayoutDashboard,
             permission: 'da.view_report',
           },
-          { to: '/notifications', labelKey: 'nav.notifications', icon: Bell },
         ],
       },
       {
