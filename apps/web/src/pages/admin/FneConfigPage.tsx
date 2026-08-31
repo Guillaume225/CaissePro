@@ -142,6 +142,7 @@ export default function FneConfigPage() {
     regimeImposition: '',
     centreImpots: '',
     bankRef: '',
+    defaultFooter: '',
   });
   const [settingsSaved, setSettingsSaved] = useState(false);
 
@@ -239,6 +240,7 @@ export default function FneConfigPage() {
         regimeImposition: fneSetting.regimeImposition ?? '',
         centreImpots: fneSetting.centreImpots ?? '',
         bankRef: fneSetting.bankRef ?? '',
+        defaultFooter: fneSetting.defaultFooter ?? '',
       });
     } else if (!settingLoading && settingsCompanyId) {
       setSettingsForm({
@@ -251,6 +253,7 @@ export default function FneConfigPage() {
         regimeImposition: '',
         centreImpots: '',
         bankRef: '',
+        defaultFooter: '',
       });
     }
   }, [fneSetting, settingLoading, settingsCompanyId]);
@@ -617,6 +620,7 @@ export default function FneConfigPage() {
       regimeImposition: settingsForm.regimeImposition || undefined,
       centreImpots: settingsForm.centreImpots || undefined,
       bankRef: settingsForm.bankRef || undefined,
+      defaultFooter: settingsForm.defaultFooter || undefined,
     });
     setSettingsSaved(true);
     setTimeout(() => setSettingsSaved(false), 3000);
@@ -847,6 +851,26 @@ export default function FneConfigPage() {
                     maxLength={500}
                     className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                   />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    {t('admin.fneConfig.defaultFooter', 'Pied de page')}
+                  </label>
+                  <input
+                    value={settingsForm.defaultFooter}
+                    onChange={(e) =>
+                      setSettingsForm((f) => ({ ...f, defaultFooter: e.target.value }))
+                    }
+                    placeholder="Ex: Merci de votre confiance"
+                    maxLength={500}
+                    className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
+                  />
+                  <p className="text-xs text-gray-400">
+                    {t(
+                      'admin.fneConfig.defaultFooterHint',
+                      'Repris automatiquement dans le champ "Pied de page" à la création d\'une nouvelle facture',
+                    )}
+                  </p>
                 </div>
               </div>
             </div>

@@ -22,6 +22,7 @@ import {
   Package,
 } from 'lucide-react';
 import { useCreateFneInvoice, useUpdateFneInvoice } from '@/hooks/useFneInvoices';
+import { useActiveFneSetting } from '@/hooks/useFneSettings';
 import { useFneClients } from '@/hooks/useFneClients';
 import { useFneProducts } from '@/hooks/useFneProducts';
 import { useFnePointsOfSale } from '@/hooks/useFnePointsOfSale';
@@ -205,6 +206,13 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
   const [establishment, setEstablishment] = useState(editInvoice?.establishment ?? '');
   const [commercialMessage, setCommercialMessage] = useState(editInvoice?.commercialMessage ?? '');
   const [footer, setFooter] = useState(editInvoice?.footer ?? '');
+  const { data: activeFneSetting } = useActiveFneSetting();
+  useEffect(() => {
+    if (!isEditMode && !footer && activeFneSetting?.defaultFooter) {
+      setFooter(activeFneSetting.defaultFooter);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFneSetting]);
   const [foreignCurrency, setForeignCurrency] = useState(editInvoice?.foreignCurrency ?? '');
   const [foreignCurrencyRate, setForeignCurrencyRate] = useState<number>(
     editInvoice?.foreignCurrencyRate ?? 0,

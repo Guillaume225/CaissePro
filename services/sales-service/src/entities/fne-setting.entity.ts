@@ -48,6 +48,10 @@ export class FneSetting {
   @Column({ type: 'varchar', length: 500, name: 'bank_ref', nullable: true })
   bankRef!: string | null;
 
+  /** Repris automatiquement dans le champ "Pied de page" à la création d'une nouvelle facture. */
+  @Column({ type: 'varchar', length: 500, name: 'default_footer', nullable: true })
+  defaultFooter!: string | null;
+
   @Column({ type: 'bit', name: 'is_active', default: true })
   isActive!: boolean;
 

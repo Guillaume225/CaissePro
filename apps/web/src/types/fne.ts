@@ -269,6 +269,7 @@ export interface FneSettingRecord {
   regimeImposition: string | null;
   centreImpots: string | null;
   bankRef: string | null;
+  defaultFooter: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -285,6 +286,7 @@ export interface UpsertFneSettingPayload {
   regimeImposition?: string;
   centreImpots?: string;
   bankRef?: string;
+  defaultFooter?: string;
 }
 
 // ── FNE Accounting Entry ─────────────────────────────────

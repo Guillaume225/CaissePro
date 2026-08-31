@@ -13,6 +13,7 @@ export interface CreateFneSettingDto {
   regimeImposition?: string;
   centreImpots?: string;
   bankRef?: string;
+  defaultFooter?: string;
 }
 
 export interface UpdateFneSettingDto {
@@ -26,6 +27,7 @@ export interface UpdateFneSettingDto {
   regimeImposition?: string;
   centreImpots?: string;
   bankRef?: string;
+  defaultFooter?: string;
 }
 
 @Injectable()
@@ -74,6 +76,7 @@ export class FneSettingsService {
       regimeImposition: dto.regimeImposition ?? null,
       centreImpots: dto.centreImpots ?? null,
       bankRef: dto.bankRef ?? null,
+      defaultFooter: dto.defaultFooter ?? null,
     });
     return repo.save(entity);
   }
@@ -103,6 +106,7 @@ export class FneSettingsService {
           dto.regimeImposition !== undefined ? dto.regimeImposition : existing.regimeImposition,
         centreImpots: dto.centreImpots !== undefined ? dto.centreImpots : existing.centreImpots,
         bankRef: dto.bankRef !== undefined ? dto.bankRef : existing.bankRef,
+        defaultFooter: dto.defaultFooter !== undefined ? dto.defaultFooter : existing.defaultFooter,
       });
       return repo.save(existing);
     }
