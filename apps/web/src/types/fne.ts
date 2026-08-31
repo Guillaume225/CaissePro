@@ -319,6 +319,8 @@ export interface FneAccountingFilters {
   dateFrom?: string;
   dateTo?: string;
   invoiceReference?: string;
+  /** 'true' = déjà envoyées vers Sage, 'false' = pas encore envoyées, undefined = toutes. */
+  erpPosted?: 'true' | 'false';
 }
 
 export interface GenerateEntriesResult {

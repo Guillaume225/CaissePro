@@ -23,6 +23,8 @@ export interface ListFneAccountingQuery {
   dateFrom?: string;
   dateTo?: string;
   invoiceReference?: string;
+  /** 'true' | 'false' — filter on whether the entry was already posted to Sage. */
+  erpPosted?: string;
 }
 
 export interface GenerateEntriesDto {
@@ -403,6 +405,11 @@ export class FneAccountingService {
     }
     if (query.invoiceReference) {
       qb.andWhere('e.invoiceReference LIKE :ref', { ref: `%${query.invoiceReference}%` });
+    }
+    if (query.erpPosted === 'true') {
+      qb.andWhere('e.erpPosted = :erpPosted', { erpPosted: true });
+    } else if (query.erpPosted === 'false') {
+      qb.andWhere('e.erpPosted = :erpPosted', { erpPosted: false });
     }
 
     qb.orderBy('e.entryDate', 'DESC')

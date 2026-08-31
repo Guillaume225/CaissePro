@@ -19,6 +19,7 @@ export function useFneAccountingEntries(filters: FneAccountingFilters) {
       if (filters.dateFrom) params.dateFrom = filters.dateFrom;
       if (filters.dateTo) params.dateTo = filters.dateTo;
       if (filters.invoiceReference) params.invoiceReference = filters.invoiceReference;
+      if (filters.erpPosted) params.erpPosted = filters.erpPosted;
       const { data } = await api.get<FnePaginatedResponse<FneAccountingEntryRecord>>(
         '/fne-accounting',
         { params },

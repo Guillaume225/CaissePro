@@ -38,6 +38,8 @@ export default function FneAccountingPage() {
   const [searchRef, setSearchRef] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  // Par défaut, ne montre que les écritures pas encore envoyées vers Sage.
+  const [erpPostedFilter, setErpPostedFilter] = useState<'true' | 'false' | ''>('false');
 
   const { data, isLoading } = useFneAccountingEntries({
     page,
@@ -45,6 +47,7 @@ export default function FneAccountingPage() {
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
     invoiceReference: searchRef || undefined,
+    erpPosted: erpPostedFilter || undefined,
   });
   const entries = data?.data ?? [];
   const meta = data?.meta;
@@ -306,13 +309,26 @@ export default function FneAccountingPage() {
               className="input max-w-[160px]"
             />
           </div>
-          {(searchRef || dateFrom || dateTo) && (
+          <select
+            value={erpPostedFilter}
+            onChange={(e) => {
+              setErpPostedFilter(e.target.value as 'true' | 'false' | '');
+              setPage(1);
+            }}
+            className="input max-w-[220px]"
+          >
+            <option value="false">Non envoyées vers Sage</option>
+            <option value="true">Déjà envoyées vers Sage</option>
+            <option value="">Toutes</option>
+          </select>
+          {(searchRef || dateFrom || dateTo || erpPostedFilter !== 'false') && (
             <button
               className="flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-[#697386] hover:bg-zinc-100"
               onClick={() => {
                 setSearchRef('');
                 setDateFrom('');
                 setDateTo('');
+                setErpPostedFilter('false');
                 setPage(1);
               }}
             >
