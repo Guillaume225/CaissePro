@@ -1038,10 +1038,12 @@ export class FneInvoicesService {
     const page = query.page || 1;
     const perPage = Math.min(query.perPage || 25, 100);
 
-    const qb = invoiceRepo
-      .createQueryBuilder('i')
-      .leftJoinAndSelect('i.items', 'items')
-      .orderBy('i.createdAt', 'DESC');
+    // Pas de jointure sur les lignes — la liste n'affiche jamais le détail
+    // des articles, et un leftJoinAndSelect vers une relation one-to-many
+    // force TypeORM à paginer via une sous-requête DISTINCT sur
+    // invoice×items au lieu d'un simple OFFSET/FETCH sur fne_invoices,
+    // ce qui devenait très lent à mesure que le nombre de lignes augmentait.
+    const qb = invoiceRepo.createQueryBuilder('i').orderBy('i.createdAt', 'DESC');
 
     if (query.status) {
       qb.andWhere('i.status = :status', { status: query.status });

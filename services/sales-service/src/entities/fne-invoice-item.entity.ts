@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { FneInvoice } from './fne-invoice.entity';
 
 @Entity('fne_invoice_items')
+@Index(['invoiceId'])
 export class FneInvoiceItem {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

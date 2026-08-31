@@ -15,6 +15,8 @@ import { FneInvoiceItem } from './fne-invoice-item.entity';
 @Index(['fneReference'])
 @Index(['status'])
 @Index(['clientPhone'])
+@Index(['createdAt'])
+@Index(['status', 'createdAt'])
 export class FneInvoice {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
