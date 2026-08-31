@@ -1043,8 +1043,10 @@ export default function FneInvoiceCreatePage({ editInvoice }: FneInvoiceFormPage
                   value={footer}
                   onChange={(e) => setFooter(e.target.value)}
                   rows={2}
+                  maxLength={255}
                   className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                 />
+                <p className="text-xs text-gray-400">{footer.length}/255</p>
               </div>
             </div>
 

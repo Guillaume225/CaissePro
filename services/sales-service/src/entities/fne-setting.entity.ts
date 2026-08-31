@@ -48,8 +48,13 @@ export class FneSetting {
   @Column({ type: 'varchar', length: 500, name: 'bank_ref', nullable: true })
   bankRef!: string | null;
 
-  /** Repris automatiquement dans le champ "Pied de page" à la création d'une nouvelle facture. */
-  @Column({ type: 'varchar', length: 500, name: 'default_footer', nullable: true })
+  /**
+   * Repris automatiquement dans le champ "Pied de page" à la création d'une
+   * nouvelle facture. Limité à 255 caractères — c'est la limite imposée par
+   * l'API FNE elle-même sur le champ footer de la facture (une valeur plus
+   * longue fait échouer la certification avec une erreur 400).
+   */
+  @Column({ type: 'varchar', length: 255, name: 'default_footer', nullable: true })
   defaultFooter!: string | null;
 
   @Column({ type: 'bit', name: 'is_active', default: true })

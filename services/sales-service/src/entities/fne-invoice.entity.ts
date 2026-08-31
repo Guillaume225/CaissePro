@@ -88,7 +88,8 @@ export class FneInvoice {
   @Column({ type: 'varchar', length: 500, name: 'commercial_message', nullable: true })
   commercialMessage!: string | null;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  /** Limité à 255 caractères — c'est la limite imposée par l'API FNE elle-même. */
+  @Column({ type: 'varchar', length: 255, nullable: true })
   footer!: string | null;
 
   /* ── RNE ── */

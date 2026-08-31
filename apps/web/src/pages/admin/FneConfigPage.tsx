@@ -862,13 +862,14 @@ export default function FneConfigPage() {
                       setSettingsForm((f) => ({ ...f, defaultFooter: e.target.value }))
                     }
                     placeholder="Ex: Merci de votre confiance"
-                    maxLength={500}
+                    maxLength={255}
                     className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-gold focus:outline-none focus:ring-1 focus:ring-brand-gold"
                   />
                   <p className="text-xs text-gray-400">
+                    {settingsForm.defaultFooter.length}/255 —{' '}
                     {t(
                       'admin.fneConfig.defaultFooterHint',
-                      'Repris automatiquement dans le champ "Pied de page" à la création d\'une nouvelle facture',
+                      'Repris automatiquement dans le champ "Pied de page" à la création d\'une nouvelle facture. L\'API FNE limite ce champ à 255 caractères.',
                     )}
                   </p>
                 </div>
