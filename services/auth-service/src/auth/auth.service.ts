@@ -549,7 +549,7 @@ export class AuthService {
     const useRS256 = privateKey && privateKey.includes('BEGIN');
 
     const signOptions: Record<string, unknown> = {
-      expiresIn: this.configService.get<string>('jwt.accessExpiration') || '15m',
+      expiresIn: this.configService.get<string>('jwt.accessExpiration') || '30m',
       ...(useRS256
         ? { algorithm: 'RS256', privateKey }
         : { algorithm: 'HS256', secret: this.configService.get<string>('jwt.secret') || 'dev-secret-change-in-production' }),
@@ -567,7 +567,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: this.parseExpiration(this.configService.get<string>('jwt.accessExpiration') || '15m'),
+      expiresIn: this.parseExpiration(this.configService.get<string>('jwt.accessExpiration') || '30m'),
     };
   }
 
